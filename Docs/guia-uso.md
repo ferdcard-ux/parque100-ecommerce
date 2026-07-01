@@ -54,7 +54,7 @@
 
 ### Confirmación (`/payment-success`)
 - Animación de éxito con icono de check
-- Número de pedido generado de forma automatica
+- Número de pedido generado automáticamente
 - Timeline del estado del pedido
 - Botón para volver a la tienda
 
