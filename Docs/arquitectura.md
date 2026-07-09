@@ -74,10 +74,10 @@ src/
 │   │   └── AdminInventoryPage.tsx
 │   └── components/           # Componentes atómicos
 │       ├── layout/           # Navbar, Footer, RootLayout
-│       ├── home/             # HeroBanner, CategoryGrid, etc.
+│       ├── home/             # HeroBanner, CategoryGrid, CategoryModal, AllCategoriesModal, etc.
 │       ├── cart/             # CartItemCard, RecommendedList
 │       ├── checkout/         # AddressForm, PaymentOptions, CardForm
-│       ├── admin/            # AdminSidebar, ProductTable, etc.
+│       ├── admin/            # AdminSidebar, ProductTable, AddProductModal, EditProductModal
 │       ├── auth/             # LoginForm, RegisterForm
 │       ├── shared/           # ProgressSteps, OrderSummary
 │       ├── figma/            # ImageWithFallback
@@ -87,7 +87,8 @@ src/
 │   ├── index.ts              # Re-exportaciones
 │   ├── constants.ts          # Constantes globales
 │   ├── formatters.ts         # Formateo de precios, tarjetas
-│   └── validators.ts         # Validación de formularios
+│   ├── validators.ts         # Validación de formularios
+│   └── useScrollLock.ts      # Hook para bloquear scroll del body en modales
 │
 └── styles/                   # Estilos globales
     ├── index.css             # Punto de entrada CSS
