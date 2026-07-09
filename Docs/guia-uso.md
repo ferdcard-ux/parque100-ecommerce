@@ -11,16 +11,26 @@
 
 ### Inicio (`/`)
 - **Hero Banner**: llamativo con ofertas del día y acceso rápido a login
-- **Categorías**: 8 categorías de productos (Verduras, Frutas, Carnes, Granos, Lácteos, Panadería, Bebidas, Limpieza)
-- **Productos Destacados**: cuadrícula con 8 productos, cada uno con botón "Añadir" al carrito
+- **Categorías**: 8 categorías con emoji único. Cada categoría es clickeable y abre un modal con los productos filtrados. Si la categoría no tiene productos, muestra mensaje "Categoría sin productos". Botón "Ver todas" abre un modal con las 8 categorías como botones funcionales
+- **Productos Destacados**: cuadrícula con productos, cada uno con imagen única, precio y botón "Añadir" al carrito
 - **Oferta Especial**: banner promocional con descuento
 - **Footer**: enlaces a categorías, ayuda, contacto y redes sociales
 
 ### Login (`/login`)
 - Inicio de sesión con correo y contraseña
+- Botón **X** en la esquina superior derecha para cerrar y volver al inicio
 - Opción "Recordarme"
 - Enlace a registro de cuenta
 - Modal de inicio de sesión para administradores (link "¿Eres administrador?")
+
+### Navegación — Menú de usuario
+- Al iniciar sesión, el botón "Iniciar Sesión" se reemplaza por un avatar con las iniciales del usuario
+- Al hacer clic se despliega un menú con:
+  - Nombre completo y correo electrónico
+  - Badge "Administrador" si aplica
+  - Opción "Cambiar de usuario" (navega al login)
+  - Opción "Cerrar sesión" (desloguea y redirige al inicio)
+- El menú se cierra al hacer clic fuera de él
 
 ### Registro (`/register`)
 - Formulario con nombre, apellido, correo, contraseña y confirmación
@@ -60,9 +70,10 @@
 
 ### Panel Administrativo (`/admin`)
 - Sidebar colapsable con navegación (Dashboard, Inventario, Pedidos, etc.)
+- Botón **Inicio** para volver a la página principal
 - Estadísticas: total productos, en stock, bajo stock, sin stock
 - Tabla de productos con búsqueda, filtro por estado y paginación
-- Acciones: editar, eliminar, agregar producto (modal)
+- **CRUD completo**: agregar (modal con nombre, categoría, cantidad, precio, URL de imagen opcional), editar (modal precargado), eliminar (confirmación directa)
 - Botones de importar/exportar inventario
 
 ## Flujo completo de compra
