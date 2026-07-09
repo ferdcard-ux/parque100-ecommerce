@@ -1,12 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import type { AdminProduct } from '../../../models';
 import { useScrollLock } from '../../../utils/useScrollLock';
 
-interface AddProductModalProps {
-  isOpen: boolean;
+interface EditProductModalProps {
+  product: AdminProduct | null;
   onClose: () => void;
-  onCreate: (data: {
-    ID_Producto: string;
+  onUpdate: (id: string, data: {
     Nombre: string;
     Descripcion: string;
     Imagen?: string;
@@ -16,8 +16,8 @@ interface AddProductModalProps {
   }) => Promise<void>;
 }
 
-export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalProps) {
-  useScrollLock(isOpen);
+export function EditProductModal({ product, onClose, onUpdate }: EditProductModalProps) {
+  useScrollLock(product !== null);
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('');
   const [cantidad, setCantidad] = useState('');
@@ -25,7 +25,17 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
   const [imagen, setImagen] = useState('');
   const [saving, setSaving] = useState(false);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    if (product) {
+      setNombre(product.name);
+      setCategoria(product.category);
+      setCantidad(String(product.quantity));
+      setPrecio(String(product.price));
+      setImagen('');
+    }
+  }, [product]);
+
+  if (!product) return null;
 
   const handleSubmit = async () => {
     if (!nombre || !categoria || !cantidad || !precio) return;
@@ -37,9 +47,8 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
         bebidas: 7, limpieza: 8,
       };
       const catId = catMap[categoria.toLowerCase().trim()] || 1;
-      const id = `P${String(Date.now()).slice(-3)}`;
-      await onCreate({
-        ID_Producto: id,
+      const id = product.id.toString();
+      await onUpdate(id, {
         Nombre: nombre.trim(),
         Descripcion: nombre.trim(),
         Imagen: imagen.trim() || undefined,
@@ -47,11 +56,6 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
         Stock_Minimo: parseInt(cantidad),
         ID_Categoria: catId,
       });
-      setNombre('');
-      setCategoria('');
-      setCantidad('');
-      setPrecio('');
-      setImagen('');
       onClose();
     } finally {
       setSaving(false);
@@ -62,7 +66,7 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[#212121] font-bold" style={{ fontSize: '1.1rem' }}>Agregar Producto</h2>
+          <h2 className="text-[#212121] font-bold" style={{ fontSize: '1.1rem' }}>Editar Producto</h2>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
             <X size={18} className="text-gray-500" />
           </button>
@@ -83,7 +87,7 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
             />
           </div>
           <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Cantidad inicial</label>
+            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Cantidad</label>
             <input type="number" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}

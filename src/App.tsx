@@ -36,6 +36,23 @@ interface AppContextValue {
   products: Product[];
   adminProducts: AdminProduct[];
   deleteAdminProduct: (id: number) => void;
+  createAdminProduct: (data: {
+    ID_Producto: string;
+    Nombre: string;
+    Descripcion: string;
+    Imagen?: string;
+    Precio_Venta: number;
+    Stock_Minimo: number;
+    ID_Categoria: number;
+  }) => Promise<void>;
+  updateAdminProduct: (id: string, data: {
+    Nombre: string;
+    Descripcion: string;
+    Imagen?: string;
+    Precio_Venta: number;
+    Stock_Minimo: number;
+    ID_Categoria: number;
+  }) => Promise<void>;
   paymentMethod: PaymentMethodType | null;
   selectPaymentMethod: (m: PaymentMethodType) => void;
   saveAddress: (addr: DeliveryAddress) => void;
@@ -53,8 +70,8 @@ export function useApp(): AppContextValue {
 
 /* ── Route Components (have access to context via useApp) ── */
 function LayoutWrapper() {
-  const { cartCount, isAdmin, isLoggedIn } = useApp();
-  return <RootLayout cartCount={cartCount} isAdmin={isAdmin} isLoggedIn={isLoggedIn} />;
+  const { cartCount, isAdmin, isLoggedIn, user, logout } = useApp();
+  return <RootLayout cartCount={cartCount} isAdmin={isAdmin} isLoggedIn={isLoggedIn} user={user} onLogout={logout} />;
 }
 
 function HomeWrapper() { const { addToCart } = useApp(); return <HomePage onAddToCart={addToCart} />; }
@@ -62,7 +79,7 @@ function CartWrapper() { const ctx = useApp(); return <CartPage items={ctx.cartI
 function AddressWrapper() { const { saveAddress } = useApp(); return <AddressPage onAddressSubmit={saveAddress} />; }
 function PaymentMethodWrapper() { const ctx = useApp(); return <PaymentMethodPage selectedMethod={ctx.paymentMethod} onSelectMethod={ctx.selectPaymentMethod} />; }
 function CardPaymentWrapper() { const ctx = useApp(); return <CardPaymentPage total={ctx.cartTotal} isProcessing={ctx.isPaymentProcessing} onPay={ctx.payWithCard} />; }
-function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} />; }
+function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} />; }
 
 /* ── App Component ── */
 export default function App() {
@@ -96,6 +113,8 @@ export default function App() {
     products: productCtrl.products,
     adminProducts: productCtrl.adminProducts,
     deleteAdminProduct: productCtrl.deleteProduct,
+    createAdminProduct: productCtrl.createProduct,
+    updateAdminProduct: productCtrl.updateProduct,
     paymentMethod: payment.method,
     selectPaymentMethod: payment.selectMethod,
     saveAddress: payment.saveAddress,
