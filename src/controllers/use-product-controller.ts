@@ -33,6 +33,31 @@ export function useProductController() {
     setAdminProducts((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
+  const createProduct = useCallback(async (data: {
+    ID_Producto: string;
+    Nombre: string;
+    Descripcion: string;
+    Imagen?: string;
+    Precio_Venta: number;
+    Stock_Minimo: number;
+    ID_Categoria: number;
+  }) => {
+    await productService.createProduct(data);
+    await loadProducts();
+  }, [loadProducts]);
+
+  const updateProduct = useCallback(async (id: string, data: {
+    Nombre: string;
+    Descripcion: string;
+    Imagen?: string;
+    Precio_Venta: number;
+    Stock_Minimo: number;
+    ID_Categoria: number;
+  }) => {
+    await productService.updateProduct(id, data);
+    await loadProducts();
+  }, [loadProducts]);
+
   const getFeaturedProducts = useCallback(() => {
     return products;
   }, [products]);
@@ -44,6 +69,8 @@ export function useProductController() {
     isLoading,
     getFeaturedProducts,
     deleteProduct,
+    createProduct,
+    updateProduct,
     reload: loadProducts,
   };
 }

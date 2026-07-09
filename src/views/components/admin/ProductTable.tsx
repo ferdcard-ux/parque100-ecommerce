@@ -7,9 +7,10 @@ interface ProductTableProps {
   products: AdminProduct[];
   onDelete: (id: number) => void;
   onAddClick: () => void;
+  onEditClick: (product: AdminProduct) => void;
 }
 
-export function ProductTable({ products, onDelete, onAddClick }: ProductTableProps) {
+export function ProductTable({ products, onDelete, onAddClick, onEditClick }: ProductTableProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | InventoryStatus>('all');
   const [page, setPage] = useState(1);
@@ -111,7 +112,7 @@ export function ProductTable({ products, onDelete, onAddClick }: ProductTablePro
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-2">
-                    <button className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 hover:text-blue-600 transition-colors">
+                    <button onClick={() => onEditClick(product)} className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 hover:text-blue-600 transition-colors">
                       <Edit2 size={14} />
                     </button>
                     <button onClick={() => onDelete(product.id)}
