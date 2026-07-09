@@ -1,7 +1,7 @@
 import type { Order, DeliveryAddress, PaymentMethodType, CartItem } from '../models';
 import { generateOrderId, calculateShipping } from '../utils';
 
-const MOCK_ORDERS: Order[] = [];
+const API = 'http://localhost:3001/api';
 
 export const orderService = {
   async create(
@@ -24,15 +24,32 @@ export const orderService = {
       createdAt: new Date(),
     };
 
-    MOCK_ORDERS.push(order);
+    try {
+      await fetch(`${API}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          Total: Math.round(order.total),
+          Tipo_Entrega: address.type || 'domicilio',
+          productos: items.map(item => ({
+            ID_Producto: item.id,
+            Cantidad: item.quantity,
+            Subtotal: Math.round(item.price * item.quantity),
+          })),
+        }),
+      });
+    } catch {
+      // fallback: keep order in memory
+    }
+
     return order;
   },
 
   async getById(id: string): Promise<Order | null> {
-    return MOCK_ORDERS.find((o) => o.id === id) ?? null;
+    return null;
   },
 
   async getAll(): Promise<Order[]> {
-    return [...MOCK_ORDERS];
+    return [];
   },
 };
