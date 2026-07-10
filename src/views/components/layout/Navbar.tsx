@@ -1,18 +1,53 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
-  ShoppingCart, Heart, Search, Menu, X, Store, ShieldCheck,
+  ShoppingCart, Heart, Search, Menu, X, Store, ShieldCheck, User, LogOut,
 } from 'lucide-react';
+import type { User as UserType } from '../../../models';
 
 interface NavbarProps {
   cartCount: number;
   isAdmin: boolean;
   isLoggedIn: boolean;
+  user: UserType | null;
+  onLogout: () => void;
 }
 
-export function Navbar({ cartCount, isAdmin, isLoggedIn }: NavbarProps) {
+export function Navbar({ cartCount, isAdmin, isLoggedIn, user, onLogout }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleCategoriesClick = () => {
+    const onHome = window.location.pathname === '/';
+    if (onHome) {
+      document.getElementById('categorias')?.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      navigate('/?scroll=categorias');
+    }
+  };
+
+  const handleLogout = () => {
+    setUserMenuOpen(false);
+    onLogout();
+    navigate('/');
+  };
+
+  const userInitials = user
+    ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
+    : '';
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
@@ -33,7 +68,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn }: NavbarProps) {
 
           <div className="hidden md:flex items-center gap-6">
             <Link to="/" className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Inicio</Link>
-            <Link to="/" className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Categorías</Link>
+            <button onClick={handleCategoriesClick} className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Categorías</button>
             {isAdmin && (
               <Link to="/admin" className="flex items-center gap-1.5 text-[#C62828] hover:text-[#b71c1c] transition-colors font-medium">
                 <ShieldCheck size={15} />
@@ -70,14 +105,60 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn }: NavbarProps) {
                 </span>
               )}
             </Link>
-            <Link
-              to="/login"
-              className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#C62828] text-white font-medium hover:bg-[#b71c1c] transition-colors"
-              style={{ fontSize: '0.875rem' }}
-            >
-              {isAdmin && <ShieldCheck size={13} />}
-              {isAdmin ? 'Administrador' : isLoggedIn ? 'Mi Cuenta' : 'Iniciar Sesión'}
-            </Link>
+
+            {isLoggedIn && user ? (
+              <div className="relative" ref={userMenuRef}>
+                <button onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C62828] text-white font-medium hover:bg-[#b71c1c] transition-colors"
+                  style={{ fontSize: '0.875rem' }}
+                >
+                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
+                    <span className="text-white font-bold" style={{ fontSize: '0.65rem' }}>{userInitials}</span>
+                  </div>
+                  <span className="max-w-[100px] truncate">{isAdmin ? 'Admin' : user.firstName}</span>
+                </button>
+                {userMenuOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                    <div className="px-5 py-4 border-b border-gray-100">
+                      <p className="text-[#212121] font-semibold" style={{ fontSize: '0.9rem' }}>
+                        {user.firstName} {user.lastName}
+                      </p>
+                      <p className="text-gray-400 truncate" style={{ fontSize: '0.8rem' }}>{user.email}</p>
+                      {isAdmin && (
+                        <div className="flex items-center gap-1 mt-1.5">
+                          <ShieldCheck size={12} className="text-[#C62828]" />
+                          <span className="text-[#C62828] font-medium" style={{ fontSize: '0.75rem' }}>Administrador</span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="py-1">
+                      <button onClick={() => { setUserMenuOpen(false); navigate('/login'); }}
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
+                        style={{ fontSize: '0.875rem' }}
+                      >
+                        <User size={16} />
+                        Cambiar de usuario
+                      </button>
+                      <button onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-[#C62828] hover:bg-red-50 transition-colors"
+                        style={{ fontSize: '0.875rem' }}
+                      >
+                        <LogOut size={16} />
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/login"
+                className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#C62828] text-white font-medium hover:bg-[#b71c1c] transition-colors"
+                style={{ fontSize: '0.875rem' }}
+              >
+                <User size={15} />
+                Iniciar Sesión
+              </Link>
+            )}
 
             <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
@@ -97,7 +178,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn }: NavbarProps) {
             />
           </div>
           <Link to="/" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Inicio</Link>
-          <Link to="/" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Categorías</Link>
+          <button onClick={() => { setMenuOpen(false); handleCategoriesClick(); }} className="text-left text-[#212121] font-medium py-2 border-b">Categorías</button>
           <Link to="/sitemap" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Mapa del Sitio</Link>
           {isAdmin && (
             <Link to="/admin" className="flex items-center gap-1.5 text-[#C62828] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>
@@ -105,9 +186,35 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn }: NavbarProps) {
               Admin
             </Link>
           )}
-          <Link to="/login" className="text-center py-2 rounded-full bg-[#C62828] text-white font-medium" onClick={() => setMenuOpen(false)}>
-            {isAdmin ? 'Administrador' : isLoggedIn ? 'Mi Cuenta' : 'Iniciar Sesión'}
-          </Link>
+          {isLoggedIn && user ? (
+            <>
+              <div className="flex items-center gap-2 py-2 border-b border-gray-100">
+                <div className="w-8 h-8 rounded-full bg-[#C62828] flex items-center justify-center">
+                  <span className="text-white font-bold" style={{ fontSize: '0.7rem' }}>{userInitials}</span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[#212121] font-medium truncate" style={{ fontSize: '0.85rem' }}>{user.firstName} {user.lastName}</p>
+                  <p className="text-gray-400 truncate" style={{ fontSize: '0.75rem' }}>{user.email}</p>
+                </div>
+              </div>
+              <button onClick={() => { setMenuOpen(false); navigate('/login'); }}
+                className="text-left flex items-center gap-2 text-gray-600 font-medium py-2 border-b"
+                style={{ fontSize: '0.85rem' }}
+              >
+                <User size={16} /> Cambiar de usuario
+              </button>
+              <button onClick={() => { setMenuOpen(false); handleLogout(); }}
+                className="text-left flex items-center gap-2 text-[#C62828] font-medium py-2 border-b"
+                style={{ fontSize: '0.85rem' }}
+              >
+                <LogOut size={16} /> Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <Link to="/login" className="text-center py-2 rounded-full bg-[#C62828] text-white font-medium" onClick={() => setMenuOpen(false)}>
+              Iniciar Sesión
+            </Link>
+          )}
         </div>
       )}
     </nav>

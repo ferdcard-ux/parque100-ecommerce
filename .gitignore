@@ -31,5 +31,6 @@ npm-debug.log*
 .cache/
 .temp/
 
-# Non-essential
+# Non-essential or Private
 *.zip
+bitacora-desarrollador.md

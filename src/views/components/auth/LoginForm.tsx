@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Mail, Lock, Eye, EyeOff, Store, UserCog, X } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Store, UserCog, X, ArrowLeft } from 'lucide-react';
 import type { LoginCredentials } from '../../../models';
 import { isValidEmail } from '../../../utils';
+import { useScrollLock } from '../../../utils/useScrollLock';
 
 interface LoginFormProps {
   onLogin: (credentials: LoginCredentials) => Promise<void>;
@@ -18,6 +19,7 @@ export function LoginForm({ onLogin, onAdminLogin, error }: LoginFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [adminModalOpen, setAdminModalOpen] = useState(false);
+  useScrollLock(adminModalOpen);
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [showAdminPassword, setShowAdminPassword] = useState(false);
@@ -64,7 +66,10 @@ export function LoginForm({ onLogin, onAdminLogin, error }: LoginFormProps) {
 
       <div className="w-full max-w-md relative z-10">
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden">
-          <div className="px-8 py-8 text-center" style={{ background: 'linear-gradient(135deg, #FBC02D 0%, #C62828 100%)' }}>
+          <div className="relative px-8 py-8 text-center" style={{ background: 'linear-gradient(135deg, #FBC02D 0%, #C62828 100%)' }}>
+            <button onClick={() => navigate('/')} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white backdrop-blur-sm transition-colors">
+              <X size={16} />
+            </button>
             <div className="flex justify-center mb-3">
               <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
                 <Store className="text-white" size={28} />
