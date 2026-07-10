@@ -2,6 +2,14 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.0.1] — 2026-07-09
+
+### Commits organizados en el repositorio
+- Desarrollo completo de la Sesión 7 publicado en 5 commits en `origin/main`
+- Historial de git reorganizado: backend, CRUD, categorías/modales, servicios/config, documentación
+- Este archivo (`CHANGELOG.md`) creado para registrar cambios del proyecto
+- Bitácora del desarrollador excluida del repositorio (documento interno)
+
 ## [1.0.0] — 2026-07-01
 
 ### Proyecto base
@@ -19,7 +27,7 @@
 - Limpieza de archivos: `pnpm-workspace.yaml`, `postcss.config.mjs`, `guidelines/`, `dist/`
 
 ### Git y repositorio
-- Configuración de identidad Git: `ferdcard-ux <ferdcard@gmail.com>`
+- Configuración de identidad Git: `ferdcard-ux <******@gmail.com>`
 - Repositorio público `parque100-ecommerce` creado en GitHub
 - Rama `master` renombrada a `main`, sincronización con remoto
 - Integración de 4 commits de compañeros (conexión BD, correcciones texto)
@@ -75,7 +83,7 @@
 - `Docs/arquitectura.md`: patrón MVC, estructura de directorios, flujo de datos
 - `Docs/manual-tecnico.md`: requisitos, instalación, convenciones, backend, BD, despliegue
 - `Docs/guia-uso.md`: credenciales, funcionalidades por pantalla, rutas
-- `Docs/bitacora-desarrollador.md`: 7 sesiones documentadas con problemas y soluciones `(Exclusivo para el DEV)`
+- `Docs/bitacora-desarrollador.md`: 9+ sesiones documentadas con problemas y soluciones `(Exclusivo para el DEV)`
 - `Docs/index.md`: índice de documentos
 - `README.md`: descripción del proyecto
 - `CHANGELOG.md`: este archivo
