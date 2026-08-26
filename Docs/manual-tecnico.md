@@ -99,7 +99,7 @@ La tabla `productos` incluye una columna `Imagen VARCHAR(500)` opcional para alm
 
 ### Conexión
 
-Archivo `connection.js` en la raíz del proyecto — pool de conexiones MySQL con `mysql2/promise`:
+Archivo `server/config/db.js` — pool de conexiones MySQL con `mysql2/promise`:
 
 ```js
 const pool = mysql.createPool({
@@ -112,9 +112,13 @@ const pool = mysql.createPool({
 });
 ```
 
+> Este módulo es importado exclusivamente por la capa de modelos (`server/models/`). Ninguna ruta o controlador accede a la BD directamente.
+
 ## Backend Express
 
-El backend corre en el puerto 3001 con las siguientes rutas:
+El backend sigue arquitectura MVC en capas: `routes → controllers → models → db` (detalle en [`arquitectura.md`](arquitectura.md)).
+
+Corre en el puerto 3001 con las siguientes rutas:
 
 | Endpoint | Descripción |
 |----------|-------------|

@@ -1,13 +1,13 @@
-# Dependencies
+# Dependencias
 node_modules/
 .pnpm/
 .pnpm-store/
 
-# Build output
+# Salida de build
 dist/
 build/
 
-# Environment
+# Entorno
 .env
 .env.local
 .env.*.local
@@ -19,7 +19,7 @@ build/
 *.swo
 *~
 
-# OS
+# Sistema operativo
 .DS_Store
 Thumbs.db
 
@@ -27,10 +27,23 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# Misc
+# Varios
 .cache/
 .temp/
 
-# Non-essential or Private
+# Empaquetados y entregas locales
 *.zip
+
+# Documento interno del desarrollador (no forma parte de la evidencia)
 bitacora-desarrollador.md
+Docs/BITACORA.md
+
+# Material interno de sustentacion del equipo (no es documentacion tecnica)
+Docs/DESCRIPCION_CARPETAS.md
+
+# Coordinacion interna de commits del equipo
+Docs/INSTRUCCIONES_COMMITS.md
+
+# Scripts y recursos exclusivos del equipo de desarrollo
+# (viven fuera del repo en ../scripts_dev; regla defensiva por si se copian aqui)
+scripts_dev/
