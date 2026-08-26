@@ -2,6 +2,43 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.2.1] — 2026-08-22
+
+### Calidad y verificación
+- Verificación estática del script de inicio para Windows ejecutada desde entorno Linux (PowerShell 7.6.5 portátil + PSScriptAnalyzer 1.25.0): sintaxis OK, compatibilidad con PowerShell 5.1 OK
+- Corregida codificación del script Windows (BOM UTF-8) para render correcto de acentos en `powershell.exe`
+
+## [1.2.0] — 2026-08-22
+
+### Arquitectura backend (MVC)
+- Backend reestructurado en capas: `server/config/db.js` (pool MySQL), `server/models/*.model.js` (SQL encapsulado), `server/controllers/*.controller.js` (lógica), `server/routes/` (routers delgados)
+- Creación de pedidos ahora **transaccional** (`beginTransaction/commit/rollback`) garantizando atomicidad entre `pedidos` y `detalle_pedido`
+- `connection.js` movido de la raíz a `server/config/db.js`
+
+### Estándares de codificación
+- `tsconfig.json` creado (strict mode) — el proyecto usaba TypeScript sin configuración de chequeo de tipos
+- `.editorconfig`, `.prettierrc` y `Docs/CODING_STANDARDS.md` con las convenciones obligatorias
+- `src/vite-env.d.ts` agregado; `@types/react-dom` instalado
+
+### Documentación
+- JSDoc integral (`@fileoverview`, `@param`, `@returns`) en todo el backend y núcleo del frontend (models, services, controllers, utils)
+- 6 errores de tipos latentes corregidos al habilitar el chequeo estricto
+
+### Verificación
+- Endpoints probados end-to-end: productos, categorías, login, pedidos (201) y pagos
+- `tsc --noEmit` sin errores; build de producción exitoso
+
+## [1.1.1] — 2026-08-22
+
+### Hotfix (herramientas del equipo)
+- Restauradas credenciales `-u root` en el helper `run_mysql` del script de inicio Linux
+
+## [1.1.0] — 2026-08-22
+
+### Herramientas del equipo (fuera del repo: `scripts_dev/`)
+- Script de inicio automatizado para Linux (`iniciar-proyecto.sh`): instalación automática de Node.js y MySQL/MariaDB, manejo de `auth_socket`, limpieza de procesos con `trap`
+- `setup.sql` corregido: `SET FOREIGN_KEY_CHECKS` alrededor de los TRUNCATEs (fallaba con ERROR 1701 por llaves foráneas)
+
 ## [1.0.1] — 2026-07-09
 
 ### Commits organizados en el repositorio

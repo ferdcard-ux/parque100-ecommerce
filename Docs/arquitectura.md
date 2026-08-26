@@ -1,8 +1,8 @@
 # Arquitectura del Proyecto
 
-## Patrón MVC adaptado a Frontend
+El proyecto implementa una arquitectura **MVC (Modelo-Vista-Controlador) full-stack**: un frontend React que consume una API REST servida por un backend Express con base de datos MySQL.
 
-El proyecto implementa una arquitectura **MVC (Modelo-Vista-Controlador)** adaptada al desarrollo frontend con React:
+## Frontend — MVC en React (`src/`)
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -20,7 +20,8 @@ El proyecto implementa una arquitectura **MVC (Modelo-Vista-Controlador)** adapt
                      │ utiliza
 ┌────────────────────▼────────────────────────────────────┐
 │                      services/                           │
-│  Capa de acceso a datos (mock actual, API en futuro)    │
+│  Capa de acceso a datos: peticiones HTTP (fetch)         │
+│  contra la API REST del backend (:3001/api)              │
 │  Abstracción intercambiable sin afectar controllers     │
 │  Dependen de: models                                     │
 └────────────────────┬────────────────────────────────────┘
@@ -97,13 +98,53 @@ src/
     └── fonts.css             # Fuentes tipográficas
 ```
 
+## Backend — MVC en Express (`server/`)
+
+```
+server/
+├── index.js                    # Bootstrap: middleware, montaje de routers, puerto 3001
+│
+├── config/
+│   └── db.js                   # Pool de conexiones MySQL (mysql2/promise)
+│
+├── models/                     # Capa Modelo — única capa que ejecuta SQL
+│   ├── product.model.js        # Consultas CRUD sobre productos
+│   ├── category.model.js       # Consultas de categorías
+│   ├── user.model.js           # Búsqueda/creación de usuarios
+│   └── order.model.js          # Pedidos + detalle (transaccional)
+│
+├── controllers/                # Capa Controlador — lógica de negocio y HTTP
+│   ├── product.controller.js   # Listar, crear, editar, eliminar productos
+│   ├── category.controller.js  # Listar categorías
+│   ├── auth.controller.js      # Login / registro
+│   ├── order.controller.js     # Consulta y creación de pedidos
+│   └── payment.controller.js   # Procesamiento de pagos
+│
+└── routes/                     # Capa de enrutamiento (routers delgados)
+    ├── products.js             # /api/products
+    ├── categories.js           # /api/categories
+    ├── auth.js                 # /api/auth
+    ├── orders.js               # /api/orders
+    └── payments.js             # /api/payments
+```
+
+**Regla de dependencias del backend:** `routes → controllers → models → db`. Las rutas solo delegan; los controladores nunca ejecutan SQL; los modelos nunca conocen HTTP.
+
+La creación de pedidos es **transaccional**: `beginTransaction` → insertar pedido e ítems → `commit`; ante cualquier error, `rollback` garantiza que no queden pedidos parciales.
+
 ## Flujo de datos
 
-1. El usuario interactúa con un **componente vista** (`views/`)
-2. La vista llama a un **controlador** via contexto (`controllers/`)
-3. El controlador ejecuta lógica de negocio y llama al **servicio** (`services/`)
-4. El servicio accede a datos (mock o API) y retorna modelos tipados (`models/`)
-5. El controlador actualiza su estado, lo que re-renderiza la vista
+1. El usuario interactúa con un **componente vista** (`src/views/`)
+2. La vista llama a un **controlador** via contexto (`src/controllers/`)
+3. El controlador ejecuta lógica de negocio y llama al **servicio** (`src/services/`)
+4. El servicio realiza una petición HTTP a la API REST (`http://localhost:3001/api`)
+5. El router del backend delega en su **controlador** (`server/controllers/`)
+6. El controlador invoca el **modelo** (`server/models/`), que ejecuta el SQL contra MySQL
+7. La respuesta viaja de vuelta tipada y re-renderiza la vista
+
+```
+views → controllers → services ──HTTP──▶ routes → controllers → models ──SQL──▶ MySQL
+```
 
 ## Principios aplicados
 
