@@ -47,7 +47,13 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
 
     setIsSubmitting(true);
     try {
-      await onRegister(form);
+      await onRegister({
+        firstName: form.firstName,
+        lastName: form.lastName,
+        email: form.email,
+        password: form.password,
+        confirmPassword: form.confirm,
+      });
       navigate('/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrarse');
