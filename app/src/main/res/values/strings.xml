@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Parque 100-movil</string>
+    <string name="welcome_message">Bienvenido a Parque 100-movil</string>
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="hint_user">Correo / Usuario</string>
+    <string name="hint_password">Contraseña</string>
+    <string name="btn_login">Iniciar sesión</string>
+    <string name="msg_empty_fields">Por favor completa todos los campos</string>
+    <string name="msg_login_success">¡Acceso correcto! Bienvenido</string>
+    <string name="msg_login_failed">Credenciales incorrectas</string>
+    <string name="info_original">Fork móvil de Tienda Parque 100 — productos frescos a tu puerta</string>
+</resources>
