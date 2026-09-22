@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Paleta modo oscuro. Mismos nombres que values/colors.xml.
+         Fondos oscuros con textos claros para contraste WCAG en Android 15+. -->
+    <color name="primary">#EF5350</color>
+    <color name="primary_dark">#B71C1C</color>
+    <color name="accent">#FBC02D</color>
+    <color name="background">#121212</color>
+    <color name="surface">#1E1E1E</color>
+    <color name="input_background">#2A2A2A</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#BDBDBD</color>
+    <color name="on_primary">#FFFFFF</color>
+    <color name="success">#81C784</color>
+    <color name="error">#F28B82</color>
+</resources>
