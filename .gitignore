@@ -1,0 +1,12 @@
+# Salidas de compilación (no rastrear)
+build/
+app/build/
+.gradle/
+# Archivos locales del IDE y del sistema
+local.properties
+.idea/
+*.iml
+.DS_Store
+# Logs
+*.log
+# Evidencias fuera del fork (Docs/movil del repo principal: no rastrear aquí)
