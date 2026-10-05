@@ -1,21 +1,20 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User, Phone, Building, Hash, MapPin } from 'lucide-react';
 import type { DeliveryAddress } from '../../../models';
 
 interface AddressFormProps {
-  onSubmit: (address: DeliveryAddress) => void;
+  initialAddress: DeliveryAddress;
+  lockRecipient: boolean;
+  isSaving: boolean;
+  onSubmit: (address: DeliveryAddress) => Promise<void>;
 }
 
-export function AddressForm({ onSubmit }: AddressFormProps) {
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    tower: '',
-    floor: '',
-    apartment: '',
-    notes: '',
-  });
+export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit }: AddressFormProps) {
+  const [form, setForm] = useState<DeliveryAddress>(initialAddress);
+
+  useEffect(() => {
+    setForm(initialAddress);
+  }, [initialAddress]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const value = e.target.name === 'phone'
@@ -24,9 +23,9 @@ export function AddressForm({ onSubmit }: AddressFormProps) {
     setForm((prev) => ({ ...prev, [e.target.name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(form);
+    await onSubmit(form);
   };
 
   return (
@@ -57,14 +56,14 @@ export function AddressForm({ onSubmit }: AddressFormProps) {
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Nombre *</label>
             <div className="relative">
               <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="firstName" required value={form.firstName} onChange={handleChange} placeholder="Tu nombre" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="firstName" required readOnly={lockRecipient} value={form.firstName} onChange={handleChange} placeholder="Tu nombre" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
           <div>
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Apellido *</label>
             <div className="relative">
               <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="lastName" required value={form.lastName} onChange={handleChange} placeholder="Tu apellido" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="lastName" required readOnly={lockRecipient} value={form.lastName} onChange={handleChange} placeholder="Tu apellido" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
         </div>
@@ -121,6 +120,8 @@ export function AddressForm({ onSubmit }: AddressFormProps) {
 
         <button
           type="submit"
+          disabled={isSaving}
+          aria-busy={isSaving}
           className="w-full py-3.5 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
           style={{ fontSize: '1rem' }}
         >

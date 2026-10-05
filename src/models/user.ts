@@ -17,6 +17,18 @@ export interface User {
   isAdmin: boolean;
 }
 
+/** Datos de entrega persistentes asociados al usuario autenticado. */
+export interface UserDeliveryDetails {
+  /** Telefono de contacto. */
+  phone: string;
+  /** Torre o bloque del conjunto. */
+  tower: string;
+  /** Piso del apartamento. */
+  floor: string;
+  /** Identificacion del apartamento. */
+  apartment: string;
+}
+
 /** Estado global de autenticacion expuesto por useAuthController. */
 export interface AuthState {
   /** Usuario activo o null si no hay sesion. */
