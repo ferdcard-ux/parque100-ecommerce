@@ -53,6 +53,34 @@ export const userModel = {
   },
 
   /**
+   * Obtiene los datos de entrega de un usuario.
+   *
+   * @param {number} id - Identificador del usuario.
+   * @returns {Promise<Object|null>} Datos de entrega o null si no existe.
+   */
+  async findDeliveryDetailsById(id) {
+    const [rows] = await pool.query(
+      'SELECT Telefono, Torre_Bloque, Piso, Apartamento FROM usuario WHERE ID_Usuario = ?',
+      [id],
+    );
+    return rows[0] || null;
+  },
+
+  /**
+   * Actualiza unicamente los datos persistentes de entrega.
+   *
+   * @param {number} id - Identificador del usuario.
+   * @param {Object} details - Datos de entrega validados.
+   * @returns {Promise<void>}
+   */
+  async updateDeliveryDetailsById(id, { Telefono, Torre_Bloque, Piso, Apartamento }) {
+    await pool.query(
+      'UPDATE usuario SET Telefono = ?, Torre_Bloque = ?, Piso = ?, Apartamento = ? WHERE ID_Usuario = ?',
+      [Telefono, Torre_Bloque, Piso, Apartamento, id],
+    );
+  },
+
+  /**
    * Convierte una fila cruda de la tabla `usuario` al formato
    * expuesto por la API (sin datos sensibles como la contrasena).
    *

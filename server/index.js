@@ -16,6 +16,7 @@ import categoriesRouter from './routes/categories.js';
 import authRouter from './routes/auth.js';
 import ordersRouter from './routes/orders.js';
 import paymentsRouter from './routes/payments.js';
+import usersRouter from './routes/users.js';
 
 /**
  * Puerto de escucha del backend.
@@ -37,6 +38,7 @@ app.use('/api', categoriesRouter);
 app.use('/api', authRouter);
 app.use('/api', ordersRouter);
 app.use('/api', paymentsRouter);
+app.use('/api', usersRouter);
 
 /** Levanta el servidor HTTP e informa la URL base. */
 app.listen(PORT, () => {

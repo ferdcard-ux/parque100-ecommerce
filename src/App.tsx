@@ -4,6 +4,7 @@ import { useCartController } from './controllers/use-cart-controller';
 import { usePaymentController } from './controllers/use-payment-controller';
 import { useProductController } from './controllers/use-product-controller';
 import { useAuthController } from './controllers/use-auth-controller';
+import { useUserDeliveryController } from './controllers/use-user-delivery-controller';
 import { RootLayout } from './views/components/layout/RootLayout';
 import { HomePage } from './views/pages/HomePage';
 import { CartPage } from './views/pages/CartPage';
@@ -76,7 +77,23 @@ function LayoutWrapper() {
 
 function HomeWrapper() { const { addToCart } = useApp(); return <HomePage onAddToCart={addToCart} />; }
 function CartWrapper() { const ctx = useApp(); return <CartPage items={ctx.cartItems} products={ctx.products} subtotal={ctx.cartSubtotal} shipping={ctx.cartShipping} total={ctx.cartTotal} onRemove={ctx.removeFromCart} onUpdateQuantity={ctx.updateQuantity} />; }
-function AddressWrapper() { const { saveAddress } = useApp(); return <AddressPage onAddressSubmit={saveAddress} />; }
+function AddressWrapper() {
+  const { user, saveAddress } = useApp();
+  const delivery = useUserDeliveryController(user?.id ?? null);
+  return (
+    <AddressPage
+      user={user}
+      deliveryDetails={delivery.details}
+      isLoadingProfile={user !== null && delivery.isLoading}
+      isSaving={delivery.isSaving}
+      loadError={delivery.loadError}
+      saveError={delivery.saveError}
+      onRetryLoad={delivery.loadDetails}
+      onSaveDetails={delivery.saveDetails}
+      onAddressSubmit={saveAddress}
+    />
+  );
+}
 function PaymentMethodWrapper() { const ctx = useApp(); return <PaymentMethodPage selectedMethod={ctx.paymentMethod} onSelectMethod={ctx.selectPaymentMethod} />; }
 function CardPaymentWrapper() { const ctx = useApp(); return <CardPaymentPage total={ctx.cartTotal} isProcessing={ctx.isPaymentProcessing} onPay={ctx.payWithCard} />; }
 function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} />; }

@@ -40,8 +40,11 @@ CREATE TABLE IF NOT EXISTS usuario (
   Correo varchar(50) NOT NULL,
   Contrasena varchar(30) NOT NULL,
   Rol varchar(20) DEFAULT NULL,
-  Telefono int(20) DEFAULT NULL,
+  Telefono varchar(10) DEFAULT NULL,
   Direccion varchar(20) NOT NULL,
+  Torre_Bloque varchar(50) DEFAULT NULL,
+  Piso varchar(20) DEFAULT NULL,
+  Apartamento varchar(20) DEFAULT NULL,
   PRIMARY KEY (ID_Usuario),
   UNIQUE KEY Correo (Correo)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
