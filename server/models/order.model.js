@@ -6,6 +6,12 @@
  */
 import pool from '../config/db.js';
 
+function createOrderError(message, statusCode) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
 /**
  * Modelo de pedidos.
  * @namespace orderModel
@@ -57,8 +63,8 @@ export const orderModel = {
   },
 
   /**
-   * Crea un pedido y sus detalles dentro de una transaccion.
-   * Si alguna linea de detalle falla, se revierte todo (atomicidad).
+  * Valida y descuenta el stock, y crea un pedido con sus detalles
+  * dentro de una misma transaccion.
    *
    * @async
    * @param {Object} data - Datos del pedido.
@@ -70,12 +76,44 @@ export const orderModel = {
    * @param {Array<Object>} [data.productos] - Lineas de detalle:
    *   `{ ID_Producto, Cantidad, Subtotal }`.
    * @returns {Promise<number>} El `insertId` del pedido creado.
-   * @throws {Error} Si falla la insercion; la transaccion se revierte.
+  * @throws {Error} Si falta stock o falla una operacion; revierte todo.
    */
   async createWithDetails({ Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, productos }) {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
+
+      const stockPorProducto = new Map();
+      for (const item of productos || []) {
+        if (!item?.ID_Producto || !Number.isInteger(item.Cantidad) || item.Cantidad <= 0) {
+          throw createOrderError('Cada producto debe tener un identificador y una cantidad valida', 400);
+        }
+
+        const productId = String(item.ID_Producto);
+        const existing = stockPorProducto.get(productId);
+        stockPorProducto.set(productId, {
+          ID_Producto: item.ID_Producto,
+          Cantidad: (existing?.Cantidad || 0) + item.Cantidad,
+        });
+      }
+
+      for (const item of stockPorProducto.values()) {
+        const [products] = await connection.query(
+          'SELECT Nombre, Stock_Minimo FROM productos WHERE ID_Producto = ? FOR UPDATE',
+          [item.ID_Producto],
+        );
+        if (products.length === 0) {
+          throw createOrderError(`El producto ${item.ID_Producto} no existe`, 404);
+        }
+
+        const available = Number(products[0].Stock_Minimo || 0);
+        if (available < item.Cantidad) {
+          throw createOrderError(
+            `Stock insuficiente para "${products[0].Nombre}": disponible ${available}, solicitado ${item.Cantidad}`,
+            409,
+          );
+        }
+      }
 
       const [result] = await connection.query(
         'INSERT INTO pedidos (Fecha, Estado, Total, Tipo_Entrega, ID_Usuario) VALUES (?, ?, ?, ?, ?)',
@@ -95,6 +133,16 @@ export const orderModel = {
             'INSERT INTO detalle_pedido (ID_Pedido, ID_Producto, Cantidad, Subtotal) VALUES (?, ?, ?, ?)',
             [pedidoId, item.ID_Producto, item.Cantidad, item.Subtotal],
           );
+        }
+      }
+
+      for (const item of stockPorProducto.values()) {
+        const [result] = await connection.query(
+          'UPDATE productos SET Stock_Minimo = Stock_Minimo - ? WHERE ID_Producto = ? AND Stock_Minimo >= ?',
+          [item.Cantidad, item.ID_Producto, item.Cantidad],
+        );
+        if (result.affectedRows !== 1) {
+          throw createOrderError(`No se pudo actualizar el stock del producto ${item.ID_Producto}`, 409);
         }
       }
 

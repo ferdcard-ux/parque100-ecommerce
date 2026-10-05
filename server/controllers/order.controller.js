@@ -62,7 +62,7 @@ export const orderController = {
       const id = await orderModel.createWithDetails(req.body);
       res.status(201).json({ id, message: 'Pedido creado' });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({ error: err.message });
     }
   },
 };

@@ -1,8 +1,7 @@
 /**
  * @fileoverview Servicio de pedidos.
  * Calcula los totales del pedido en el cliente y lo persiste contra
- * el backend; si la API no esta disponible, degrada gracefully
- * manteniendo el pedido en memoria para mostrar la confirmacion.
+ * el backend antes de devolver la confirmacion.
  */
 import type { Order, DeliveryAddress, PaymentMethodType, CartItem } from '../models';
 import { generateOrderId, calculateShipping } from '../utils';
@@ -17,13 +16,14 @@ const API = 'http://localhost:3001/api';
 export const orderService = {
   /**
    * Crea un pedido a partir del carrito, la direccion y el metodo de pago.
-   * Construye el objeto `Order` local, intenta persistirlo en el backend
-   * y siempre lo retorna (estrategia offline-friendly).
+  * Construye el objeto `Order` local y lo retorna solo si el backend
+  * confirma la persistencia.
    *
    * @param {CartItem[]} items - Lineas del carrito.
    * @param {DeliveryAddress} address - Direccion de entrega.
    * @param {PaymentMethodType} paymentMethod - Metodo de pago elegido.
-   * @returns {Promise<Order>} Pedido confirmado con id generado localmente.
+  * @returns {Promise<Order>} Pedido confirmado con id generado localmente.
+  * @throws {Error} Si el backend rechaza el pedido o no esta disponible.
    */
   async create(
     items: CartItem[],
@@ -47,8 +47,9 @@ export const orderService = {
       createdAt: new Date(),
     };
 
+    let response: Response;
     try {
-      await fetch(`${API}/orders`, {
+      response = await fetch(`${API}/orders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -62,7 +63,12 @@ export const orderService = {
         }),
       });
     } catch {
-      // El backend no responde: el pedido se mantiene solo en memoria.
+      throw new Error('No fue posible conectar con el servidor. El pedido no fue creado.');
+    }
+
+    const responseData = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(responseData?.error || 'No fue posible crear el pedido.');
     }
 
     return order;
