@@ -2,6 +2,37 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.3.2] — 2026-10-06
+
+### Mejoras y correcciones
+- Notificaciones de usuario: campana en el navbar (solo con sesion) con el estado de cada pedido y enlace al detalle; el badge cuenta pedidos no entregados.
+- Imagenes de productos: 15 fotos Pexels verificadas una por una (sin repetidos ni errores) para Carnes, Granos, Panaderia, Bebidas y Limpieza; corregida la extension del archivo de la foto de pollo.
+- Clientes admin: CRUD completo (agregar, editar datos y rol, eliminar con proteccion 409 si tiene pedidos) con `POST /users`, `PUT /users/:id/admin` y `DELETE /users/:id`.
+- Flujo de compra con login: `addToCart` redirige a `/login?next=...` sin sesion; rutas de compra, cuenta y favoritos protegidas con retorno post-login; panel admin solo para administradores.
+- Multisesion: "Cambiar de usuario" agrega otra cuenta sin cerrar la actual; menu con lista de sesiones activas para alternar; "Cerrar sesion" cierra solo la activa.
+
+## [1.3.1] — 2026-10-05
+
+### Correcciones de funcionalidad
+- Login: validaciones de correo y contraseña con mensajes visibles; "¿Olvidaste tu contraseña?" abre modal de recuperación (`POST /api/auth/recover` con clave temporal); "Recuérdame" persiste la sesión (localStorage vs sessionStorage).
+- Perfil: "Cambiar contraseña" funcional mediante modal y `PUT /api/auth/password`.
+- Direcciones: agregadas columnas `Torre_Bloque`, `Piso`, `Apartamento` a `usuario` (arreglo del error Unknown column) y alineadas en `setup.sql`; el checkout ahora persiste snapshot de entrega y pago en `pedidos`.
+- Cadena de pago: flujo Nequi real (`GET/POST /payment-card?method=nequi` con formulario de teléfono y `processNequiPayment`).
+- Admin: campana de notificaciones con pedidos pendientes reales; nuevas páginas `/admin/clientes` (con `GET /api/users`) y `/admin/configuracion`; inventario migrado al shell común.
+- Tienda: destacados y recomendados enlazan a `/producto/:id`; tarjeta de categoría y modal cierran al navegar; buscador navbar navega a `/catalogo?q=`; favoritos con badge en navbar y página `/favoritos`; Hero/Promo CTAs a `/catalogo`.
+- Footer: categorías enlazan a `/catalogo?cat=`, ayuda a `/ayuda` (FAQ acordeón), social a sitios externos reales, Privacidad/Cookies a `/privacidad` y Mapa del sitio a `/mapa-sitio`.
+
+## [1.3.0] — 2026-10-05
+
+### Pantallas adicionales (prototipo "Pantallas nuevas restantes" integrado)
+- Nuevas páginas de cuenta: `/cuenta` (AccountPage), `/perfil` (ProfilePage), `/compras` (OrdersPage) y `/compras/:id` (OrderDetailPage) con tracker de estado.
+- Nuevas páginas de tienda: `/catalogo` (CatalogPage con chips, búsqueda y orden) y `/producto/:id` (ProductDetailPage con relacionados).
+- Nuevas páginas admin: `/admin/pedidos-pendientes`, `/admin/pedidos`, `/admin/pedidos/:id` y `/admin/reportes` (KPIs, pedidos por estado y filtros de periodo).
+- Nuevos componentes compartidos: `shared/page-header`, `shared/section-title`, `shared/status-badge`, `shared/order-tracker`, `shared/empty-state`, `shop/product-card`, `admin/AdminPageShell`.
+- Nuevos controladores: `use-orders-controller`, `use-admin-orders-controller`, `use-favorites-controller` (localStorage), `use-catalog-controller`.
+- Backend: nuevo endpoint `PUT /api/orders/:id/status` para tomar pedidos y cambiar su estado.
+- Navbar: enlaces Catálogo, Mi cuenta y Mis compras (desktop y móvil).
+
 ## [1.2.1] — 2026-08-22
 
 ### Calidad y verificación

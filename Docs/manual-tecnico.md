@@ -130,10 +130,18 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `GET /api/categories` | Listar todas las categorías |
 | `POST /api/auth/login` | Iniciar sesión |
 | `POST /api/auth/register` | Registrar usuario |
+| `POST /api/auth/recover` | Generar clave temporal para un correo |
+| `PUT /api/auth/password` | Cambiar contraseña (valida la actual) |
+| `GET /api/users` | Listar usuarios registrados |
+| `POST /api/users` | Crear usuario desde el panel admin |
+| `PUT /api/users/:id/admin` | Editar nombre, correo, rol y teléfono |
+| `DELETE /api/users/:id` | Eliminar usuario sin pedidos (409 si tiene) |
 | `GET /api/users/:id` | Consultar datos de entrega del usuario |
 | `PUT /api/users/:id` | Actualizar teléfono, torre/bloque, piso y apartamento |
 | `GET /api/orders` | Listar pedidos |
-| `POST /api/orders` | Crear pedido |
+| `GET /api/orders/:id` | Detalle de pedido con sus líneas |
+| `POST /api/orders` | Crear pedido (con snapshot de entrega y pago) |
+| `PUT /api/orders/:id/status` | Cambiar estado (pendiente, preparando, enviando, entregado) |
 | `POST /api/payments/process` | Procesar pago |
 
 ## Scroll Lock en modales
