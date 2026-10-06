@@ -36,6 +36,21 @@ export const orderModel = {
   },
 
   /**
+   * Actualiza el estado de un pedido existente.
+   *
+   * @async
+   * @param {number} id - Identificador del pedido.
+   * @param {string} estado - Nuevo estado ('pendiente', 'preparando',
+   *   'enviando', 'entregado').
+   * @returns {Promise<boolean>} true si se actualizo, false si no existe.
+   * @throws {Error} Si falla la consulta a la base de datos.
+   */
+  async updateStatus(id, estado) {
+    const [result] = await pool.query('UPDATE pedidos SET Estado = ? WHERE ID_Pedido = ?', [estado, id]);
+    return result.affectedRows === 1;
+  },
+
+  /**
    * Busca un pedido por su identificador e incluye sus lineas de
    * detalle con el nombre de cada producto.
    *
@@ -78,7 +93,10 @@ export const orderModel = {
    * @returns {Promise<number>} El `insertId` del pedido creado.
   * @throws {Error} Si falta stock o falla una operacion; revierte todo.
    */
-  async createWithDetails({ Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, productos }) {
+  async createWithDetails({
+    Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, productos,
+    Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago,
+  }) {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
@@ -116,13 +134,21 @@ export const orderModel = {
       }
 
       const [result] = await connection.query(
-        'INSERT INTO pedidos (Fecha, Estado, Total, Tipo_Entrega, ID_Usuario) VALUES (?, ?, ?, ?, ?)',
+        `INSERT INTO pedidos
+          (Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           Fecha || new Date().toISOString().split('T')[0],
           Estado || 'pendiente',
           Total,
           Tipo_Entrega,
-          ID_Usuario,
+          ID_Usuario ?? null,
+          Destinatario ?? null,
+          Telefono ?? null,
+          Torre ?? null,
+          Piso ?? null,
+          Apartamento ?? null,
+          Metodo_Pago ?? null,
         ],
       );
       const pedidoId = result.insertId;
