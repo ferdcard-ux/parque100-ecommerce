@@ -40,6 +40,13 @@ app.use('/api', ordersRouter);
 app.use('/api', paymentsRouter);
 app.use('/api', usersRouter);
 
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Ruta no encontrada',
+    mensaje: `El método ${req.method} no está disponible para ${req.originalUrl}`,
+  });
+});
+
 /** Levanta el servidor HTTP e informa la URL base. */
 app.listen(PORT, () => {
   console.log(`Servidor backend en http://localhost:${PORT}`);
