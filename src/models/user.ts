@@ -45,6 +45,8 @@ export interface LoginCredentials {
   email: string;
   /** Contrasena en texto plano (se envia al backend). */
   password: string;
+  /** Persistir la sesion entre cierres del navegador. */
+  remember?: boolean;
 }
 
 /** Datos del formulario de registro. */
@@ -60,3 +62,4 @@ export interface RegisterData {
   /** Confirmacion de contrasena (validada solo en cliente). */
   confirmPassword: string;
 }
+

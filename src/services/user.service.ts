@@ -29,6 +29,23 @@ function mapDeliveryDetails(row: ApiDeliveryDetails): UserDeliveryDetails {
   };
 }
 
+/** Usuario tal como lo expone GET /api/users. */
+export interface ApiUserRow {
+  ID_Usuario: number;
+  Nombre: string;
+  Correo: string;
+  Rol: string | null;
+  Telefono: string | number | null;
+}
+
+/** Datos editables de un usuario desde el panel admin. */
+export interface AdminUserData {
+  Nombre: string;
+  Correo: string;
+  Rol: string;
+  Telefono: string;
+}
+
 export const userService = {
   /**
    * Consulta los datos de entrega guardados para un usuario.
@@ -71,5 +88,72 @@ export const userService = {
       throw new Error(await getErrorMessage(response, 'No fue posible guardar los datos de entrega.'));
     }
     return mapDeliveryDetails(await response.json() as ApiDeliveryDetails);
+  },
+
+  /**
+   * Lista todos los usuarios registrados (panel admin).
+   *
+   * @returns {Promise<ApiUserRow[]>} Usuarios sin datos sensibles.
+   * @throws {Error} Si el servidor rechaza la consulta.
+   */
+  async getAllUsers(): Promise<ApiUserRow[]> {
+    const response = await fetch(`${API}/users`);
+    if (!response.ok) {
+      throw new Error(await getErrorMessage(response, 'No fue posible cargar los clientes.'));
+    }
+    return (await response.json()) as ApiUserRow[];
+  },
+
+  /**
+   * Crea un usuario desde el panel admin.
+   *
+   * @param {AdminUserData & { Contrasena: string }} data - Datos del nuevo usuario.
+   * @returns {Promise<number>} Id generado.
+   * @throws {Error} Si el correo ya existe o los datos son invalidos.
+   */
+  async createUser(data: AdminUserData & { Contrasena: string }): Promise<number> {
+    const response = await fetch(`${API}/users`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(body?.error || 'No fue posible crear el usuario.');
+    }
+    return body.id;
+  },
+
+  /**
+   * Actualiza nombre, correo, rol y telefono de un usuario.
+   *
+   * @param {number} id - Identificador del usuario.
+   * @param {AdminUserData} data - Datos editados.
+   * @returns {Promise<void>}
+   * @throws {Error} Si el correo ya existe o los datos son invalidos.
+   */
+  async updateUser(id: number, data: AdminUserData): Promise<void> {
+    const response = await fetch(`${API}/users/${id}/admin`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(await getErrorMessage(response, 'No fue posible actualizar el usuario.'));
+    }
+  },
+
+  /**
+   * Elimina un usuario sin pedidos asociados.
+   *
+   * @param {number} id - Identificador del usuario.
+   * @returns {Promise<void>}
+   * @throws {Error} Si tiene pedidos (409) o falla la eliminacion.
+   */
+  async deleteUser(id: number): Promise<void> {
+    const response = await fetch(`${API}/users/${id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      throw new Error(await getErrorMessage(response, 'No fue posible eliminar el usuario.'));
+    }
   },
 };

@@ -79,12 +79,48 @@ export const authService = {
   },
 
   /**
-   * Cierra la sesion. La sesion vive en memoria del controlador,
-   * por lo que aqui no hay llamada al backend.
+   * Cierra la sesion. La sesion del controller se limpia aparte.
    *
    * @returns {Promise<void>}
    */
   async logout(): Promise<void> {
     return;
+  },
+
+  /**
+   * Solicita una clave temporal para el correo indicado.
+   *
+   * @param {string} email - Correo de la cuenta.
+   * @returns {Promise<string>} La clave temporal generada.
+   * @throws {Error} Si el backend rechaza la solicitud.
+   */
+  async recoverPassword(email: string): Promise<string> {
+    const res = await fetch(`${API}/auth/recover`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Correo: email }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || 'No fue posible recuperar la clave.');
+    return data.tempPassword;
+  },
+
+  /**
+   * Cambia la contrasena del usuario autenticado.
+   *
+   * @param {string} email - Correo de la cuenta.
+   * @param {string} currentPassword - Contrasena actual.
+   * @param {string} newPassword - Nueva contrasena.
+   * @returns {Promise<void>}
+   * @throws {Error} Si la actual no coincide o el cambio falla.
+   */
+  async changePassword(email: string, currentPassword: string, newPassword: string): Promise<void> {
+    const res = await fetch(`${API}/auth/password`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ Correo: email, ContrasenaActual: currentPassword, ContrasenaNueva: newPassword }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(data?.error || 'No fue posible actualizar la contrasena.');
   },
 };

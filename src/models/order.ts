@@ -48,3 +48,50 @@ export type PaymentMethodType = 'card' | 'nequi';
 
 /** Ciclo de vida de un pedido. */
 export type OrderStatus = 'confirmed' | 'preparing' | 'on_way' | 'delivered';
+
+/** Estado de pedido persistido en la base de datos (ciclo del panel admin). */
+export type OrderEstado = 'pendiente' | 'preparando' | 'enviando' | 'entregado';
+
+/** Linea de detalle de un pedido tal como la expone la API. */
+export interface ApiOrderItem {
+  /** Identificador del producto. */
+  ID_Producto: string;
+  /** Nombre del producto (join con productos). */
+  Producto_Nombre?: string;
+  /** Cantidad solicitada. */
+  Cantidad: number;
+  /** Subtotal de la linea en COP. */
+  Subtotal: number;
+}
+
+/** Pedido persistido tal como lo expone la API REST. */
+export interface ApiOrder {
+  /** Identificador numerico autoincremental. */
+  ID_Pedido: number;
+  /** Fecha de creacion (YYYY-MM-DD). */
+  Fecha: string;
+  /** Estado actual del pedido. */
+  Estado: OrderEstado | string;
+  /** Total del pedido en COP. */
+  Total: number;
+  /** 'domicilio' o 'recogida'. */
+  Tipo_Entrega: string;
+  /** Usuario asociado. */
+  ID_Usuario: number | null;
+  /** Nombre del usuario (solo en el listado). */
+  Usuario_Nombre?: string | null;
+  /** Destinatario del envio. */
+  Destinatario?: string | null;
+  /** Telefono de contacto. */
+  Telefono?: string | number | null;
+  /** Torre/conjunto. */
+  Torre?: string | null;
+  /** Piso. */
+  Piso?: string | null;
+  /** Apartamento. */
+  Apartamento?: string | null;
+  /** Metodo de pago usado. */
+  Metodo_Pago?: string | null;
+  /** Lineas de detalle (solo en el detalle). */
+  detalles?: ApiOrderItem[];
+}
