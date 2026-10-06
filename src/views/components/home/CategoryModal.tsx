@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, ShoppingCart } from 'lucide-react';
+import { Link } from 'react-router';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import type { Product, Category } from '../../../models';
 import { formatPrice } from '../../../utils';
@@ -68,11 +69,13 @@ export function CategoryModal({ category, products, onClose, onAddToCart }: Cate
               {filtered.map((product) => (
                 <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
                   <div className="relative h-32 overflow-hidden bg-[#F5F5F5]">
-                    <ImageWithFallback
-                      src={product.image}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
+                    <Link to={`/producto/${product.id}`} onClick={onClose}>
+                      <ImageWithFallback
+                        src={product.image}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </Link>
                     {product.stock <= 8 && (
                       <div className="absolute top-2 left-2 bg-[#FBC02D] text-[#212121] px-2 py-0.5 rounded-full font-semibold" style={{ fontSize: '0.6rem' }}>
                         ¡Últimas unidades!
@@ -80,7 +83,9 @@ export function CategoryModal({ category, products, onClose, onAddToCart }: Cate
                     )}
                   </div>
                   <div className="p-3">
-                    <h3 className="text-[#212121] font-semibold leading-tight mb-2" style={{ fontSize: '0.8rem' }}>{product.name}</h3>
+                    <Link to={`/producto/${product.id}`} onClick={onClose}>
+                      <h3 className="text-[#212121] font-semibold leading-tight mb-2 hover:text-[#C62828] transition-colors" style={{ fontSize: '0.8rem' }}>{product.name}</h3>
+                    </Link>
                     <div className="flex items-center justify-between">
                       <span className="text-[#C62828] font-bold" style={{ fontSize: '0.95rem' }}>{formatPrice(product.price)}</span>
                       <button onClick={() => handleAdd(product)}

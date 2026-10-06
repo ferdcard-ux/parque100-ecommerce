@@ -25,14 +25,16 @@ export function HeroBanner() {
             Frutas, verduras, granos y más con la mejor calidad del conjunto. ¡Compra hoy y recibe hoy!
           </p>
           <div className="flex flex-wrap gap-3">
-            <Link to="/login">
+            <Link to="/catalogo">
               <button className="px-6 py-3 rounded-xl bg-white text-[#C62828] font-bold hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl active:scale-[0.97]" style={{ fontSize: '1rem' }}>
                 Comprar ahora
               </button>
             </Link>
-            <button className="px-6 py-3 rounded-xl bg-white/20 text-white font-semibold border border-white/40 hover:bg-white/30 transition-all" style={{ fontSize: '1rem' }}>
-              Ver ofertas
-            </button>
+            <Link to="/catalogo">
+              <button className="px-6 py-3 rounded-xl bg-white/20 text-white font-semibold border border-white/40 hover:bg-white/30 transition-all" style={{ fontSize: '1rem' }}>
+                Ver ofertas
+              </button>
+            </Link>
           </div>
         </div>
 

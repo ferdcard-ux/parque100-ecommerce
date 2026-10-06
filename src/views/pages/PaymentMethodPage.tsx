@@ -12,7 +12,7 @@ export function PaymentMethodPage({ selectedMethod, onSelectMethod }: PaymentMet
 
   const handleContinue = () => {
     if (!selectedMethod) return;
-    navigate('/payment-card');
+    navigate(selectedMethod === 'nequi' ? '/payment-card?method=nequi' : '/payment-card');
   };
 
   return (

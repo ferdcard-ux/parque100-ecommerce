@@ -57,6 +57,7 @@ export function usePaymentController() {
       cardData: CardPaymentData,
       amount: number,
       items: CartItem[],
+      userId: number | null = null,
     ) => {
       setIsProcessing(true);
       try {
@@ -67,7 +68,7 @@ export function usePaymentController() {
         setResult(paymentResult);
 
         if (address && method) {
-          await orderService.create(items, address, method);
+          await orderService.create(items, address, method, userId);
         }
 
         return paymentResult;
@@ -78,13 +79,41 @@ export function usePaymentController() {
     [address, method],
   );
 
-  /** Limpia metodo, direccion y resultado para un nuevo checkout. */
+  /**
+   * Limpia metodo, direccion y resultado para un nuevo checkout. */
   const reset = useCallback(() => {
     setMethod(null);
     setAddress(null);
     setResult(null);
     setIsProcessing(false);
   }, []);
+
+  /**
+   * Procesa un pago por Nequi y, si hay direccion y metodo,
+   * crea el pedido correspondiente.
+   *
+   * @param {string} phone - Telefono registrado en Nequi.
+   * @param {number} amount - Monto total a cobrar.
+   * @param {CartItem[]} items - Lineas del carrito.
+   * @param {number|null} userId - Id del usuario autenticado.
+   * @returns {Promise<PaymentResult>} Resultado devuelto por la pasarela.
+   */
+  const processNequi = useCallback(
+    async (phone: string, amount: number, items: CartItem[], userId: number | null = null) => {
+      setIsProcessing(true);
+      try {
+        const paymentResult = await paymentService.processNequiPayment(phone, amount);
+        setResult(paymentResult);
+        if (address && method) {
+          await orderService.create(items, address, method, userId);
+        }
+        return paymentResult;
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [address, method],
+  );
 
   return {
     method,
@@ -94,6 +123,7 @@ export function usePaymentController() {
     isProcessing,
     result,
     processPayment,
+    processNequi,
     reset,
   };
 }

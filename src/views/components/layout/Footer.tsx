@@ -1,9 +1,19 @@
+/**
+ * @fileoverview Pie de pagina con enlaces, categorias y contacto.
+ */
+import { Link } from 'react-router';
 import { APP_ADDRESS, APP_PHONE, APP_EMAIL } from '../../../utils';
 
 const FOOTER_CATEGORIES = ['Verduras', 'Frutas', 'Carnes', 'Lácteos', 'Bebidas', 'Limpieza'];
 const FOOTER_HELP = ['¿Cómo comprar?', 'Seguimiento de pedido', 'Política de devolución', 'Términos y condiciones', 'Preguntas frecuentes'];
-const SOCIAL_ICONS = ['📘', '📸', '🐦', '💬'];
+const SOCIAL_LINKS = [
+  { label: '📘', href: 'https://www.facebook.com' },
+  { label: '📸', href: 'https://www.instagram.com' },
+  { label: '🐦', href: 'https://x.com' },
+  { label: '💬', href: 'https://wa.me/573046068846' },
+];
 
+/** Footer con navegacion por categoria, ayuda y contacto. */
 export function Footer() {
   return (
     <footer className="bg-[#212121] text-white pt-12 pb-6 px-4">
@@ -30,14 +40,14 @@ export function Footer() {
           <div>
             <h4 className="text-[#FBC02D] font-semibold mb-4" style={{ fontSize: '0.95rem' }}>Categorías</h4>
             {FOOTER_CATEGORIES.map((c) => (
-              <p key={c} className="text-white/50 hover:text-white cursor-pointer transition-colors mb-2" style={{ fontSize: '0.875rem' }}>{c}</p>
+              <Link key={c} to={`/catalogo?cat=${encodeURIComponent(c)}`} className="block text-white/50 hover:text-white transition-colors mb-2" style={{ fontSize: '0.875rem' }}>{c}</Link>
             ))}
           </div>
 
           <div>
             <h4 className="text-[#FBC02D] font-semibold mb-4" style={{ fontSize: '0.95rem' }}>Ayuda</h4>
             {FOOTER_HELP.map((c) => (
-              <p key={c} className="text-white/50 hover:text-white cursor-pointer transition-colors mb-2" style={{ fontSize: '0.875rem' }}>{c}</p>
+              <Link key={c} to="/ayuda" className="block text-white/50 hover:text-white transition-colors mb-2" style={{ fontSize: '0.875rem' }}>{c}</Link>
             ))}
           </div>
 
@@ -47,13 +57,17 @@ export function Footer() {
             <p className="text-white/50 mb-2" style={{ fontSize: '0.875rem' }}>📞 {APP_PHONE}</p>
             <p className="text-white/50 mb-4" style={{ fontSize: '0.875rem' }}>✉️ {APP_EMAIL}</p>
             <div className="flex gap-3">
-              {SOCIAL_ICONS.map((icon, i) => (
-                <button
-                  key={i}
+              {SOCIAL_LINKS.map(({ label, href }) => (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label={href}
                   className="w-9 h-9 rounded-full bg-white/10 hover:bg-[#C62828] flex items-center justify-center transition-colors"
                 >
-                  <span style={{ fontSize: '0.85rem' }}>{icon}</span>
-                </button>
+                  <span style={{ fontSize: '0.85rem' }}>{label}</span>
+                </a>
               ))}
             </div>
           </div>
@@ -62,9 +76,9 @@ export function Footer() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-6">
           <p className="text-white/40" style={{ fontSize: '0.8rem' }}>© 2026 Tienda Parque 100. Todos los derechos reservados.</p>
           <div className="flex gap-4">
-            <span className="text-white/40 hover:text-white cursor-pointer" style={{ fontSize: '0.8rem' }}>Privacidad</span>
-            <span className="text-white/40 hover:text-white cursor-pointer" style={{ fontSize: '0.8rem' }}>Cookies</span>
-            <span className="text-white/40 hover:text-white cursor-pointer" style={{ fontSize: '0.8rem' }}>Mapa del sitio</span>
+            <Link to="/privacidad" className="text-white/40 hover:text-white transition-colors" style={{ fontSize: '0.8rem' }}>Privacidad</Link>
+            <Link to="/privacidad#cookies" className="text-white/40 hover:text-white transition-colors" style={{ fontSize: '0.8rem' }}>Cookies</Link>
+            <Link to="/mapa-sitio" className="text-white/40 hover:text-white transition-colors" style={{ fontSize: '0.8rem' }}>Mapa del sitio</Link>
           </div>
         </div>
       </div>
