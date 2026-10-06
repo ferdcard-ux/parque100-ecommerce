@@ -80,6 +80,7 @@ Base URL: `http://localhost:3001/api`
 | Productos | `GET/POST /products`, `GET/PUT/DELETE /products/:id` |
 | Categorías | `GET /categories` |
 | Autenticación | `POST /auth/login`, `POST /auth/register` |
+| Datos de entrega de usuario | `GET /users/:id`, `PUT /users/:id` |
 | Pedidos | `GET /orders`, `GET /orders/:id`, `POST /orders` |
 | Pagos | `POST /payments/process` |
 
