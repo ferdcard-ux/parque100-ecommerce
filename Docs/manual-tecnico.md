@@ -130,6 +130,8 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `GET /api/categories` | Listar todas las categorías |
 | `POST /api/auth/login` | Iniciar sesión |
 | `POST /api/auth/register` | Registrar usuario |
+| `GET /api/users/:id` | Consultar datos de entrega del usuario |
+| `PUT /api/users/:id` | Actualizar teléfono, torre/bloque, piso y apartamento |
 | `GET /api/orders` | Listar pedidos |
 | `POST /api/orders` | Crear pedido |
 | `POST /api/payments/process` | Procesar pago |
