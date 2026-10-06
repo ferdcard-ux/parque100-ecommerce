@@ -2,6 +2,9 @@ import type { Product, Category, AdminProduct } from '../models';
 
 const API = 'http://localhost:3001/api';
 
+const PEXELS = (id: number, file?: string) =>
+  `https://images.pexels.com/photos/${id}/${file || `pexels-photo-${id}.jpeg`}?auto=compress&cs=tinysrgb&w=400`;
+
 const PRODUCT_IMAGES: Record<string, string> = {
   'Tomates Cherry 500g': 'https://images.unsplash.com/photo-1542838132-92c53300491e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
   'Bananos x6 und': 'https://images.unsplash.com/photo-1588964895597-cfccd6e2dbf9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
@@ -13,6 +16,22 @@ const PRODUCT_IMAGES: Record<string, string> = {
   'Mix Frutas Tropicales': 'https://images.unsplash.com/photo-1560761098-21f5722ecb14?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
   'Leche Entera 1L': 'https://images.unsplash.com/photo-1563636619-e9143da7973b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
   'Pan Tajado 500g': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
+  // Fotos Pexels verificadas (una por producto, sin repeticiones).
+  'Carne Molida 500g': PEXELS(128401),
+  'Pechuga de Pollo 1kg': PEXELS(3688, 'food-dinner-lunch-chicken.jpg'),
+  'Chorizos x5 und': PEXELS(10794112),
+  'Arroz Blanco 1kg': PEXELS(31555431),
+  'Lentejas 500g': PEXELS(6086414),
+  'Frijoles Rojos 500g': PEXELS(7717469),
+  'Pan Integral 500g': PEXELS(12284683),
+  'Croissants x4 und': PEXELS(11675765),
+  'Torta Casera 500g': PEXELS(7966511),
+  'Jugo de Naranja 1L': PEXELS(14510445),
+  'Cafe Molido 500g': PEXELS(5908468),
+  'Avena 1L': PEXELS(33874707),
+  'Jabon Liquido 1L': PEXELS(7262480),
+  'Detergente 1kg': PEXELS(10566513),
+  'Papel Higienico x4': PEXELS(3958205),
 };
 
 const CATEGORY_IMAGES: Record<string, string> = {

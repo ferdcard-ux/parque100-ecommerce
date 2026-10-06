@@ -3,7 +3,7 @@
  * Calcula los totales del pedido en el cliente y lo persiste contra
  * el backend antes de devolver la confirmacion.
  */
-import type { Order, DeliveryAddress, PaymentMethodType, CartItem } from '../models';
+import type { Order, DeliveryAddress, PaymentMethodType, CartItem, ApiOrder, OrderEstado } from '../models';
 import { generateOrderId, calculateShipping } from '../utils';
 
 /** URL base de la API REST del backend. */
@@ -29,6 +29,7 @@ export const orderService = {
     items: CartItem[],
     address: DeliveryAddress,
     paymentMethod: PaymentMethodType,
+    userId: number | null = null,
   ): Promise<Order> {
     /** Suma de precio * cantidad de todas las lineas. */
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -55,6 +56,13 @@ export const orderService = {
         body: JSON.stringify({
           Total: Math.round(order.total),
           Tipo_Entrega: 'domicilio',
+          ID_Usuario: userId ?? undefined,
+          Destinatario: `${address.firstName} ${address.lastName}`.trim(),
+          Telefono: address.phone,
+          Torre: address.tower,
+          Piso: address.floor,
+          Apartamento: address.apartment,
+          Metodo_Pago: paymentMethod === 'nequi' ? 'Nequi' : 'Tarjeta',
           productos: items.map((item) => ({
             ID_Producto: item.id,
             Cantidad: item.quantity,
@@ -75,23 +83,63 @@ export const orderService = {
   },
 
   /**
-   * Consulta un pedido por id. Reservado para una futura pantalla de
-   * historial; hoy devuelve null porque la UI no lo consume aun.
+   * Lista todos los pedidos persistidos en el backend, mas recientes primero.
    *
-   * @param {string} _id - Identificador del pedido.
-   * @returns {Promise<Order|null>} Siempre null en esta version.
+   * @returns {Promise<ApiOrder[]>} Pedidos con nombre de usuario.
+   * @throws {Error} Si el servidor no responde correctamente.
    */
-  async getById(_id: string): Promise<Order | null> {
-    return null;
+  async getAll(): Promise<ApiOrder[]> {
+    try {
+      const response = await fetch(`${API}/orders`);
+      if (!response.ok) throw new Error('No fue posible cargar los pedidos.');
+      return (await response.json()) as ApiOrder[];
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('No fue posible')) throw err;
+      throw new Error('No fue posible conectar con el servidor.');
+    }
   },
 
   /**
-   * Lista todos los pedidos. Reservado para el panel admin;
-   * hoy devuelve un array vacio porque la UI no lo consume aun.
+   * Consulta un pedido por id, con sus lineas de detalle.
    *
-   * @returns {Promise<Order[]>} Siempre vacio en esta version.
+   * @param {string|number} id - Identificador del pedido.
+   * @returns {Promise<ApiOrder|null>} Pedido con detalles o null si no existe.
+   * @throws {Error} Si el servidor falla por razones distintas a 404.
    */
-  async getAll(): Promise<Order[]> {
-    return [];
+  async getById(id: string | number): Promise<ApiOrder | null> {
+    try {
+      const response = await fetch(`${API}/orders/${id}`);
+      if (response.status === 404) return null;
+      if (!response.ok) throw new Error('No fue posible cargar el pedido.');
+      return (await response.json()) as ApiOrder;
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('No fue posible')) throw err;
+      throw new Error('No fue posible conectar con el servidor.');
+    }
+  },
+
+  /**
+   * Cambia el estado de un pedido en el backend.
+   *
+   * @param {string|number} id - Identificador del pedido.
+   * @param {OrderEstado} estado - Nuevo estado.
+   * @returns {Promise<void>}
+   * @throws {Error} Si el servidor rechaza el cambio.
+   */
+  async updateStatus(id: string | number, estado: OrderEstado): Promise<void> {
+    try {
+      const response = await fetch(`${API}/orders/${id}/status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Estado: estado }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || 'No fue posible actualizar el estado.');
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('No fue posible')) throw err;
+      throw new Error('No fue posible conectar con el servidor.');
+    }
   },
 };
