@@ -13,6 +13,9 @@ router.get('/orders', orderController.list);
 /** GET /api/orders/:id - Detalle de un pedido con sus productos. */
 router.get('/orders/:id', orderController.getById);
 
+/** PUT /api/orders/:id/status - Cambia el estado de un pedido. */
+router.put('/orders/:id/status', orderController.updateStatus);
+
 /** POST /api/orders - Crea un pedido con sus detalles. */
 router.post('/orders', orderController.create);
 

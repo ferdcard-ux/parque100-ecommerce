@@ -48,6 +48,30 @@ export const orderController = {
   },
 
   /**
+   * PUT /api/orders/:id/status
+   * Actualiza el estado de un pedido; 404 si no existe.
+   *
+   * @async
+   * @param {import('express').Request} req - Peticion con `Estado` en el cuerpo.
+   * @param {import('express').Response} res - Respuesta HTTP.
+   * @returns {Promise<void>}
+   */
+  async updateStatus(req, res) {
+    try {
+      const { Estado } = req.body;
+      const validos = ['pendiente', 'preparando', 'enviando', 'entregado'];
+      if (!validos.includes(Estado)) {
+        return res.status(400).json({ error: `Estado invalido. Usa: ${validos.join(', ')}` });
+      }
+      const updated = await orderModel.updateStatus(req.params.id, Estado);
+      if (!updated) return res.status(404).json({ error: 'Pedido no encontrado' });
+      res.json({ message: 'Estado actualizado', estado: Estado });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  /**
    * POST /api/orders
    * Crea un pedido con sus detalles de forma atomica (transaccion).
    *

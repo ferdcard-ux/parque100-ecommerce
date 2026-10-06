@@ -13,4 +13,10 @@ router.post('/auth/login', authController.login);
 /** POST /api/auth/register - Registra un nuevo usuario. */
 router.post('/auth/register', authController.register);
 
+/** POST /api/auth/recover - Genera una clave temporal para el correo. */
+router.post('/auth/recover', authController.recover);
+
+/** PUT /api/auth/password - Cambia la contrasena validando la actual. */
+router.put('/auth/password', authController.updatePassword);
+
 export default router;
