@@ -4,6 +4,7 @@ import { ShoppingCart, Star, ArrowRight } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import type { Product } from '../../../models';
 import { formatPrice } from '../../../utils';
+import { useFavoritesController } from '../../../controllers';
 
 interface FeaturedProductsProps {
   products: Product[];
@@ -12,6 +13,7 @@ interface FeaturedProductsProps {
 
 export function FeaturedProducts({ products, onAddToCart }: FeaturedProductsProps) {
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
+  const { toggleFavorite, isFavorite } = useFavoritesController();
 
   const handleAddToCart = (product: Product) => {
     onAddToCart(product);
@@ -48,23 +50,27 @@ export function FeaturedProducts({ products, onAddToCart }: FeaturedProductsProp
               className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 group"
             >
               <div className="relative h-40 overflow-hidden bg-[#F5F5F5]">
-                <ImageWithFallback
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
+                <Link to={`/producto/${product.id}`}>
+                  <ImageWithFallback
+                    src={product.image}
+                    alt={product.name}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                </Link>
                 {product.stock <= 8 && (
                   <div className="absolute top-2 left-2 bg-[#FBC02D] text-[#212121] px-2 py-0.5 rounded-full font-semibold" style={{ fontSize: '0.65rem' }}>
                     ¡Últimas unidades!
                   </div>
                 )}
-                <button className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Star size={12} className="text-gray-400 hover:fill-[#FBC02D] hover:text-[#FBC02D]" />
+                <button onClick={() => toggleFavorite(product.id)} aria-label="Favorito" className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Star size={12} className={isFavorite(product.id) ? 'fill-[#FBC02D] text-[#FBC02D]' : 'text-gray-400'} />
                 </button>
               </div>
               <div className="p-3">
                 <p className="text-gray-400 mb-0.5" style={{ fontSize: '0.7rem' }}>{product.category}</p>
-                <h3 className="text-[#212121] font-semibold leading-tight mb-2" style={{ fontSize: '0.875rem' }}>{product.name}</h3>
+                <Link to={`/producto/${product.id}`}>
+                  <h3 className="text-[#212121] font-semibold leading-tight mb-2 hover:text-[#C62828] transition-colors" style={{ fontSize: '0.875rem' }}>{product.name}</h3>
+                </Link>
                 <div className="flex items-center justify-between">
                   <span className="text-[#C62828] font-bold" style={{ fontSize: '1rem' }}>{formatPrice(product.price)}</span>
                   <button

@@ -7,10 +7,12 @@ interface RootLayoutProps {
   isAdmin: boolean;
   isLoggedIn: boolean;
   user: User | null;
+  sessions: User[];
+  onSwitchSession: (id: number) => void;
   onLogout: () => void;
 }
 
-export function RootLayout({ cartCount, isAdmin, isLoggedIn, user, onLogout }: RootLayoutProps) {
+export function RootLayout({ cartCount, isAdmin, isLoggedIn, user, sessions, onSwitchSession, onLogout }: RootLayoutProps) {
   return (
     <div className="min-h-screen bg-white">
       <Navbar
@@ -18,6 +20,8 @@ export function RootLayout({ cartCount, isAdmin, isLoggedIn, user, onLogout }: R
         isAdmin={isAdmin}
         isLoggedIn={isLoggedIn}
         user={user}
+        sessions={sessions}
+        onSwitchSession={onSwitchSession}
         onLogout={onLogout}
       />
       <div className="pt-16">

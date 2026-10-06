@@ -1,20 +1,25 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import {
-  LayoutDashboard, Package, ShoppingCart, Users, BarChart2, Settings,
-  Store, ChevronLeft, ChevronRight as ChevRight, LogOut,
+  Package, ShoppingCart, Users, BarChart2, Settings,
+  Store, ChevronLeft, ChevronRight as ChevRight, LogOut, LayoutDashboard,
 } from 'lucide-react';
 
 const SIDEBAR_ITEMS = [
-  { icon: <LayoutDashboard size={18} />, label: 'Dashboard', path: '/admin' },
-  { icon: <Package size={18} />, label: 'Inventario', path: '/admin', active: true },
-  { icon: <ShoppingCart size={18} />, label: 'Pedidos', path: '/admin' },
-  { icon: <Users size={18} />, label: 'Clientes', path: '/admin' },
-  { icon: <BarChart2 size={18} />, label: 'Reportes', path: '/admin' },
-  { icon: <Settings size={18} />, label: 'Configuración', path: '/admin' },
+  { key: 'inventario', icon: <Package size={18} />, label: 'Inventario', path: '/admin' },
+  { key: 'pendientes', icon: <ShoppingCart size={18} />, label: 'Pedidos pendientes', path: '/admin/pedidos-pendientes' },
+  { key: 'pedidos', icon: <LayoutDashboard size={18} />, label: 'Administrar pedidos', path: '/admin/pedidos' },
+  { key: 'reportes', icon: <BarChart2 size={18} />, label: 'Reportes', path: '/admin/reportes' },
+  { key: 'clientes', icon: <Users size={18} />, label: 'Clientes', path: '/admin/clientes' },
+  { key: 'configuracion', icon: <Settings size={18} />, label: 'Configuración', path: '/admin/configuracion' },
 ];
 
-export function AdminSidebar() {
+interface AdminSidebarProps {
+  /** Clave del item activo en el segundo plano. */
+  active?: string;
+}
+
+export function AdminSidebar({ active = 'inventario' }: AdminSidebarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
@@ -38,15 +43,16 @@ export function AdminSidebar() {
 
       <nav className="flex-1 py-4 flex flex-col gap-1 px-2">
         {SIDEBAR_ITEMS.map((item) => (
-          <button
+          <Link
             key={item.label}
+            to={item.path}
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-              item.active ? 'bg-[#C62828] text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'
+              item.key === active ? 'bg-[#C62828] text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'
             }`}
           >
             <span className="shrink-0">{item.icon}</span>
             {sidebarOpen && <span style={{ fontSize: '0.875rem' }}>{item.label}</span>}
-          </button>
+          </Link>
         ))}
       </nav>
 

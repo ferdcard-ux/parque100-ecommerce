@@ -4,14 +4,21 @@ import { Mail, Lock, Eye, EyeOff, Store, UserCog, X, ArrowLeft } from 'lucide-re
 import type { LoginCredentials } from '../../../models';
 import { isValidEmail } from '../../../utils';
 import { useScrollLock } from '../../../utils/useScrollLock';
+import { authService } from '../../../services';
 
 interface LoginFormProps {
   onLogin: (credentials: LoginCredentials) => Promise<void>;
   onAdminLogin: (credentials: LoginCredentials) => Promise<void>;
   error?: string | null;
+  /** Ruta de retorno tras un login exitoso. */
+  nextPath?: string;
+  /** true cuando se agrega otra cuenta sin cerrar la actual. */
+  switchMode?: boolean;
+  /** Nombre de la sesion activa (solo en modo switch). */
+  currentUserName?: string | null;
 }
 
-export function LoginForm({ onLogin, onAdminLogin, error }: LoginFormProps) {
+export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switchMode = false, currentUserName = null }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +32,32 @@ export function LoginForm({ onLogin, onAdminLogin, error }: LoginFormProps) {
   const [showAdminPassword, setShowAdminPassword] = useState(false);
   const [adminError, setAdminError] = useState<string | null>(null);
 
+  const [recoverOpen, setRecoverOpen] = useState(false);
+  useScrollLock(recoverOpen);
+  const [recoverEmail, setRecoverEmail] = useState('');
+  const [recoverResult, setRecoverResult] = useState<string | null>(null);
+  const [recoverError, setRecoverError] = useState<string | null>(null);
+  const [recoverLoading, setRecoverLoading] = useState(false);
+
+  const handleRecover = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRecoverError(null);
+    setRecoverResult(null);
+    if (!isValidEmail(recoverEmail)) {
+      setRecoverError('Ingresa un correo electrónico válido.');
+      return;
+    }
+    setRecoverLoading(true);
+    try {
+      const temp = await authService.recoverPassword(recoverEmail);
+      setRecoverResult(temp);
+    } catch (err) {
+      setRecoverError(err instanceof Error ? err.message : 'No fue posible recuperar.');
+    } finally {
+      setRecoverLoading(false);
+    }
+  };
+
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -32,10 +65,10 @@ export function LoginForm({ onLogin, onAdminLogin, error }: LoginFormProps) {
     if (!isValidEmail(email)) return;
     setIsSubmitting(true);
     try {
-      await onLogin({ email, password });
-      navigate('/');
+      await onLogin({ email, password, remember });
+      navigate(nextPath.startsWith('/') ? nextPath : '/');
     } catch {
-      // error handled by parent
+      // el mensaje de error lo muestra el padre via prop `error`
     } finally {
       setIsSubmitting(false);
     }
@@ -47,7 +80,7 @@ export function LoginForm({ onLogin, onAdminLogin, error }: LoginFormProps) {
     try {
       await onAdminLogin({ email: adminEmail, password: adminPassword });
       setAdminModalOpen(false);
-      navigate('/');
+      navigate(nextPath.startsWith('/') ? nextPath : '/');
     } catch (err) {
       setAdminError(err instanceof Error ? err.message : 'Credenciales inválidas');
     }
@@ -82,6 +115,11 @@ export function LoginForm({ onLogin, onAdminLogin, error }: LoginFormProps) {
           <div className="px-8 py-8">
             <h2 className="text-[#212121] mb-6" style={{ fontSize: '1.25rem' }}>Iniciar Sesión</h2>
 
+            {switchMode && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-800" style={{ fontSize: '0.85rem' }}>
+                Sesion activa: <strong>{currentUserName}</strong>. Esta sesion se mantiene; al ingresar agregaras otra cuenta.
+              </div>
+            )}
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.875rem' }}>
                 {error}
@@ -119,7 +157,7 @@ export function LoginForm({ onLogin, onAdminLogin, error }: LoginFormProps) {
                   <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="w-4 h-4 rounded accent-[#C62828] cursor-pointer" />
                   <span className="text-[#212121]" style={{ fontSize: '0.85rem' }}>Recuérdame</span>
                 </label>
-                <button type="button" className="text-[#C62828] hover:underline" style={{ fontSize: '0.85rem' }}>
+                <button type="button" onClick={() => setRecoverOpen(true)} className="text-[#C62828] hover:underline" style={{ fontSize: '0.85rem' }}>
                   ¿Olvidaste tu contraseña?
                 </button>
               </div>
@@ -160,6 +198,41 @@ export function LoginForm({ onLogin, onAdminLogin, error }: LoginFormProps) {
           © 2026 Tienda Parque 100. Todos los derechos reservados.
         </p>
       </div>
+
+      {recoverOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setRecoverOpen(false); }}
+        >
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+              <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>Recuperar contraseña</h3>
+              <button type="button" onClick={() => setRecoverOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
+                <X size={15} />
+              </button>
+            </div>
+            <form onSubmit={handleRecover} className="px-6 py-6 flex flex-col gap-4">
+              {recoverError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{recoverError}</div>
+              )}
+              {recoverResult && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>
+                  Tu clave temporal es: <strong>{recoverResult}</strong>. Inicia sesión y cámbiala desde tu perfil.
+                </div>
+              )}
+              <div>
+                <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Correo de la cuenta</label>
+                <input type="email" value={recoverEmail} onChange={(e) => setRecoverEmail(e.target.value)} placeholder="correo@ejemplo.com"
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121]"
+                  style={{ fontSize: '0.875rem' }}
+                />
+              </div>
+              <button type="submit" disabled={recoverLoading} className="w-full py-3 rounded-xl text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 transition-all shadow-md" style={{ fontSize: '0.95rem' }}>
+                {recoverLoading ? 'Generando...' : 'Generar clave temporal'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
       {adminModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}

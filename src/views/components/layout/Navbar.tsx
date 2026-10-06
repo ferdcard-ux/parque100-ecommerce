@@ -1,19 +1,23 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router';
 import {
-  ShoppingCart, Heart, Search, Menu, X, Store, ShieldCheck, User, LogOut,
+  ShoppingCart, Heart, Search, Menu, X, Store, ShieldCheck, User, LogOut, RefreshCw,
 } from 'lucide-react';
 import type { User as UserType } from '../../../models';
+import { useFavoritesController } from '../../../controllers';
+import { UserNotifications } from './UserNotifications';
 
 interface NavbarProps {
   cartCount: number;
   isAdmin: boolean;
   isLoggedIn: boolean;
   user: UserType | null;
+  sessions: UserType[];
+  onSwitchSession: (id: number) => void;
   onLogout: () => void;
 }
 
-export function Navbar({ cartCount, isAdmin, isLoggedIn, user, onLogout }: NavbarProps) {
+export function Navbar({ cartCount, isAdmin, isLoggedIn, user, sessions, onSwitchSession, onLogout }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -49,6 +53,9 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, onLogout }: Navba
     ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
     : '';
 
+  const { favorites: favoriteIds } = useFavoritesController();
+  const favoriteCount = favoriteIds.length;
+
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-white shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -69,6 +76,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, onLogout }: Navba
           <div className="hidden md:flex items-center gap-6">
             <Link to="/" className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Inicio</Link>
             <button onClick={handleCategoriesClick} className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Categorías</button>
+            <Link to="/catalogo" className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Catálogo</Link>
             {isAdmin && (
               <Link to="/admin" className="flex items-center gap-1.5 text-[#C62828] hover:text-[#b71c1c] transition-colors font-medium">
                 <ShieldCheck size={15} />
@@ -85,15 +93,24 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, onLogout }: Navba
                 placeholder="Buscar productos..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && searchValue.trim()) navigate(`/catalogo?q=${encodeURIComponent(searchValue.trim())}`);
+                }}
                 className="w-full pl-9 pr-4 py-2 rounded-full bg-[#F5F5F5] border border-gray-200 focus:outline-none focus:border-[#C62828] focus:ring-1 focus:ring-[#C62828] text-sm text-[#212121]"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="p-2 rounded-full hover:bg-red-50 transition-colors">
+            {isLoggedIn && <UserNotifications userId={user?.id ?? null} />}
+            <Link to="/favoritos" className="relative p-2 rounded-full hover:bg-red-50 transition-colors">
               <Heart size={22} className="text-[#C62828]" />
-            </button>
+              {favoriteCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#C62828] text-white flex items-center justify-center" style={{ fontSize: '0.65rem', fontWeight: 700 }}>
+                  {favoriteCount}
+                </span>
+              )}
+            </Link>
             <Link to="/cart" className="relative p-2 rounded-full hover:bg-red-50 transition-colors">
               <ShoppingCart size={22} className="text-[#212121]" />
               {cartCount > 0 && (
@@ -132,13 +149,43 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, onLogout }: Navba
                       )}
                     </div>
                     <div className="py-1">
-                      <button onClick={() => { setUserMenuOpen(false); navigate('/login'); }}
+                      <button onClick={() => { setUserMenuOpen(false); navigate('/cuenta'); }}
                         className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
                         style={{ fontSize: '0.875rem' }}
                       >
                         <User size={16} />
+                        Mi cuenta
+                      </button>
+                      <button onClick={() => { setUserMenuOpen(false); navigate('/compras'); }}
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
+                        style={{ fontSize: '0.875rem' }}
+                      >
+                        <ShoppingCart size={16} />
+                        Mis compras
+                      </button>
+                      <button onClick={() => { setUserMenuOpen(false); navigate('/login?mode=switch'); }}
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
+                        style={{ fontSize: '0.875rem' }}
+                      >
+                        <RefreshCw size={16} />
                         Cambiar de usuario
                       </button>
+                      {sessions.filter((s) => s.id !== user.id).length > 0 && (
+                        <div className="border-t border-gray-100 mt-1 pt-1">
+                          <p className="px-5 py-1.5 text-gray-400" style={{ fontSize: '0.7rem', fontWeight: 600 }}>Otras sesiones activas</p>
+                          {sessions.filter((s) => s.id !== user.id).map((s) => (
+                            <button key={s.id} onClick={() => { setUserMenuOpen(false); onSwitchSession(s.id); }}
+                              className="w-full flex items-center gap-3 px-5 py-2 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
+                              style={{ fontSize: '0.8rem' }}
+                            >
+                              <span className="w-6 h-6 rounded-full bg-[#FBC02D]/30 flex items-center justify-center shrink-0">
+                                <span className="font-bold" style={{ fontSize: '0.6rem' }}>{`${s.firstName.charAt(0)}${s.lastName.charAt(0)}`.toUpperCase()}</span>
+                              </span>
+                              <span className="truncate">{s.firstName} {s.lastName}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
                       <button onClick={handleLogout}
                         className="w-full flex items-center gap-3 px-5 py-2.5 text-[#C62828] hover:bg-red-50 transition-colors"
                         style={{ fontSize: '0.875rem' }}
@@ -174,11 +221,20 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, onLogout }: Navba
             <input
               type="text"
               placeholder="Buscar productos..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && searchValue.trim()) {
+                  setMenuOpen(false);
+                  navigate(`/catalogo?q=${encodeURIComponent(searchValue.trim())}`);
+                }
+              }}
               className="w-full pl-9 pr-4 py-2 rounded-full bg-[#F5F5F5] border border-gray-200 focus:outline-none focus:border-[#C62828] text-sm"
             />
           </div>
           <Link to="/" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Inicio</Link>
           <button onClick={() => { setMenuOpen(false); handleCategoriesClick(); }} className="text-left text-[#212121] font-medium py-2 border-b">Categorías</button>
+          <Link to="/catalogo" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Catálogo</Link>
           <Link to="/sitemap" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Mapa del Sitio</Link>
           {isAdmin && (
             <Link to="/admin" className="flex items-center gap-1.5 text-[#C62828] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>
@@ -197,11 +253,23 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, onLogout }: Navba
                   <p className="text-gray-400 truncate" style={{ fontSize: '0.75rem' }}>{user.email}</p>
                 </div>
               </div>
-              <button onClick={() => { setMenuOpen(false); navigate('/login'); }}
+              <button onClick={() => { setMenuOpen(false); navigate('/cuenta'); }}
                 className="text-left flex items-center gap-2 text-gray-600 font-medium py-2 border-b"
                 style={{ fontSize: '0.85rem' }}
               >
-                <User size={16} /> Cambiar de usuario
+                <User size={16} /> Mi cuenta
+              </button>
+              <button onClick={() => { setMenuOpen(false); navigate('/compras'); }}
+                className="text-left flex items-center gap-2 text-gray-600 font-medium py-2 border-b"
+                style={{ fontSize: '0.85rem' }}
+              >
+                <ShoppingCart size={16} /> Mis compras
+              </button>
+              <button onClick={() => { setMenuOpen(false); navigate('/login?mode=switch'); }}
+                className="text-left flex items-center gap-2 text-gray-600 font-medium py-2 border-b"
+                style={{ fontSize: '0.85rem' }}
+              >
+                <RefreshCw size={16} /> Cambiar de usuario
               </button>
               <button onClick={() => { setMenuOpen(false); handleLogout(); }}
                 className="text-left flex items-center gap-2 text-[#C62828] font-medium py-2 border-b"

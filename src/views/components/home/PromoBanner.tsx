@@ -33,7 +33,7 @@ export function PromoBanner() {
                 <span className="text-white/60 line-through" style={{ fontSize: '0.9rem' }}>$65.000</span>
                 <p className="text-[#FBC02D] font-black" style={{ fontSize: '2rem' }}>$48.750</p>
               </div>
-              <Link to="/login">
+              <Link to="/catalogo">
                 <button className="px-8 py-3 rounded-xl bg-[#C62828] text-white font-bold hover:bg-[#b71c1c] transition-all shadow-lg" style={{ fontSize: '1rem' }}>
                   Aprovechar oferta
                 </button>
