@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS pedidos (
   Monto_Recibido int(20) DEFAULT NULL,
   Cambio int(20) DEFAULT NULL,
   Comprobante mediumtext DEFAULT NULL,
+  Motivo_Cancelacion varchar(255) DEFAULT NULL,
   PRIMARY KEY (ID_Pedido),
   KEY ID_Usuario (ID_Usuario),
   CONSTRAINT pedidos_ibfk_1 FOREIGN KEY (ID_Usuario) REFERENCES usuario (ID_Usuario)
