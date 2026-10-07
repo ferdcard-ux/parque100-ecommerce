@@ -33,7 +33,26 @@ export function ProductDetailPage() {
   };
 
   if (isLoading) {
-    return <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4"><p className="text-center text-gray-400 py-16">Cargando...</p></main>;
+    return (
+      <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6" aria-label="Cargando producto">
+          <div className="bg-white rounded-2xl border border-gray-100 p-4">
+            <div className="w-full h-72 bg-gray-100 rounded-xl animate-pulse" />
+          </div>
+          <div className="flex flex-col gap-3">
+            <div className="h-6 w-1/4 bg-gray-100 rounded-full animate-pulse" />
+            <div className="h-8 w-3/4 bg-gray-100 rounded animate-pulse" />
+            <div className="h-8 w-1/3 bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-full bg-gray-100 rounded animate-pulse" />
+            <div className="h-4 w-2/3 bg-gray-100 rounded animate-pulse" />
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="h-8 w-1/2 bg-gray-100 rounded animate-pulse mb-4" />
+            <div className="h-11 w-full bg-gray-100 rounded-full animate-pulse" />
+          </div>
+        </div>
+      </main>
+    );
   }
 
   if (!product) {
@@ -74,10 +93,6 @@ export function ProductDetailPage() {
               {product.category}
             </span>
             <h2 className="text-[#212121] mb-2" style={{ fontSize: '1.5rem', fontWeight: 700 }}>{product.name}</h2>
-            <div className="flex items-center gap-1 mb-3">
-              {[1, 2, 3, 4, 5].map((i) => <Star key={i} size={14} className={i <= 4 ? 'fill-[#FBC02D] text-[#FBC02D]' : 'text-gray-200'} />)}
-              <span className="text-gray-400 ml-1" style={{ fontSize: '0.8rem' }}>4.0 · 24 resenas</span>
-            </div>
             <p className="text-[#C62828] font-bold mb-4" style={{ fontSize: '1.6rem' }}>{formatPrice(product.price)}</p>
             <p className="text-gray-500 mb-6" style={{ fontSize: '0.9rem' }}>{product.description}</p>
             <ul className="flex flex-col gap-3 text-gray-600" style={{ fontSize: '0.85rem' }}>

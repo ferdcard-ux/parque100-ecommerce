@@ -79,6 +79,7 @@ export const orderService = {
       throw new Error(responseData?.error || 'No fue posible crear el pedido.');
     }
 
+    order.backendId = typeof responseData?.id === 'number' ? responseData.id : null;
     return order;
   },
 
@@ -136,6 +137,26 @@ export const orderService = {
       if (!response.ok) {
         const data = await response.json().catch(() => null);
         throw new Error(data?.error || 'No fue posible actualizar el estado.');
+      }
+    } catch (err) {
+      if (err instanceof Error && err.message.startsWith('No fue posible')) throw err;
+      throw new Error('No fue posible conectar con el servidor.');
+    }
+  },
+
+  /**
+   * Cancela un pedido en estado pendiente.
+   *
+   * @param {string|number} id - Identificador del pedido.
+   * @returns {Promise<void>}
+   * @throws {Error} Si ya no esta pendiente o falla la eliminacion.
+   */
+  async cancel(id: string | number): Promise<void> {
+    try {
+      const response = await fetch(`${API}/orders/${id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || 'No fue posible cancelar el pedido.');
       }
     } catch (err) {
       if (err instanceof Error && err.message.startsWith('No fue posible')) throw err;

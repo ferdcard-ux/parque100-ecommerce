@@ -10,6 +10,7 @@ import type {
   CardPaymentData,
   DeliveryAddress,
   CartItem,
+  Order,
   PaymentResult,
 } from '../models';
 import { paymentService, orderService } from '../services';
@@ -24,6 +25,7 @@ import { paymentService, orderService } from '../services';
  * @property {Function} saveAddress - Guarda la direccion de entrega.
  * @property {boolean} isProcessing - true mientras se procesa el cobro.
  * @property {PaymentResult|null} result - Resultado del ultimo cobro.
+ * @property {Order|null} lastOrder - Ultimo pedido creado (para la confirmacion).
  * @property {Function} processPayment - Cobra y crea el pedido.
  * @property {Function} reset - Reinicia todo el estado del checkout.
  */
@@ -32,6 +34,7 @@ export function usePaymentController() {
   const [address, setAddress] = useState<DeliveryAddress | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<PaymentResult | null>(null);
+  const [lastOrder, setLastOrder] = useState<Order | null>(null);
 
   /** Guarda el metodo de pago elegido en el estado del checkout. */
   const selectMethod = useCallback((m: PaymentMethodType) => {
@@ -68,7 +71,7 @@ export function usePaymentController() {
         setResult(paymentResult);
 
         if (address && method) {
-          await orderService.create(items, address, method, userId);
+          setLastOrder(await orderService.create(items, address, method, userId));
         }
 
         return paymentResult;
@@ -80,7 +83,8 @@ export function usePaymentController() {
   );
 
   /**
-   * Limpia metodo, direccion y resultado para un nuevo checkout. */
+   * Limpia metodo, direccion y resultado para un nuevo checkout.
+   * Conserva `lastOrder` para que la confirmacion muestre el pedido real. */
   const reset = useCallback(() => {
     setMethod(null);
     setAddress(null);
@@ -105,7 +109,7 @@ export function usePaymentController() {
         const paymentResult = await paymentService.processNequiPayment(phone, amount);
         setResult(paymentResult);
         if (address && method) {
-          await orderService.create(items, address, method, userId);
+          setLastOrder(await orderService.create(items, address, method, userId));
         }
         return paymentResult;
       } finally {
@@ -122,6 +126,7 @@ export function usePaymentController() {
     saveAddress,
     isProcessing,
     result,
+    lastOrder,
     processPayment,
     processNequi,
     reset,

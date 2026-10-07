@@ -1,10 +1,12 @@
 import { Link } from 'react-router';
 import { CheckCircle2, Package, Clock, MapPin, Store } from 'lucide-react';
+import { useApp } from '../../App';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { generateOrderId } from '../../utils';
 
 export function PaymentSuccessPage() {
-  const orderId = generateOrderId();
+  const { lastOrder } = useApp();
+  const orderLabel = lastOrder?.backendId ? `#${lastOrder.backendId}` : lastOrder ? lastOrder.id : null;
+  const detailTo = lastOrder?.backendId ? `/compras/${lastOrder.backendId}` : '/compras';
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
@@ -36,7 +38,7 @@ export function PaymentSuccessPage() {
         </p>
         <div className="inline-block bg-[#FBC02D]/10 border border-[#FBC02D]/30 rounded-full px-4 py-1 mb-8">
           <span className="text-[#212121] font-semibold" style={{ fontSize: '0.875rem' }}>
-            Pedido #{orderId}
+            {orderLabel ? `Pedido ${orderLabel}` : 'Pedido confirmado'}
           </span>
         </div>
 
@@ -76,6 +78,11 @@ export function PaymentSuccessPage() {
           </div>
         </div>
 
+        <Link to={detailTo}>
+          <button className="w-full py-3.5 rounded-xl bg-white border-2 border-[#C62828] text-[#C62828] font-semibold hover:bg-red-50 transition-all active:scale-[0.98] mb-3" style={{ fontSize: '1rem' }}>
+            Ver mi pedido
+          </button>
+        </Link>
         <Link to="/">
           <button className="w-full py-3.5 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-all shadow-md hover:shadow-lg active:scale-[0.98]" style={{ fontSize: '1rem' }}>
             Volver a la tienda

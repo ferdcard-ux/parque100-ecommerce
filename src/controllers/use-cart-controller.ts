@@ -4,9 +4,26 @@
  * productos, actualizar cantidades y derivar totales (item count,
  * subtotal, envio y total) usando las utilidades de formatters.
  */
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Product, CartItem, DeliveryAddress } from '../models';
 import { calculateShipping, calculateTotal } from '../utils';
+
+/** Lee el carrito guardado validando su forma minima. */
+function loadCart(key: string): CartItem[] {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (x): x is CartItem =>
+        !!x && typeof x === 'object' && typeof (x as CartItem).id === 'number' &&
+        Number.isInteger((x as CartItem).quantity) && (x as CartItem).quantity > 0,
+    );
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Controlador del carrito.
@@ -22,15 +39,33 @@ import { calculateShipping, calculateTotal } from '../utils';
  * @property {number} shipping - Costo de envio segun umbral.
  * @property {number} total - Subtotal + envio.
  * @property {Function} getRecommendedItems - Productos sugeridos excluyendo ids.
+ * @param {string} ownerId - Propietario del carrito (id de usuario o 'guest').
  */
-export function useCartController() {
-  const [items, setItems] = useState<CartItem[]>([]);
+export function useCartController(ownerId: string = 'guest') {
+  const storageKey = `p100-cart-${ownerId}`;
+  const [items, setItems] = useState<CartItem[]>(() => loadCart(storageKey));
 
-  /** Agrega un producto al carrito o incrementa su cantidad en 1. */
+  /** Recarga el carrito al cambiar de cuenta. */
+  useEffect(() => {
+    setItems(loadCart(storageKey));
+  }, [storageKey]);
+
+  /** Persiste el carrito en cada cambio. */
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(items));
+    } catch {
+      /* almacenamiento no disponible */
+    }
+  }, [items, storageKey]);
+
+  /** Agrega un producto sin superar su stock disponible. */
   const addItem = useCallback((product: Product) => {
+    if (product.stock <= 0) return;
     setItems((prev) => {
       const existing = prev.find((item) => item.id === product.id);
       if (existing) {
+        if (existing.quantity >= product.stock) return prev;
         return prev.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
@@ -46,14 +81,16 @@ export function useCartController() {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
-  /** Actualiza la cantidad de una linea; si es <= 0 la elimina. */
+  /** Actualiza la cantidad clamped al stock; si es <= 0 la elimina. */
   const updateQuantity = useCallback((id: number, quantity: number) => {
     if (quantity <= 0) {
       setItems((prev) => prev.filter((item) => item.id !== id));
       return;
     }
     setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item)),
+      prev.map((item) =>
+        item.id === id ? { ...item, quantity: Math.min(quantity, Math.max(item.stock, 1)) } : item,
+      ),
     );
   }, []);
 
