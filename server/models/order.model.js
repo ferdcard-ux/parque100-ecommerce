@@ -51,6 +51,30 @@ export const orderModel = {
   },
 
   /**
+   * Elimina un pedido pendiente junto con sus lineas de detalle.
+   *
+   * @async
+   * @param {number} id - Identificador del pedido.
+   * @returns {Promise<boolean>} true si elimino el pedido.
+   * @throws {Error} Si falla alguna operacion; revierte todo.
+   */
+  async deleteById(id) {
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.query('DELETE FROM detalle_pedido WHERE ID_Pedido = ?', [id]);
+      const [result] = await connection.query('DELETE FROM pedidos WHERE ID_Pedido = ?', [id]);
+      await connection.commit();
+      return result.affectedRows === 1;
+    } catch (err) {
+      await connection.rollback();
+      throw err;
+    } finally {
+      connection.release();
+    }
+  },
+
+  /**
    * Busca un pedido por su identificador e incluye sus lineas de
    * detalle con el nombre de cada producto.
    *
