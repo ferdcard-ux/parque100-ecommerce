@@ -37,19 +37,19 @@ export const paymentService = {
   },
 
   /**
-   * Simula un cobro Nequi: espera 1.5 s y aprueba siempre, generando
-   * una referencia NEQ-<timestamp>.
+   * Simula un cobro Nequi con comprobante: espera 1.5 s y aprueba
+   * siempre, generando una referencia NEQ-<timestamp>.
    *
-   * @param {string} _phone - Telefono Nequi del pagador (sin uso aun).
+   * @param {string} _receipt - Comprobante en imagen (se persiste en el pedido).
    * @param {number} amount - Monto a solicitar.
    * @returns {Promise<PaymentResult>} Aprobacion simulada.
    */
-  async processNequiPayment(_phone: string, amount: number): Promise<PaymentResult> {
+  async processNequiPayment(_receipt: string, amount: number): Promise<PaymentResult> {
     await new Promise((resolve) => setTimeout(resolve, 1500));
     return {
       success: true,
       transactionId: `NEQ-${Date.now()}`,
-      message: `Solicitud de pago Nequi por $${amount.toLocaleString('es-CO')} enviada`,
+      message: `Pago Nequi por $${amount.toLocaleString('es-CO')} confirmado con comprobante`,
     };
   },
 
@@ -57,9 +57,11 @@ export const paymentService = {
    * Etiqueta legible para mostrar un metodo de pago en la interfaz.
    *
    * @param {PaymentMethodType} method - Metodo elegido.
-   * @returns {string} 'Tarjeta' o 'Nequi'.
+   * @returns {string} 'Tarjeta', 'Nequi' o 'Efectivo'.
    */
   getMethodLabel(method: PaymentMethodType): string {
-    return method === 'card' ? 'Tarjeta' : 'Nequi';
+    if (method === 'card') return 'Tarjeta';
+    if (method === 'nequi') return 'Nequi';
+    return 'Efectivo';
   },
 };

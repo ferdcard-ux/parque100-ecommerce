@@ -2,7 +2,7 @@
  * @fileoverview Pedidos pendientes de tomar (panel admin).
  */
 import { Link } from 'react-router';
-import { Package } from 'lucide-react';
+import { Package, TriangleAlert } from 'lucide-react';
 import { useAdminOrdersController } from '../../controllers';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { formatPrice } from '../../utils';
@@ -30,6 +30,12 @@ export function AdminPendingOrdersPage() {
                 <span className="text-[#212121] font-bold">Pedido #{order.ID_Pedido}</span>
                 <span className="text-[#C62828] font-bold">{formatPrice(order.Total)}</span>
               </div>
+              {order.Metodo_Pago === 'Efectivo' && (
+                <p role="alert" className="flex items-center gap-2 mb-3 bg-amber-50 border border-amber-300 rounded-xl px-3 py-2 text-amber-800" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+                  <TriangleAlert size={14} className="shrink-0" />
+                  Efectivo: llevar cambio de {formatPrice(Number(order.Cambio ?? 0))}
+                </p>
+              )}
               <dl className="text-gray-500 mb-4 flex flex-col gap-1" style={{ fontSize: '0.8rem' }}>
                 <div className="flex justify-between"><dt>Cliente</dt><dd className="text-[#212121]">{order.Usuario_Nombre ?? order.Destinatario ?? '—'}</dd></div>
                 <div className="flex justify-between"><dt>Ubicacion</dt><dd className="text-[#212121]">Torre {order.Torre ?? '—'} · Apto {order.Apartamento ?? '—'}</dd></div>

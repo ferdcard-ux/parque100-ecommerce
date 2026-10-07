@@ -93,25 +93,58 @@ export function usePaymentController() {
   }, []);
 
   /**
-   * Procesa un pago por Nequi y, si hay direccion y metodo,
-   * crea el pedido correspondiente.
+   * Procesa un pago por Nequi con comprobante adjunto y, si hay
+   * direccion y metodo, crea el pedido correspondiente.
    *
-   * @param {string} phone - Telefono registrado en Nequi.
+   * @param {string} receiptDataUrl - Comprobante en imagen (dataURL).
    * @param {number} amount - Monto total a cobrar.
    * @param {CartItem[]} items - Lineas del carrito.
    * @param {number|null} userId - Id del usuario autenticado.
    * @returns {Promise<PaymentResult>} Resultado devuelto por la pasarela.
    */
   const processNequi = useCallback(
-    async (phone: string, amount: number, items: CartItem[], userId: number | null = null) => {
+    async (receiptDataUrl: string, amount: number, items: CartItem[], userId: number | null = null) => {
       setIsProcessing(true);
       try {
-        const paymentResult = await paymentService.processNequiPayment(phone, amount);
+        const paymentResult = await paymentService.processNequiPayment(receiptDataUrl, amount);
         setResult(paymentResult);
         if (address && method) {
-          setLastOrder(await orderService.create(items, address, method, userId));
+          setLastOrder(await orderService.create(items, address, method, userId, { receipt: receiptDataUrl }));
         }
         return paymentResult;
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [address, method],
+  );
+
+  /**
+   * Registra un pago en efectivo contra entrega (sin pasarela):
+   * calcula el cambio y crea el pedido con monto y cambio.
+   *
+   * @param {number} tendered - Monto en efectivo que entrega el cliente.
+   * @param {number} amount - Monto total de la compra.
+   * @param {CartItem[]} items - Lineas del carrito.
+   * @param {number|null} userId - Id del usuario autenticado.
+   * @returns {Promise<Order>} Pedido creado con cambio calculado.
+   * @throws {Error} Si el monto no cubre el total.
+   */
+  const processCash = useCallback(
+    async (tendered: number, amount: number, items: CartItem[], userId: number | null = null) => {
+      if (!Number.isFinite(tendered) || tendered < amount) {
+        throw new Error('El monto en efectivo debe cubrir el total de la compra.');
+      }
+      setIsProcessing(true);
+      try {
+        const change = Math.round(tendered - amount);
+        const created = address && method
+          ? await orderService.create(items, address, method, userId, { tendered: Math.round(tendered), change })
+          : null;
+        if (created) setLastOrder(created);
+        const paymentResult = { success: true, transactionId: `EFE-${Date.now()}`, message: 'Pago en efectivo registrado' };
+        setResult(paymentResult);
+        return created;
       } finally {
         setIsProcessing(false);
       }
@@ -129,6 +162,7 @@ export function usePaymentController() {
     lastOrder,
     processPayment,
     processNequi,
+    processCash,
     reset,
   };
 }

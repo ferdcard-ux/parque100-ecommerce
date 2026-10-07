@@ -46,6 +46,11 @@ export function AdminOrdersPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <StatusBadge estado={order.Estado} />
+                  {order.Metodo_Pago === 'Efectivo' && (
+                    <span className="px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300" style={{ fontSize: '0.7rem', fontWeight: 700 }}>
+                      Efectivo · cambio {formatPrice(Number(order.Cambio ?? 0))}
+                    </span>
+                  )}
                   <span className="text-[#C62828] font-bold">{formatPrice(order.Total)}</span>
                 </div>
               </div>

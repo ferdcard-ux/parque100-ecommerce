@@ -1,7 +1,9 @@
 import { Link } from 'react-router';
-import { CheckCircle2, Package, Clock, MapPin, Store } from 'lucide-react';
+import { CheckCircle2, Package, Clock, MapPin, Store, TriangleAlert } from 'lucide-react';
 import { useApp } from '../../App';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { DISPATCH_DELAY_WARNING } from '../../utils';
+import { formatPrice } from '../../utils';
 
 export function PaymentSuccessPage() {
   const { lastOrder } = useApp();
@@ -36,10 +38,21 @@ export function PaymentSuccessPage() {
         <p className="text-gray-500 mb-2" style={{ fontSize: '1rem' }}>
           Tu pedido ha sido confirmado
         </p>
-        <div className="inline-block bg-[#FBC02D]/10 border border-[#FBC02D]/30 rounded-full px-4 py-1 mb-8">
+        <div className="inline-block bg-[#FBC02D]/10 border border-[#FBC02D]/30 rounded-full px-4 py-1 mb-6">
           <span className="text-[#212121] font-semibold" style={{ fontSize: '0.875rem' }}>
             {orderLabel ? `Pedido ${orderLabel}` : 'Pedido confirmado'}
           </span>
+        </div>
+        {lastOrder?.cashChange != null && (
+          <dl className="bg-white border border-gray-100 rounded-2xl p-4 mb-6 text-left flex flex-col gap-1" style={{ fontSize: '0.9rem' }}>
+            <div className="flex justify-between text-gray-500"><dt>Efectivo recibido</dt><dd>{formatPrice(lastOrder.cashTendered ?? 0)}</dd></div>
+            <div className="flex justify-between text-green-700 font-bold"><dt>Tu cambio</dt><dd>{formatPrice(lastOrder.cashChange)}</dd></div>
+          </dl>
+        )}
+
+        <div role="alert" className="flex gap-3 text-left bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6">
+          <TriangleAlert size={20} className="text-amber-600 shrink-0 mt-0.5" />
+          <p className="text-amber-800" style={{ fontSize: '0.85rem' }}>{DISPATCH_DELAY_WARNING}</p>
         </div>
 
         <div className="w-full h-44 rounded-2xl overflow-hidden mb-6 shadow-md relative">

@@ -27,6 +27,12 @@ export interface Order {
   id: string;
   /** Identificador numerico asignado por el backend (null si no se persistio). */
   backendId?: number | null;
+  /** Monto en efectivo recibido (solo pago contra entrega). */
+  cashTendered?: number | null;
+  /** Cambio a devolver (solo pago contra entrega). */
+  cashChange?: number | null;
+  /** Comprobante de pago Nequi (imagen dataURL). */
+  receiptDataUrl?: string | null;
   /** Lineas de producto incluidas. */
   items: CartItem[];
   /** Subtotal sin envio. */
@@ -46,7 +52,7 @@ export interface Order {
 }
 
 /** Metodos de pago soportados por la aplicacion. */
-export type PaymentMethodType = 'card' | 'nequi';
+export type PaymentMethodType = 'card' | 'nequi' | 'cash';
 
 /** Ciclo de vida de un pedido. */
 export type OrderStatus = 'confirmed' | 'preparing' | 'on_way' | 'delivered';
@@ -94,6 +100,12 @@ export interface ApiOrder {
   Apartamento?: string | null;
   /** Metodo de pago usado. */
   Metodo_Pago?: string | null;
+  /** Monto en efectivo recibido (solo pago contra entrega). */
+  Monto_Recibido?: number | null;
+  /** Cambio a devolver (solo pago contra entrega). */
+  Cambio?: number | null;
+  /** Comprobante de pago Nequi (imagen dataURL, solo ese metodo). */
+  Comprobante?: string | null;
   /** Lineas de detalle (solo en el detalle). */
   detalles?: ApiOrderItem[];
 }
