@@ -2,6 +2,13 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.5.0] — 2026-10-07
+
+### Compras
+- Envío siempre sin costo (`SHIPPING_COST = 0`).
+- Cancelación con motivo obligatorio (lista + texto libre) y aviso de reembolso: cliente en pendiente/preparando (inhabilitado en envío/entregado); admin desde el select con motivo; `PUT /api/orders/:id/cancel` con `Motivo_Cancelacion`, stock devuelto y `DELETE` anterior retirado.
+- Pedidos cancelados visibles con motivo y aviso de devolución (usuario y admin con tarjeta Cancelados).
+
 ## [1.4.0] — 2026-10-06
 
 ### Navegación de compra y productos
