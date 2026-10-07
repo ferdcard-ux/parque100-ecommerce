@@ -42,21 +42,22 @@
 ### Registro (`/register`)
 - Formulario con nombre, apellido, correo, contraseña y confirmación
 - Validación de campos (correo válido, contraseña 8+ caracteres, coincidencia)
-- Aceptación de términos y condiciones (requerido para enviar)
+- Aceptación de términos y condiciones (requerido para enviar, enlaza a `/terminos` y `/privacidad`)
 
 ### Catálogo (`/catalogo`)
 - Chips por categoría sincronizados con `?cat=`, buscador del navbar con `?q=`, orden (relevancia, precio, nombre)
-- Estado vacío con botón "Ver todos los productos"
-- Favorito por producto y botón "Añadir" (exige sesión)
+- Skeletons de carga, estado vacío con botón "Ver todos los productos" y paginación (12 por página)
+- Favorito por producto y botón "Añadir" (exige sesión, con tope de stock)
 
 ### Detalle de producto (`/producto/:id`)
 - Galería, categoría, precio, stock disponible, selector de cantidad y relacionados clicables
+- Skeleton de carga; sin rating ficticio
 - Añadir al carrito exige sesión
 
 ### Mi cuenta (`/cuenta`), Perfil (`/perfil`) y Compras (`/compras`, `/compras/:id`)
 - Panel con accesos a perfil, direcciones y compras; cierre de sesión
 - Perfil editable (modo Editar/Guardar) y cambio de contraseña funcional
-- Historial de pedidos del usuario con tracker de estado; detalle con productos, totales y entrega
+- Historial de pedidos del usuario con tracker de estado y skeletons de carga; cancelación de pedidos pendientes (confirmación en dos pasos); detalle con productos, totales y entrega
 
 ### Favoritos (`/favoritos`), Ayuda (`/ayuda`), Privacidad (`/privacidad`), Mapa (`/mapa-sitio`)
 - Favoritos persistidos en localStorage con badge en el navbar
@@ -64,7 +65,8 @@
 
 ### Carrito (`/cart`)
 - Lista de productos agregados con imagen, nombre, precio unitario
-- Control de cantidad (+ / -) y eliminar producto
+- Persistente por cuenta en localStorage (sobrevive recargas; invitado separado)
+- Control de cantidad (+ / -) con tope de stock y aviso "Máx. disponibles"; eliminar producto
 - Resumen del pedido con subtotal, envío y total
 - Productos recomendados clicables basados en el carrito actual
 - Botón "Continuar" para iniciar el flujo de compra
@@ -91,7 +93,7 @@
 
 ### Confirmación (`/payment-success`)
 - Animación de éxito con icono de check
-- Número de pedido generado automáticamente
+- Número de pedido real (asignado por el backend) con botón "Ver mi pedido"
 - Timeline del estado del pedido
 - Botón para volver a la tienda
 
@@ -153,6 +155,7 @@ Inicio → Agregar productos al carrito (sin sesión: redirige al login)
 | `/favoritos` | Shop | Productos favoritos |
 | `/ayuda` | Help | Centro de ayuda / FAQ |
 | `/privacidad` | Privacy | Privacidad y cookies |
+| `/terminos` | Terms | Términos y condiciones |
 | `/mapa-sitio` | Sitemap | Índice de rutas |
 | `/admin/clientes` | Admin | CRUD de usuarios y roles |
 | `/admin/configuracion` | Admin | Preferencias del panel |

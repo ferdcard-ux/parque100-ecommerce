@@ -142,6 +142,7 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `GET /api/orders/:id` | Detalle de pedido con sus líneas |
 | `POST /api/orders` | Crear pedido (con snapshot de entrega y pago) |
 | `PUT /api/orders/:id/status` | Cambiar estado (pendiente, preparando, enviando, entregado) |
+| `DELETE /api/orders/:id` | Cancelar pedido pendiente con sus líneas |
 | `POST /api/payments/process` | Procesar pago |
 
 ## Scroll Lock en modales

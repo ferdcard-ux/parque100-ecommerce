@@ -82,7 +82,7 @@ Base URL: `http://localhost:3001/api`
 | Autenticación | `POST /auth/login`, `POST /auth/register`, `POST /auth/recover`, `PUT /auth/password` |
 | Usuarios | `GET /users`, `POST /users`, `PUT /users/:id/admin`, `DELETE /users/:id` |
 | Datos de entrega de usuario | `GET /users/:id`, `PUT /users/:id` |
-| Pedidos | `GET /orders`, `GET /orders/:id`, `POST /orders`, `PUT /orders/:id/status` |
+| Pedidos | `GET /orders`, `GET /orders/:id`, `POST /orders`, `PUT /orders/:id/status`, `DELETE /orders/:id` |
 | Pagos | `POST /payments/process` |
 
 ## Documentación

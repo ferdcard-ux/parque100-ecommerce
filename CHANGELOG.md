@@ -2,6 +2,14 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.3.3] — 2026-10-06
+
+### Correcciones y mejoras
+- Bugs: enlace "Mapa del Sitio" del menú móvil a `/mapa-sitio`; confirmación de pago muestra el pedido real (`backendId`) con enlace "Ver mi pedido"; "Términos y Condiciones" y "Política de Privacidad" del registro enlazan a `/terminos` (nueva página) y `/privacidad`.
+- Funcionales: carrito persistente por cuenta en localStorage; tope de stock al añadir y en cantidades (con aviso "Máx. disponibles"); cancelación de pedidos pendientes por el usuario (`DELETE /api/orders/:id`, solo pendiente, con confirmación en dos pasos).
+- Visuales: skeletons de carga en catálogo, pedidos y detalle; paginación del catálogo (12 por página); rating ficticio eliminado del detalle; banners verificados (HTTP 200).
+- Script `scripts_dev-ecommerce2`: consola interactiva con detener/pausar/reanudar; chequeos HTTP para el frontend (Vite en IPv6); apertura explícita en el navegador por defecto y solo si el frontend responde.
+
 ## [1.3.2] — 2026-10-06
 
 ### Mejoras y correcciones
