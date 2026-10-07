@@ -3,13 +3,14 @@
  */
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router';
+import { TriangleAlert } from 'lucide-react';
 import type { ApiOrder } from '../../models';
 import { orderService } from '../../services';
 import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
-import { formatPrice } from '../../utils';
+import { DISPATCH_DELAY_WARNING, formatPrice } from '../../utils';
 
 /** Formatea fecha y hora legibles. */
 function formatDateTime(value: string): string {
@@ -55,6 +56,12 @@ export function OrderDetailPage() {
           <p className="text-center text-[#C62828] py-16">{error ?? 'Pedido no encontrado.'}</p>
         ) : (
           <div className="flex flex-col gap-4">
+            {order.Estado !== 'entregado' && (
+              <div role="alert" className="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <TriangleAlert size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-amber-800" style={{ fontSize: '0.85rem' }}>{DISPATCH_DELAY_WARNING}</p>
+              </div>
+            )}
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <div className="flex items-center justify-between mb-4">
                 <SectionTitle>Estado del pedido</SectionTitle>
@@ -92,7 +99,19 @@ export function OrderDetailPage() {
                 <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Piso</dt><dd>{order.Piso ?? '—'}</dd></div>
                 <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Apartamento</dt><dd>{order.Apartamento ?? '—'}</dd></div>
                 <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Metodo de pago</dt><dd>{order.Metodo_Pago ?? '—'}</dd></div>
+                {order.Metodo_Pago === 'Efectivo' && (
+                  <>
+                    <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Efectivo recibido</dt><dd>{formatPrice(Number(order.Monto_Recibido ?? 0))}</dd></div>
+                    <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Tu cambio</dt><dd>{formatPrice(Number(order.Cambio ?? 0))}</dd></div>
+                  </>
+                )}
               </dl>
+              {order.Comprobante && (
+                <div className="mt-4">
+                  <p className="text-gray-400 mb-2" style={{ fontSize: '0.7rem' }}>Comprobante Nequi</p>
+                  <img src={order.Comprobante} alt="Comprobante de pago Nequi" className="w-full max-h-72 object-contain rounded-xl border border-gray-100 bg-[#F5F5F5]" />
+                </div>
+              )}
             </div>
           </div>
         )}

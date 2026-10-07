@@ -79,7 +79,8 @@ interface AppContextValue {
   isPaymentProcessing: boolean;
   lastOrder: Order | null;
   payWithCard: (data: CardPaymentData) => Promise<void>;
-  payWithNequi: (phone: string) => Promise<void>;
+  payWithNequi: (receiptDataUrl: string) => Promise<void>;
+  payWithCash: (tendered: number) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -127,7 +128,7 @@ function LayoutWrapper() {
 function HomeWrapper() { const { addToCart } = useApp(); return <HomePage onAddToCart={addToCart} />; }
 function CartWrapper() { const ctx = useApp(); return <Protected><CartPage items={ctx.cartItems} products={ctx.products} subtotal={ctx.cartSubtotal} shipping={ctx.cartShipping} total={ctx.cartTotal} onRemove={ctx.removeFromCart} onUpdateQuantity={ctx.updateQuantity} /></Protected>; }
 function AddressWrapper() {
-  const { user, saveAddress } = useApp();
+  const { user, saveAddress, cartCount, cartTotal } = useApp();
   const delivery = useUserDeliveryController(user?.id ?? null);
   return (
     <Protected><AddressPage
@@ -140,11 +141,13 @@ function AddressWrapper() {
       onRetryLoad={delivery.loadDetails}
       onSaveDetails={delivery.saveDetails}
       onAddressSubmit={saveAddress}
+      itemCount={cartCount}
+      total={cartTotal}
     /></Protected>
   );
 }
-function PaymentMethodWrapper() { const ctx = useApp(); return <Protected><PaymentMethodPage selectedMethod={ctx.paymentMethod} onSelectMethod={ctx.selectPaymentMethod} /></Protected>; }
-function CardPaymentWrapper() { const ctx = useApp(); return <Protected><CardPaymentPage total={ctx.cartTotal} isProcessing={ctx.isPaymentProcessing} onPay={ctx.payWithCard} onPayNequi={ctx.payWithNequi} /></Protected>; }
+function PaymentMethodWrapper() { const ctx = useApp(); return <Protected><PaymentMethodPage selectedMethod={ctx.paymentMethod} onSelectMethod={ctx.selectPaymentMethod} itemCount={ctx.cartCount} total={ctx.cartTotal} /></Protected>; }
+function CardPaymentWrapper() { const ctx = useApp(); return <Protected><CardPaymentPage total={ctx.cartTotal} itemCount={ctx.cartCount} isProcessing={ctx.isPaymentProcessing} onPay={ctx.payWithCard} onPayNequi={ctx.payWithNequi} onPayCash={ctx.payWithCash} /></Protected>; }
 function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} />; }
 function AccountWrapper() { return <Protected><AccountPage /></Protected>; }
 function ProfileWrapper() { return <Protected><ProfilePage /></Protected>; }
@@ -165,8 +168,14 @@ export default function App() {
     payment.reset();
   };
 
-  const handlePayWithNequi = async (phone: string) => {
-    await payment.processNequi(phone, cart.total, cart.items, auth.user?.id ?? null);
+  const handlePayWithNequi = async (receiptDataUrl: string) => {
+    await payment.processNequi(receiptDataUrl, cart.total, cart.items, auth.user?.id ?? null);
+    cart.clearItems();
+    payment.reset();
+  };
+
+  const handlePayWithCash = async (tendered: number) => {
+    await payment.processCash(tendered, cart.total, cart.items, auth.user?.id ?? null);
     cart.clearItems();
     payment.reset();
   };
@@ -211,6 +220,7 @@ export default function App() {
     lastOrder: payment.lastOrder,
     payWithCard: handlePayWithCard,
     payWithNequi: handlePayWithNequi,
+    payWithCash: handlePayWithCash,
   }), [
     auth.user, auth.sessions, auth.switchSession, auth.isLoggedIn, auth.isAdmin,
     cart.items, cart.itemCount, cart.subtotal, cart.shipping, cart.total, handleAddToCart,

@@ -71,7 +71,7 @@ export function ProductDetailPage() {
     <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
       <div className="max-w-6xl mx-auto">
         <p className="text-gray-400 mb-4" style={{ fontSize: '0.8rem' }}>
-          <Link to="/" className="hover:text-[#C62828]">Inicio</Link> /{' '}
+          <Link to="/catalogo" className="hover:text-[#C62828]">Catálogo</Link> /{' '}
           <Link to={`/catalogo?cat=${encodeURIComponent(product.category)}`} className="hover:text-[#C62828]">{product.category}</Link> / {product.name}
         </p>
         <PageHeader title="Detalle del producto" backTo="/catalogo" />

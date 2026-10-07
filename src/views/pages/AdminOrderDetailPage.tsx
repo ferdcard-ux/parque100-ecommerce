@@ -3,6 +3,7 @@
  */
 import { useState, useEffect } from 'react';
 import { useParams } from 'react-router';
+import { TriangleAlert } from 'lucide-react';
 import type { ApiOrder, OrderEstado } from '../../models';
 import { orderService } from '../../services';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
@@ -49,6 +50,15 @@ export function AdminOrderDetailPage() {
         <p className="text-center text-[#C62828] py-16">{error ?? 'Pedido no encontrado.'}</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {order.Metodo_Pago === 'Efectivo' && (
+            <div role="alert" className="lg:col-span-2 flex gap-3 bg-amber-50 border-2 border-amber-300 rounded-2xl p-4">
+              <TriangleAlert size={22} className="text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-amber-800" style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                Pago en efectivo: recibir {formatPrice(Number(order.Monto_Recibido ?? 0))} y
+                enviar el cambio de {formatPrice(Number(order.Cambio ?? 0))} con el pedido.
+              </p>
+            </div>
+          )}
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <SectionTitle>Estado</SectionTitle>
             <div className="flex items-center justify-between mb-4">
@@ -74,7 +84,19 @@ export function AdminOrderDetailPage() {
               <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Telefono</dt><dd>{order.Telefono ?? '—'}</dd></div>
               <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Direccion</dt><dd>Torre {order.Torre ?? '—'}, Piso {order.Piso ?? '—'}, Apto {order.Apartamento ?? '—'}</dd></div>
               <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Pago</dt><dd>{order.Metodo_Pago ?? '—'}</dd></div>
+              {order.Metodo_Pago === 'Efectivo' && (
+                <>
+                  <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Recibido</dt><dd>{formatPrice(Number(order.Monto_Recibido ?? 0))}</dd></div>
+                  <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Cambio</dt><dd>{formatPrice(Number(order.Cambio ?? 0))}</dd></div>
+                </>
+              )}
             </dl>
+            {order.Comprobante && (
+              <div className="mt-4">
+                <p className="text-gray-400 mb-2" style={{ fontSize: '0.7rem' }}>Comprobante Nequi</p>
+                <img src={order.Comprobante} alt="Comprobante de pago Nequi" className="w-full max-h-72 object-contain rounded-xl border border-gray-100 bg-[#F5F5F5]" />
+              </div>
+            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5 lg:col-span-2">

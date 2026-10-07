@@ -19,6 +19,9 @@ export const ORDER_ID_PREFIX = 'TP';
 /** Identidad de la aplicacion. */
 export const APP_NAME = 'Tienda Parque 100';
 
+/** Aviso de posible demora en el despacho mostrado en confirmacion y detalle activo. */
+export const DISPATCH_DELAY_WARNING = 'Su pedido podría tardar un poco en ser despachado debido al proceso de entregas en curso. Le pedimos un momento de paciencia mientras finalizamos la gestión.';
+
 /** Estados del ciclo de vida de un pedido tal como los guarda la BD. */
 export const ORDER_ESTADOS = ['pendiente', 'preparando', 'enviando', 'entregado'] as const;
 

@@ -4,6 +4,8 @@ import type { CartItem, Product } from '../../models';
 import { formatPrice } from '../../utils';
 import { CartItemCard } from '../components/cart/CartItemCard';
 import { RecommendedList } from '../components/cart/RecommendedList';
+import { CheckoutSteps } from '../components/checkout/checkout-steps';
+import { CheckoutSummary } from '../components/checkout/checkout-summary';
 
 interface CartPageProps {
   items: CartItem[];
@@ -18,6 +20,7 @@ interface CartPageProps {
 export function CartPage({ items, products, subtotal, shipping, total, onRemove, onUpdateQuantity }: CartPageProps) {
   const navigate = useNavigate();
   const recommended = products.filter((p) => !items.find((c) => c.id === p.id)).slice(0, 4);
+  const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
   if (items.length === 0) {
     return (
@@ -39,6 +42,8 @@ export function CartPage({ items, products, subtotal, shipping, total, onRemove,
   return (
     <div className="min-h-screen bg-[#F5F5F5] pb-12">
       <div className="max-w-7xl mx-auto px-4 py-8">
+        <CheckoutSteps current={1} />
+        <CheckoutSummary itemCount={itemCount} total={total} />
         <div className="flex items-center gap-3 mb-8">
           <Link to="/" className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-all">
             <ArrowLeft size={18} className="text-[#212121]" />

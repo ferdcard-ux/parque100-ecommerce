@@ -73,7 +73,9 @@ export function AdminPageShell({ active, title, subtitle, children }: AdminPageS
                           className="w-full text-left px-4 py-3 hover:bg-[#F5F5F5] transition-colors border-b border-gray-50"
                         >
                           <p className="text-[#212121]" style={{ fontSize: '0.85rem' }}>Pedido #{o.ID_Pedido} · {o.Usuario_Nombre ?? 'Cliente'}</p>
-                          <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>Total: ${o.Total.toLocaleString('es-CO')}</p>
+                          <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>
+                            {o.Metodo_Pago === 'Efectivo' ? 'EFECTIVO · ' : ''}Total: ${o.Total.toLocaleString('es-CO')}
+                          </p>
                         </button>
                       ))
                     )}

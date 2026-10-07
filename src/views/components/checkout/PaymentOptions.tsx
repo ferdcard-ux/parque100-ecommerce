@@ -1,4 +1,4 @@
-import { CreditCard, Smartphone, CheckCircle2 } from 'lucide-react';
+import { CreditCard, Smartphone, Banknote, CheckCircle2 } from 'lucide-react';
 import type { PaymentMethodType } from '../../../models';
 
 interface PaymentOptionsProps {
@@ -60,6 +60,28 @@ export function PaymentOptions({ selectedMethod, onSelect }: PaymentOptionsProps
             </div>
           </div>
           {selectedMethod === 'nequi' && <CheckCircle2 size={24} className="text-[#FBC02D] shrink-0" />}
+        </div>
+      </button>
+
+      <button
+        onClick={() => onSelect('cash')}
+        className={`w-full text-left rounded-2xl p-5 border-2 transition-all ${
+          selectedMethod === 'cash'
+            ? 'border-[#FBC02D] bg-[#FBC02D]/5 shadow-md'
+            : 'border-gray-200 bg-white hover:border-gray-300 shadow-sm'
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${selectedMethod === 'cash' ? 'bg-[#FBC02D]' : 'bg-gray-100'}`}>
+              <Banknote size={26} className={selectedMethod === 'cash' ? 'text-white' : 'text-gray-500'} />
+            </div>
+            <div>
+              <h3 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Efectivo contra entrega</h3>
+              <p className="text-gray-400 mt-0.5" style={{ fontSize: '0.85rem' }}>Pagas al recibir; llevamos tu cambio</p>
+            </div>
+          </div>
+          {selectedMethod === 'cash' && <CheckCircle2 size={24} className="text-[#FBC02D] shrink-0" />}
         </div>
       </button>
 

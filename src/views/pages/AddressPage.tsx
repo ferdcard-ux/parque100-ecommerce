@@ -2,6 +2,9 @@ import { useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import type { DeliveryAddress, User, UserDeliveryDetails } from '../../models';
 import { AddressForm } from '../components/checkout/AddressForm';
+import { CheckoutSteps } from '../components/checkout/checkout-steps';
+import { CheckoutSummary } from '../components/checkout/checkout-summary';
+import { PageHeader } from '../components/shared/page-header';
 
 interface AddressPageProps {
   user: User | null;
@@ -13,6 +16,10 @@ interface AddressPageProps {
   onRetryLoad: () => Promise<void>;
   onSaveDetails: (details: UserDeliveryDetails) => Promise<UserDeliveryDetails>;
   onAddressSubmit: (address: DeliveryAddress) => void;
+  /** Unidades del carrito para el resumen superior. */
+  itemCount: number;
+  /** Total de la compra para el resumen superior. */
+  total: number;
 }
 
 export function AddressPage({
@@ -25,6 +32,8 @@ export function AddressPage({
   onRetryLoad,
   onSaveDetails,
   onAddressSubmit,
+  itemCount,
+  total,
 }: AddressPageProps) {
   const navigate = useNavigate();
 
@@ -58,6 +67,9 @@ export function AddressPage({
   return (
     <div className="min-h-screen bg-[#F5F5F5] pb-12">
       <div className="max-w-4xl mx-auto px-4 py-8">
+        <CheckoutSteps current={2} />
+        <CheckoutSummary itemCount={itemCount} total={total} />
+        <PageHeader title="Dirección de entrega" subtitle="¿Dónde enviamos tu pedido?" backTo="/cart" />
         {isLoadingProfile ? (
           <p role="status" className="text-center text-gray-600">Cargando datos de entrega...</p>
         ) : loadError && user ? (

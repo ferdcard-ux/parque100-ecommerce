@@ -16,9 +16,12 @@ function loadCart(key: string): CartItem[] {
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
-      (x): x is CartItem =>
-        !!x && typeof x === 'object' && typeof (x as CartItem).id === 'number' &&
-        Number.isInteger((x as CartItem).quantity) && (x as CartItem).quantity > 0,
+      (x): x is CartItem => {
+        if (!x || typeof x !== 'object') return false;
+        const item = x as CartItem;
+        const idOk = typeof item.id === 'number' || typeof item.id === 'string';
+        return idOk && Number.isInteger(item.quantity) && item.quantity > 0;
+      },
     );
   } catch {
     return [];

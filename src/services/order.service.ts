@@ -9,6 +9,16 @@ import { generateOrderId, calculateShipping } from '../utils';
 /** URL base de la API REST del backend. */
 const API = 'http://localhost:3001/api';
 
+/** Extras opcionales persistidos junto al pedido. */
+export interface OrderExtras {
+  /** Monto en efectivo recibido (pago contra entrega). */
+  tendered?: number;
+  /** Cambio a devolver (pago contra entrega). */
+  change?: number;
+  /** Comprobante de pago Nequi (imagen dataURL). */
+  receipt?: string | null;
+}
+
 /**
  * Servicio de pedidos.
  * @namespace orderService
@@ -30,6 +40,7 @@ export const orderService = {
     address: DeliveryAddress,
     paymentMethod: PaymentMethodType,
     userId: number | null = null,
+    extras: OrderExtras = {},
   ): Promise<Order> {
     /** Suma de precio * cantidad de todas las lineas. */
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -62,7 +73,10 @@ export const orderService = {
           Torre: address.tower,
           Piso: address.floor,
           Apartamento: address.apartment,
-          Metodo_Pago: paymentMethod === 'nequi' ? 'Nequi' : 'Tarjeta',
+          Metodo_Pago: paymentMethod === 'nequi' ? 'Nequi' : paymentMethod === 'cash' ? 'Efectivo' : 'Tarjeta',
+          Monto_Recibido: extras.tendered ?? null,
+          Cambio: extras.change ?? null,
+          Comprobante: extras.receipt ?? null,
           productos: items.map((item) => ({
             ID_Producto: item.id,
             Cantidad: item.quantity,
@@ -80,6 +94,9 @@ export const orderService = {
     }
 
     order.backendId = typeof responseData?.id === 'number' ? responseData.id : null;
+    order.cashTendered = extras.tendered ?? null;
+    order.cashChange = extras.change ?? null;
+    order.receiptDataUrl = extras.receipt ?? null;
     return order;
   },
 
