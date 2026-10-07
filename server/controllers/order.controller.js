@@ -72,6 +72,29 @@ export const orderController = {
   },
 
   /**
+   * DELETE /api/orders/:id
+   * Cancela un pedido en estado 'pendiente' con sus lineas.
+   *
+   * @async
+   * @param {import('express').Request} req - Peticion con `req.params.id`.
+   * @param {import('express').Response} res - Respuesta HTTP.
+   * @returns {Promise<void>} 409 si ya no esta pendiente.
+   */
+  async remove(req, res) {
+    try {
+      const order = await orderModel.findByIdWithDetails(req.params.id);
+      if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
+      if (order.Estado !== 'pendiente') {
+        return res.status(409).json({ error: `Solo se pueden cancelar pedidos pendientes (estado actual: ${order.Estado})` });
+      }
+      await orderModel.deleteById(req.params.id);
+      res.json({ message: 'Pedido cancelado' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  /**
    * POST /api/orders
    * Crea un pedido con sus detalles de forma atomica (transaccion).
    *

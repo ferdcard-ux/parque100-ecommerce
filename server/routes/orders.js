@@ -16,6 +16,9 @@ router.get('/orders/:id', orderController.getById);
 /** PUT /api/orders/:id/status - Cambia el estado de un pedido. */
 router.put('/orders/:id/status', orderController.updateStatus);
 
+/** DELETE /api/orders/:id - Cancela un pedido pendiente con sus lineas. */
+router.delete('/orders/:id', orderController.remove);
+
 /** POST /api/orders - Crea un pedido con sus detalles. */
 router.post('/orders', orderController.create);
 
