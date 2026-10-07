@@ -4,11 +4,11 @@
  * compartidos por servicios, controladores y vistas.
  */
 
-/** Subtotal (COP) a partir del cual el envio es gratis. */
-export const FREE_SHIPPING_THRESHOLD = 30000;
+/** Todos los envios son sin costo: umbral y tarifa en cero. */
+export const FREE_SHIPPING_THRESHOLD = 0;
 
-/** Costo fijo del envio (COP) cuando no aplica envio gratis. */
-export const SHIPPING_COST = 4000;
+/** Costo fijo del envio (COP): 0, no se cobra envio. */
+export const SHIPPING_COST = 0;
 
 /** Estimacion de entrega en minutos mostrada al usuario. */
 export const DELIVERY_ESTIMATE_MINUTES = '45-60';
@@ -23,7 +23,7 @@ export const APP_NAME = 'Tienda Parque 100';
 export const DISPATCH_DELAY_WARNING = 'Su pedido podría tardar un poco en ser despachado debido al proceso de entregas en curso. Le pedimos un momento de paciencia mientras finalizamos la gestión.';
 
 /** Estados del ciclo de vida de un pedido tal como los guarda la BD. */
-export const ORDER_ESTADOS = ['pendiente', 'preparando', 'enviando', 'entregado'] as const;
+export const ORDER_ESTADOS = ['pendiente', 'preparando', 'enviando', 'entregado', 'cancelado'] as const;
 
 /** Pasos del indicador de progreso de un pedido (orden del tracker). */
 export const ORDER_TRACKER_STEPS = ['Pendiente', 'Preparando', 'En envio', 'Entregado'] as const;
@@ -37,7 +37,19 @@ export const ORDER_STATUS_META: Record<string, { label: string; badgeClass: stri
   preparando: { label: 'En preparacion', badgeClass: 'bg-orange-100 text-orange-700 border-orange-200', step: 1 },
   enviando: { label: 'En envio', badgeClass: 'bg-blue-100 text-blue-700 border-blue-200', step: 2 },
   entregado: { label: 'Entregado', badgeClass: 'bg-green-100 text-green-700 border-green-200', step: 3 },
+  cancelado: { label: 'Cancelado', badgeClass: 'bg-red-100 text-red-700 border-red-200', step: -1 },
 };
+
+/** Motivos predefinidos de cancelacion (mas opcion de texto libre en la UI). */
+export const CANCEL_REASONS = [
+  'Cambié de opinión',
+  'Pedí por error',
+  'Demora en la entrega',
+  'Encontré mejores precios',
+] as const;
+
+/** Aviso de reembolso mostrado al cancelar un pedido. */
+export const CANCEL_REFUND_NOTICE = 'Tras la cancelación, debes acordar con el propietario de la tienda el reembolso del pago.';
 
 /** Devuelve metadatos del estado o valores por defecto para estados desconocidos. */
 export function orderStatusMeta(estado: string): { label: string; badgeClass: string; step: number } {

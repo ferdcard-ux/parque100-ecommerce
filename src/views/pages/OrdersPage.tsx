@@ -11,7 +11,8 @@ import { PageHeader } from '../components/shared/page-header';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { EmptyState } from '../components/shared/empty-state';
-import { formatPrice } from '../../utils';
+import { CancelOrderModal } from '../components/shared/cancel-order-modal';
+import { CANCEL_REFUND_NOTICE, formatPrice } from '../../utils';
 
 /** Formatea la fecha ISO a estilo legible (ej. 10 de diciembre de 2024). */
 function formatDate(value: string): string {
@@ -22,21 +23,26 @@ function formatDate(value: string): string {
   }
 }
 
-/** Lista de pedidos del usuario con su tracker de estado y cancelacion. */
+/** Lista de pedidos del usuario con tracker, cancelacion con motivo y reembolso. */
 export function OrdersPage() {
   const { user, isLoggedIn } = useApp();
   const { orders, isLoading, error, reload } = useOrdersController(user?.id ?? null);
-  const [confirmingId, setConfirmingId] = useState<number | null>(null);
+  const [cancelId, setCancelId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
 
-  const handleCancel = async (id: number) => {
+  const handleCancel = async (motivo: string) => {
+    if (cancelId === null) return;
     setCancelError(null);
+    setSaving(true);
     try {
-      await orderService.cancel(id);
-      setConfirmingId(null);
+      await orderService.cancel(cancelId, motivo);
+      setCancelId(null);
       await reload();
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : 'No fue posible cancelar.');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -88,7 +94,10 @@ export function OrdersPage() {
           />
         ) : (
           <div className="flex flex-col gap-4">
-            {orders.map((order) => (
+            {orders.map((order) => {
+              const cancellable = order.Estado === 'pendiente' || order.Estado === 'preparando';
+              const locked = order.Estado === 'enviando';
+              return (
               <div key={order.ID_Pedido} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-[#C62828]/20 transition-all">
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[#212121] font-bold">Pedido #{order.ID_Pedido}</span>
@@ -98,28 +107,41 @@ export function OrdersPage() {
                   <span>{formatDate(order.Fecha)}</span>
                   <span className="text-[#C62828] font-bold" style={{ fontSize: '1rem' }}>{formatPrice(order.Total)}</span>
                 </div>
-                <OrderTracker estado={order.Estado} />
+                {order.Estado === 'cancelado' ? (
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-1">
+                    <p className="text-red-700" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Motivo: {order.Motivo_Cancelacion ?? '—'}</p>
+                    <p className="text-red-600 mt-1" style={{ fontSize: '0.75rem' }}>{CANCEL_REFUND_NOTICE}</p>
+                  </div>
+                ) : (
+                  <OrderTracker estado={order.Estado} />
+                )}
                 <div className="flex items-center justify-between mt-3">
-                  {order.Estado === 'pendiente' && (
-                    confirmingId === order.ID_Pedido ? (
-                      <span className="flex items-center gap-2" style={{ fontSize: '0.75rem' }}>
-                        <span className="text-gray-500">¿Cancelar pedido?</span>
-                        <button onClick={() => handleCancel(order.ID_Pedido)} className="text-[#C62828] font-semibold hover:underline">Sí, cancelar</button>
-                        <button onClick={() => setConfirmingId(null)} className="text-gray-400 hover:underline">No</button>
-                      </span>
-                    ) : (
-                      <button onClick={() => setConfirmingId(order.ID_Pedido)} className="text-gray-400 hover:text-[#C62828] transition-colors" style={{ fontSize: '0.75rem' }}>
-                        Cancelar pedido
-                      </button>
-                    )
-                  )}
+                  {cancellable ? (
+                    <button onClick={() => { setCancelError(null); setCancelId(order.ID_Pedido); }} className="text-gray-400 hover:text-[#C62828] transition-colors" style={{ fontSize: '0.75rem' }}>
+                      Cancelar pedido
+                    </button>
+                  ) : locked ? (
+                    <span title="Ya no se puede cancelar en este estado" className="text-gray-300 cursor-not-allowed" style={{ fontSize: '0.75rem' }}>
+                      Cancelar pedido
+                    </span>
+                  ) : <span />}
                   <Link to={`/compras/${order.ID_Pedido}`} className="flex items-center gap-1 text-gray-400 ml-auto" style={{ fontSize: '0.75rem' }}>
                     Ver detalle <ChevronRight size={14} />
                   </Link>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
+        )}
+        {cancelId !== null && (
+          <CancelOrderModal
+            orderId={cancelId}
+            saving={saving}
+            error={cancelError}
+            onClose={() => setCancelId(null)}
+            onConfirm={handleCancel}
+          />
         )}
       </div>
     </main>

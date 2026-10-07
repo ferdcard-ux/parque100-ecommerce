@@ -10,14 +10,18 @@ import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { SectionTitle } from '../components/shared/section-title';
+import { CancelOrderModal } from '../components/shared/cancel-order-modal';
 import { ORDER_ESTADOS, formatPrice } from '../../utils';
 
-/** Detalle admin de un pedido con cambio de estado. */
+/** Detalle admin de un pedido con cambio de estado y cancelacion con motivo. */
 export function AdminOrderDetailPage() {
   const { id } = useParams();
   const [order, setOrder] = useState<ApiOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,8 +40,28 @@ export function AdminOrderDetailPage() {
 
   const changeStatus = async (estado: OrderEstado) => {
     if (!order) return;
+    if (estado === 'cancelado') {
+      setCancelError(null);
+      setCancelOpen(true);
+      return;
+    }
     await orderService.updateStatus(order.ID_Pedido, estado);
     setOrder({ ...order, Estado: estado });
+  };
+
+  const handleCancel = async (motivo: string) => {
+    if (!order) return;
+    setCancelError(null);
+    setSaving(true);
+    try {
+      await orderService.cancel(order.ID_Pedido, motivo);
+      setOrder({ ...order, Estado: 'cancelado', Motivo_Cancelacion: motivo });
+      setCancelOpen(false);
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : 'No fue posible cancelar.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const subtotal = (order?.detalles ?? []).reduce((sum, d) => sum + Number(d.Subtotal), 0);
@@ -70,11 +94,21 @@ export function AdminOrderDetailPage() {
                 style={{ fontSize: '0.8rem' }}
               >
                 {ORDER_ESTADOS.map((estado) => (
-                  <option key={estado} value={estado}>{estado}</option>
+                  <option key={estado} value={estado}>{estado === 'cancelado' ? 'cancelado (con motivo)' : estado}</option>
                 ))}
               </select>
             </div>
-            <OrderTracker estado={order.Estado} compact />
+            {order.Estado === 'cancelado' ? (
+              <div role="alert" className="flex gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                <TriangleAlert size={16} className="text-red-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-red-700" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Cancelado: {order.Motivo_Cancelacion ?? '—'}</p>
+                  <p className="text-red-600 mt-0.5" style={{ fontSize: '0.75rem' }}>Proceder con la devolución del pago según lo acordado con el cliente.</p>
+                </div>
+              </div>
+            ) : (
+              <OrderTracker estado={order.Estado} compact />
+            )}
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -116,6 +150,15 @@ export function AdminOrderDetailPage() {
             </dl>
           </div>
         </div>
+      )}
+      {cancelOpen && order && (
+        <CancelOrderModal
+          orderId={order.ID_Pedido}
+          saving={saving}
+          error={cancelError}
+          onClose={() => setCancelOpen(false)}
+          onConfirm={handleCancel}
+        />
       )}
     </AdminPageShell>
   );

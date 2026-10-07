@@ -162,15 +162,21 @@ export const orderService = {
   },
 
   /**
-   * Cancela un pedido en estado pendiente.
+   * Cancela un pedido con motivo obligatorio (solo pendiente o preparando
+   * desde la vista del cliente; el servidor admite tambien en envio).
    *
    * @param {string|number} id - Identificador del pedido.
+   * @param {string} motivo - Motivo de la cancelacion.
    * @returns {Promise<void>}
-   * @throws {Error} Si ya no esta pendiente o falla la eliminacion.
+   * @throws {Error} Sin motivo, estado no cancelable o falla del servidor.
    */
-  async cancel(id: string | number): Promise<void> {
+  async cancel(id: string | number, motivo: string): Promise<void> {
     try {
-      const response = await fetch(`${API}/orders/${id}`, { method: 'DELETE' });
+      const response = await fetch(`${API}/orders/${id}/cancel`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Motivo: motivo }),
+      });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
         throw new Error(data?.error || 'No fue posible cancelar el pedido.');

@@ -1,28 +1,58 @@
 /**
  * @fileoverview Panel de administracion de pedidos.
  */
+import { useState } from 'react';
 import { Link } from 'react-router';
+import { TriangleAlert } from 'lucide-react';
 import { useAdminOrdersController } from '../../controllers';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
+import { CancelOrderModal } from '../components/shared/cancel-order-modal';
 import { ORDER_ESTADOS, formatPrice } from '../../utils';
 import type { OrderEstado } from '../../models';
 
-/** Resumen y gestion de pedidos en curso y finalizados. */
+/** Resumen y gestion de pedidos en curso, finalizados y cancelados. */
 export function AdminOrdersPage() {
-  const { orders, counts, isLoading, error, changeStatus } = useAdminOrdersController();
+  const { orders, counts, isLoading, error, changeStatus, cancelOrder } = useAdminOrdersController();
+  const [cancelId, setCancelId] = useState<number | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [cancelError, setCancelError] = useState<string | null>(null);
 
   const summary = [
     { label: 'Pendientes', value: counts.pendiente },
     { label: 'Preparando', value: counts.preparando },
     { label: 'En envio', value: counts.enviando },
     { label: 'Entregados', value: counts.entregado },
+    { label: 'Cancelados', value: counts.cancelado },
   ];
+
+  const handleSelect = (id: number, estado: OrderEstado) => {
+    if (estado === 'cancelado') {
+      setCancelError(null);
+      setCancelId(id);
+      return;
+    }
+    changeStatus(id, estado);
+  };
+
+  const handleCancel = async (motivo: string) => {
+    if (cancelId === null) return;
+    setCancelError(null);
+    setSaving(true);
+    try {
+      await cancelOrder(cancelId, motivo);
+      setCancelId(null);
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : 'No fue posible cancelar.');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <AdminPageShell active="pedidos" title="Administrar Pedidos" subtitle="Gestiona el estado de cada pedido">
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         {summary.map((s) => (
           <div key={s.label} className="bg-white rounded-2xl border border-gray-100 p-5">
             <p className="text-[#C62828]" style={{ fontSize: '1.6rem', fontWeight: 700 }}>{s.value}</p>
@@ -57,25 +87,44 @@ export function AdminOrdersPage() {
               <p className="text-gray-400 mb-4" style={{ fontSize: '0.8rem' }}>
                 Torre {order.Torre ?? '—'} · Piso {order.Piso ?? '—'} · Apto {order.Apartamento ?? '—'}
               </p>
-              <OrderTracker estado={order.Estado} compact />
+              {order.Estado === 'cancelado' ? (
+                <div role="alert" className="flex gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-1">
+                  <TriangleAlert size={16} className="text-red-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-red-700" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Cancelado: {order.Motivo_Cancelacion ?? '—'}</p>
+                    <p className="text-red-600 mt-0.5" style={{ fontSize: '0.75rem' }}>Proceder con la devolución del pago según lo acordado con el cliente.</p>
+                  </div>
+                </div>
+              ) : (
+                <OrderTracker estado={order.Estado} compact />
+              )}
               <div className="flex items-center justify-between mt-4">
                 <Link to={`/admin/pedidos/${order.ID_Pedido}`} className="text-[#C62828] hover:underline" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
                   Ver detalle
                 </Link>
                 <select
                   value={order.Estado}
-                  onChange={(e) => changeStatus(order.ID_Pedido, e.target.value as OrderEstado)}
+                  onChange={(e) => handleSelect(order.ID_Pedido, e.target.value as OrderEstado)}
                   className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828]"
                   style={{ fontSize: '0.8rem' }}
                 >
                   {ORDER_ESTADOS.map((estado) => (
-                    <option key={estado} value={estado}>{estado}</option>
+                    <option key={estado} value={estado}>{estado === 'cancelado' ? 'cancelado (con motivo)' : estado}</option>
                   ))}
                 </select>
               </div>
             </div>
           ))}
         </div>
+      )}
+      {cancelId !== null && (
+        <CancelOrderModal
+          orderId={cancelId}
+          saving={saving}
+          error={cancelError}
+          onClose={() => setCancelId(null)}
+          onConfirm={handleCancel}
+        />
       )}
     </AdminPageShell>
   );

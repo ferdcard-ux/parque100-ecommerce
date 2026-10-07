@@ -12,6 +12,7 @@ export interface OrderStatusCounts {
   preparando: number;
   enviando: number;
   entregado: number;
+  cancelado: number;
 }
 
 /**
@@ -45,6 +46,7 @@ export function useAdminOrdersController() {
     preparando: orders.filter((o) => o.Estado === 'preparando').length,
     enviando: orders.filter((o) => o.Estado === 'enviando').length,
     entregado: orders.filter((o) => o.Estado === 'entregado').length,
+    cancelado: orders.filter((o) => o.Estado === 'cancelado').length,
   };
 
   /** Cambia el estado en backend y actualiza el estado local. */
@@ -53,10 +55,18 @@ export function useAdminOrdersController() {
     setOrders((prev) => prev.map((o) => (o.ID_Pedido === id ? { ...o, Estado: estado } : o)));
   }, []);
 
+  /** Cancela con motivo en backend y actualiza el estado local. */
+  const cancelOrder = useCallback(async (id: number, motivo: string) => {
+    await orderService.cancel(id, motivo);
+    setOrders((prev) =>
+      prev.map((o) => (o.ID_Pedido === id ? { ...o, Estado: 'cancelado', Motivo_Cancelacion: motivo } : o)),
+    );
+  }, []);
+
   /** "Tomar pedido": pasa de pendiente a preparando. */
   const takeOrder = useCallback(async (id: number) => {
     await changeStatus(id, 'preparando');
   }, [changeStatus]);
 
-  return { orders, counts, isLoading, error, reload: load, changeStatus, takeOrder };
+  return { orders, counts, isLoading, error, reload: load, changeStatus, cancelOrder, takeOrder };
 }

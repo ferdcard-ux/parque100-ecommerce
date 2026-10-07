@@ -58,7 +58,7 @@ export type PaymentMethodType = 'card' | 'nequi' | 'cash';
 export type OrderStatus = 'confirmed' | 'preparing' | 'on_way' | 'delivered';
 
 /** Estado de pedido persistido en la base de datos (ciclo del panel admin). */
-export type OrderEstado = 'pendiente' | 'preparando' | 'enviando' | 'entregado';
+export type OrderEstado = 'pendiente' | 'preparando' | 'enviando' | 'entregado' | 'cancelado';
 
 /** Linea de detalle de un pedido tal como la expone la API. */
 export interface ApiOrderItem {
@@ -106,6 +106,8 @@ export interface ApiOrder {
   Cambio?: number | null;
   /** Comprobante de pago Nequi (imagen dataURL, solo ese metodo). */
   Comprobante?: string | null;
+  /** Motivo de cancelacion (solo pedidos cancelados). */
+  Motivo_Cancelacion?: string | null;
   /** Lineas de detalle (solo en el detalle). */
   detalles?: ApiOrderItem[];
 }
