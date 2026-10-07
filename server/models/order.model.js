@@ -51,19 +51,52 @@ export const orderModel = {
   },
 
   /**
-   * Elimina un pedido pendiente junto con sus lineas de detalle.
+   * Cancela un pedido pendiente, en preparacion o en envio: guarda el
+   * motivo, devuelve el stock reservado y marca el estado como
+   * 'cancelado' dentro de una misma transaccion.
    *
    * @async
    * @param {number} id - Identificador del pedido.
-   * @returns {Promise<boolean>} true si elimino el pedido.
-   * @throws {Error} Si falla alguna operacion; revierte todo.
+   * @param {string} motivo - Motivo obligatorio de la cancelacion.
+   * @returns {Promise<boolean>} true si cancelo el pedido.
+   * @throws {Error} Si el estado no admite cancelacion o falla la operacion.
    */
-  async deleteById(id) {
+  async cancelById(id, motivo) {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
-      await connection.query('DELETE FROM detalle_pedido WHERE ID_Pedido = ?', [id]);
-      const [result] = await connection.query('DELETE FROM pedidos WHERE ID_Pedido = ?', [id]);
+
+      const [orders] = await connection.query(
+        'SELECT Estado FROM pedidos WHERE ID_Pedido = ? FOR UPDATE',
+        [id],
+      );
+      if (orders.length === 0) {
+        throw createOrderError('Pedido no encontrado', 404);
+      }
+      const estado = orders[0].Estado;
+      if (estado === 'cancelado') {
+        throw createOrderError('El pedido ya esta cancelado', 409);
+      }
+      if (estado !== 'pendiente' && estado !== 'preparando' && estado !== 'enviando') {
+        throw createOrderError(`No se puede cancelar un pedido en estado '${estado}'`, 409);
+      }
+
+      const [details] = await connection.query(
+        'SELECT ID_Producto, Cantidad FROM detalle_pedido WHERE ID_Pedido = ?',
+        [id],
+      );
+      for (const item of details) {
+        await connection.query(
+          'UPDATE productos SET Stock_Minimo = Stock_Minimo + ? WHERE ID_Producto = ?',
+          [item.Cantidad, item.ID_Producto],
+        );
+      }
+
+      const [result] = await connection.query(
+        "UPDATE pedidos SET Estado = 'cancelado', Motivo_Cancelacion = ? WHERE ID_Pedido = ?",
+        [motivo, id],
+      );
+
       await connection.commit();
       return result.affectedRows === 1;
     } catch (err) {

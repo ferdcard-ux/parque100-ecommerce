@@ -60,6 +60,9 @@ export const orderController = {
     try {
       const { Estado } = req.body;
       const validos = ['pendiente', 'preparando', 'enviando', 'entregado'];
+      if (Estado === 'cancelado') {
+        return res.status(400).json({ error: 'Para cancelar usa el endpoint de cancelación con motivo.' });
+      }
       if (!validos.includes(Estado)) {
         return res.status(400).json({ error: `Estado invalido. Usa: ${validos.join(', ')}` });
       }
@@ -72,25 +75,29 @@ export const orderController = {
   },
 
   /**
-   * DELETE /api/orders/:id
-   * Cancela un pedido en estado 'pendiente' con sus lineas.
+   * PUT /api/orders/:id/cancel
+   * Cancela un pedido en estado pendiente, preparando o enviando,
+   * guardando el motivo obligatorio y devolviendo el stock.
    *
    * @async
-   * @param {import('express').Request} req - Peticion con `req.params.id`.
+   * @param {import('express').Request} req - Peticion con `{ Motivo }` en el cuerpo.
    * @param {import('express').Response} res - Respuesta HTTP.
-   * @returns {Promise<void>} 409 si ya no esta pendiente.
+   * @returns {Promise<void>} 400 sin motivo, 409 si el estado no lo admite.
    */
-  async remove(req, res) {
+  async cancel(req, res) {
     try {
-      const order = await orderModel.findByIdWithDetails(req.params.id);
-      if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
-      if (order.Estado !== 'pendiente') {
-        return res.status(409).json({ error: `Solo se pueden cancelar pedidos pendientes (estado actual: ${order.Estado})` });
+      const motivo = typeof req.body?.Motivo === 'string' ? req.body.Motivo.trim() : '';
+      if (!motivo) {
+        return res.status(400).json({ error: 'Debes indicar el motivo de la cancelación.' });
       }
-      await orderModel.deleteById(req.params.id);
+      if (motivo.length > 255) {
+        return res.status(400).json({ error: 'El motivo no puede superar 255 caracteres.' });
+      }
+      const cancelled = await orderModel.cancelById(req.params.id, motivo);
+      if (!cancelled) return res.status(404).json({ error: 'Pedido no encontrado' });
       res.json({ message: 'Pedido cancelado' });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({ error: err.message });
     }
   },
 
