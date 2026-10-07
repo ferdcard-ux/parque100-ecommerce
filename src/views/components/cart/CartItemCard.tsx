@@ -10,6 +10,7 @@ interface CartItemCardProps {
 }
 
 export function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardProps) {
+  const atMax = item.quantity >= item.stock;
   return (
     <div className="bg-white rounded-2xl p-4 flex gap-4 shadow-sm border border-gray-100 items-center">
       <div className="w-20 h-20 rounded-xl overflow-hidden bg-[#F5F5F5] shrink-0">
@@ -34,11 +35,16 @@ export function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardP
           <span className="w-6 text-center text-[#212121] font-semibold" style={{ fontSize: '0.9rem' }}>{item.quantity}</span>
           <button
             onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-            className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-[#C62828] hover:text-white transition-all"
+            disabled={atMax}
+            title={atMax ? `Máximo ${item.stock} disponibles` : 'Agregar uno'}
+            className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-[#C62828] hover:text-white transition-all disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-current"
           >
             <Plus size={12} />
           </button>
         </div>
+        {atMax && (
+          <p className="text-gray-400" style={{ fontSize: '0.7rem' }}>Máx. {item.stock} disponibles</p>
+        )}
         <p className="text-[#212121] font-bold" style={{ fontSize: '0.9rem' }}>
           {formatPrice(item.price * item.quantity)}
         </p>

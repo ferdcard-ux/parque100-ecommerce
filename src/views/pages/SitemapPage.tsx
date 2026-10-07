@@ -14,6 +14,7 @@ const ROUTES = [
   { to: '/favoritos', label: 'Favoritos' },
   { to: '/ayuda', label: 'Centro de ayuda' },
   { to: '/privacidad', label: 'Privacidad y Cookies' },
+  { to: '/terminos', label: 'Términos y Condiciones' },
   { to: '/mapa-sitio', label: 'Mapa del sitio' },
 ];
 

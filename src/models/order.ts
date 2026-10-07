@@ -25,6 +25,8 @@ export interface DeliveryAddress {
 export interface Order {
   /** Identificador legible (prefijo TP + 6 digitos). */
   id: string;
+  /** Identificador numerico asignado por el backend (null si no se persistio). */
+  backendId?: number | null;
   /** Lineas de producto incluidas. */
   items: CartItem[];
   /** Subtotal sin envio. */

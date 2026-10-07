@@ -10,7 +10,10 @@ import { PageHeader } from '../components/shared/page-header';
 import { EmptyState } from '../components/shared/empty-state';
 import { ProductCard } from '../components/shop/product-card';
 
-/** Catalogo con chips de categoria, busqueda y ordenamiento. */
+/** Productos por pagina del catalogo. */
+const PAGE_SIZE = 12;
+
+/** Catalogo con chips de categoria, busqueda, ordenamiento y paginacion. */
 export function CatalogPage() {
   const { addToCart } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -19,6 +22,7 @@ export function CatalogPage() {
   const [category, setCategory] = useState(initialCat);
   const [query, setQuery] = useState(initialQ);
   const [sort, setSort] = useState<CatalogSort>('relevance');
+  const [page, setPage] = useState(1);
   const { products, categories, isLoading } = useCatalogController(category, query, sort);
   const { toggleFavorite, isFavorite } = useFavoritesController();
 
@@ -32,6 +36,20 @@ export function CatalogPage() {
       return next;
     }, { replace: true });
   }, [category, query, setSearchParams]);
+
+  /** Vuelve a la primera pagina al cambiar filtros. */
+  useEffect(() => {
+    setPage(1);
+  }, [category, query, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const visible = products.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+
+  const goToPage = (next: number) => {
+    setPage(Math.min(Math.max(1, next), totalPages));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const allCategories = ['Todos', ...categories.map((c) => c.name)];
 
@@ -78,7 +96,18 @@ export function CatalogPage() {
         </div>
 
         {isLoading ? (
-          <p className="text-gray-400 text-center py-16">Cargando productos...</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4" aria-label="Cargando productos">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100">
+                <div className="h-40 bg-gray-100 animate-pulse" />
+                <div className="p-3 flex flex-col gap-2">
+                  <div className="h-3 w-1/3 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-4 w-3/4 bg-gray-100 rounded animate-pulse" />
+                  <div className="h-5 w-1/2 bg-gray-100 rounded animate-pulse" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : products.length === 0 ? (
           <EmptyState
             icon={SearchX}
@@ -95,17 +124,40 @@ export function CatalogPage() {
             }
           />
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            {products.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                isFavorite={isFavorite(product.id)}
-                onToggleFavorite={toggleFavorite}
-                onAddToCart={addToCart}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+              {visible.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  isFavorite={isFavorite(product.id)}
+                  onToggleFavorite={toggleFavorite}
+                  onAddToCart={addToCart}
+                />
+              ))}
+            </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-3 mt-8">
+                <button
+                  onClick={() => goToPage(safePage - 1)}
+                  disabled={safePage <= 1}
+                  className="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 disabled:opacity-40 hover:border-[#C62828] hover:text-[#C62828] transition-colors"
+                  style={{ fontSize: '0.8rem', fontWeight: 600 }}
+                >
+                  Anterior
+                </button>
+                <span className="text-gray-500" style={{ fontSize: '0.8rem' }}>Página {safePage} de {totalPages}</span>
+                <button
+                  onClick={() => goToPage(safePage + 1)}
+                  disabled={safePage >= totalPages}
+                  className="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 disabled:opacity-40 hover:border-[#C62828] hover:text-[#C62828] transition-colors"
+                  style={{ fontSize: '0.8rem', fontWeight: 600 }}
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </main>

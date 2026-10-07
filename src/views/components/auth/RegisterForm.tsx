@@ -169,9 +169,9 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
                 <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="w-4 h-4 mt-0.5 rounded accent-[#C62828] cursor-pointer shrink-0" />
                 <span className="text-gray-500" style={{ fontSize: '0.875rem' }}>
                   Acepto los{' '}
-                  <span className="text-[#C62828] hover:underline cursor-pointer">Términos y Condiciones</span>
+                  <Link to="/terminos" className="text-[#C62828] hover:underline cursor-pointer">Términos y Condiciones</Link>
                   {' '}y la{' '}
-                  <span className="text-[#C62828] hover:underline cursor-pointer">Política de Privacidad</span>
+                  <Link to="/privacidad" className="text-[#C62828] hover:underline cursor-pointer">Política de Privacidad</Link>
                 </span>
               </label>
 

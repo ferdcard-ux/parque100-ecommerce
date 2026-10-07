@@ -235,7 +235,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, sessions, onSwitc
           <Link to="/" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Inicio</Link>
           <button onClick={() => { setMenuOpen(false); handleCategoriesClick(); }} className="text-left text-[#212121] font-medium py-2 border-b">Categorías</button>
           <Link to="/catalogo" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Catálogo</Link>
-          <Link to="/sitemap" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Mapa del Sitio</Link>
+          <Link to="/mapa-sitio" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Mapa del Sitio</Link>
           {isAdmin && (
             <Link to="/admin" className="flex items-center gap-1.5 text-[#C62828] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>
               <ShieldCheck size={15} />

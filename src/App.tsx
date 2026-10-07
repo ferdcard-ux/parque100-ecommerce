@@ -30,8 +30,9 @@ import { AdminSettingsPage } from './views/pages/AdminSettingsPage';
 import { FavoritesPage } from './views/pages/FavoritesPage';
 import { HelpPage } from './views/pages/HelpPage';
 import { PrivacyPage } from './views/pages/PrivacyPage';
+import { TermsPage } from './views/pages/TermsPage';
 import { SitemapPage } from './views/pages/SitemapPage';
-import type { CardPaymentData, User, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, Product, CartItem, AdminProduct } from './models';
+import type { CardPaymentData, User, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, Product, CartItem, AdminProduct, Order } from './models';
 
 /* ── Context Definition ── */
 interface AppContextValue {
@@ -76,6 +77,7 @@ interface AppContextValue {
   selectPaymentMethod: (m: PaymentMethodType) => void;
   saveAddress: (addr: DeliveryAddress) => void;
   isPaymentProcessing: boolean;
+  lastOrder: Order | null;
   payWithCard: (data: CardPaymentData) => Promise<void>;
   payWithNequi: (phone: string) => Promise<void>;
 }
@@ -152,10 +154,10 @@ function FavoritesWrapper() { return <Protected><FavoritesPage /></Protected>; }
 
 /* ── App Component ── */
 export default function App() {
-  const cart = useCartController();
+  const auth = useAuthController();
+  const cart = useCartController(auth.user ? String(auth.user.id) : 'guest');
   const payment = usePaymentController();
   const productCtrl = useProductController();
-  const auth = useAuthController();
 
   const handlePayWithCard = async (data: CardPaymentData) => {
     await payment.processPayment(data, cart.total, cart.items, auth.user?.id ?? null);
@@ -206,6 +208,7 @@ export default function App() {
     selectPaymentMethod: payment.selectMethod,
     saveAddress: payment.saveAddress,
     isPaymentProcessing: payment.isProcessing,
+    lastOrder: payment.lastOrder,
     payWithCard: handlePayWithCard,
     payWithNequi: handlePayWithNequi,
   }), [
@@ -234,6 +237,7 @@ export default function App() {
         { path: 'favoritos', Component: FavoritesWrapper },
         { path: 'ayuda', Component: HelpPage },
         { path: 'privacidad', Component: PrivacyPage },
+        { path: 'terminos', Component: TermsPage },
         { path: 'mapa-sitio', Component: SitemapPage },
       ],
     },
