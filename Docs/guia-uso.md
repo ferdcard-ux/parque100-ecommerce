@@ -50,6 +50,7 @@
 - Favorito por producto y botón "Añadir" (exige sesión, con tope de stock)
 
 ### Detalle de producto (`/producto/:id`)
+- Breadcrumb Catálogo > Categoría (real, enlaza al listado) > Producto actual
 - Galería, categoría, precio, stock disponible, selector de cantidad y relacionados clicables
 - Skeleton de carga; sin rating ficticio
 - Añadir al carrito exige sesión
@@ -79,7 +80,7 @@
 - Resumen del pedido y tiempo estimado de entrega
 
 ### Método de pago (`/payment-method`)
-- Selección entre Tarjeta de crédito/débito (Visa, Mastercard, Amex) o Nequi
+- Selección entre Tarjeta de crédito/débito (Visa, Mastercard, Amex), Nequi o Efectivo contra entrega
 - Indicador de pago seguro SSL
 - Resumen del pedido con total a pagar
 
@@ -89,11 +90,14 @@
 - Detección automática del tipo de tarjeta (Visa/Mastercard)
 - Indicador de procesamiento con spinner
 - Confirmación de pago seguro
-- Variante Nequi (`/payment-card?method=nequi`): formulario de teléfono de 10 dígitos
+- Variante Nequi (`/payment-card?method=nequi`): adjuntar comprobante en imagen (obligatorio, máx. 3 MB); el botón se habilita al adjuntarlo y el archivo llega al admin
+- Variante efectivo (`/payment-card?method=cash`): monto recibido obligatorio con cálculo del cambio en vivo
 
 ### Confirmación (`/payment-success`)
 - Animación de éxito con icono de check
 - Número de pedido real (asignado por el backend) con botón "Ver mi pedido"
+- Efectivo: muestra recibido y cambio
+- Advertencia de posible demora en el despacho
 - Timeline del estado del pedido
 - Botón para volver a la tienda
 
@@ -109,6 +113,8 @@
 
 ### Pedidos admin (`/admin/pedidos-pendientes`, `/admin/pedidos`, `/admin/pedidos/:id`)
 - Pendientes con botón "Tomar pedido" (pendiente → preparando)
+- Efectivo prioritario: banner "llevar cambio", insignia en gestión y aviso en la campana
+- Comprobante Nequi visible en el detalle
 - Resumen por estado, tracker compacto, cambio de estado persistente y detalle con líneas
 
 ### Reportes (`/admin/reportes`)
@@ -121,10 +127,18 @@
 ## Flujo completo de compra (requiere sesión)
 
 ```
+Carrito → Dirección de entrega → Método de pago → Confirmación
+```
+
+- Indicador de progreso en la parte superior: paso actual destacado, completados con check y clicables para volver.
+- Resumen superior fijo en las 4 pantallas: cantidad de productos y valor total.
+- Flecha de regreso junto al título: Dirección → Carrito, Método → Dirección, Pago → Método; se conserva lo digitado.
+
+```
 Inicio → Agregar productos al carrito (sin sesión: redirige al login)
   → Carrito → Revisar y continuar
   → Dirección de entrega → Guardar
-  → Método de pago → Elegir (tarjeta o Nequi)
+  → Método de pago → Elegir (tarjeta, Nequi o efectivo)
   → Datos de pago → Pagar (crea el pedido con usuario y snapshot)
   → Confirmación de pago
 ```
