@@ -120,6 +120,7 @@ export const orderModel = {
   async createWithDetails({
     Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, productos,
     Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago,
+    Monto_Recibido, Cambio, Comprobante,
   }) {
     const connection = await pool.getConnection();
     try {
@@ -159,8 +160,8 @@ export const orderModel = {
 
       const [result] = await connection.query(
         `INSERT INTO pedidos
-          (Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago, Monto_Recibido, Cambio, Comprobante)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           Fecha || new Date().toISOString().split('T')[0],
           Estado || 'pendiente',
@@ -173,6 +174,9 @@ export const orderModel = {
           Piso ?? null,
           Apartamento ?? null,
           Metodo_Pago ?? null,
+          Monto_Recibido ?? null,
+          Cambio ?? null,
+          Comprobante ?? null,
         ],
       );
       const pedidoId = result.insertId;

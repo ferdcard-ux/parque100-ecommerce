@@ -65,6 +65,9 @@ CREATE TABLE IF NOT EXISTS pedidos (
   Piso varchar(20) DEFAULT NULL,
   Apartamento varchar(20) DEFAULT NULL,
   Metodo_Pago varchar(20) DEFAULT NULL,
+  Monto_Recibido int(20) DEFAULT NULL,
+  Cambio int(20) DEFAULT NULL,
+  Comprobante mediumtext DEFAULT NULL,
   PRIMARY KEY (ID_Pedido),
   KEY ID_Usuario (ID_Usuario),
   CONSTRAINT pedidos_ibfk_1 FOREIGN KEY (ID_Usuario) REFERENCES usuario (ID_Usuario)
