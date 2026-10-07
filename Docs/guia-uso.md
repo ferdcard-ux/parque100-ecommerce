@@ -58,7 +58,8 @@
 ### Mi cuenta (`/cuenta`), Perfil (`/perfil`) y Compras (`/compras`, `/compras/:id`)
 - Panel con accesos a perfil, direcciones y compras; cierre de sesión
 - Perfil editable (modo Editar/Guardar) y cambio de contraseña funcional
-- Historial de pedidos del usuario con tracker de estado y skeletons de carga; cancelación de pedidos pendientes (confirmación en dos pasos); detalle con productos, totales y entrega
+- Historial de pedidos del usuario con tracker de estado y skeletons de carga; cancelación con motivo obligatorio en pendiente/preparando (inhabilitada en envío/entregado) y aviso de reembolso; detalle con productos, totales y entrega
+- Envío siempre sin costo
 
 ### Favoritos (`/favoritos`), Ayuda (`/ayuda`), Privacidad (`/privacidad`), Mapa (`/mapa-sitio`)
 - Favoritos persistidos en localStorage con badge en el navbar
@@ -113,6 +114,7 @@
 
 ### Pedidos admin (`/admin/pedidos-pendientes`, `/admin/pedidos`, `/admin/pedidos/:id`)
 - Pendientes con botón "Tomar pedido" (pendiente → preparando)
+- Cancelación con motivo desde el select (opción "cancelado (con motivo)"); tarjeta Cancelados y aviso de devolución
 - Efectivo prioritario: banner "llevar cambio", insignia en gestión y aviso en la campana
 - Comprobante Nequi visible en el detalle
 - Resumen por estado, tracker compacto, cambio de estado persistente y detalle con líneas
