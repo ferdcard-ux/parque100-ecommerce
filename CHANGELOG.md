@@ -2,6 +2,15 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.4.0] — 2026-10-06
+
+### Navegación de compra y productos
+- Flujo Carrito → Dirección → Método → Confirmación con indicador de progreso (pasos completados enlazan atrás) y resumen superior fijo (productos + total) en las 4 pantallas; flecha de regreso a cada paso conservando lo digitado.
+- Breadcrumb Catálogo > Categoría > Producto en el detalle (categoría real, enlaces al catálogo y al listado).
+- Pago en efectivo contra entrega: monto obligatorio, cálculo y presentación del cambio; aviso prioritario al admin (banner + campana) para llevar la devolución.
+- Nequi con comprobante en imagen (carga local, botón habilitado solo con archivo); el comprobante llega al admin en el detalle.
+- Advertencia de posible demora en confirmación y en detalle de pedido activo.
+
 ## [1.3.3] — 2026-10-06
 
 ### Correcciones y mejoras
