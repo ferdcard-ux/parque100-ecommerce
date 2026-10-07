@@ -3,7 +3,7 @@
  * Utilidades puras para presentar valores monetarios/tarjetas y
  * calcular envios y totales del carrito.
  */
-import { FREE_SHIPPING_THRESHOLD, SHIPPING_COST, ORDER_ID_PREFIX } from './constants';
+import { SHIPPING_COST, ORDER_ID_PREFIX } from './constants';
 
 /**
  * Formatea un monto en pesos colombianos (COP) sin decimales.
@@ -20,14 +20,13 @@ export function formatPrice(price: number): string {
 }
 
 /**
- * Calcula el costo de envio segun el subtotal:
- * gratis si alcanza el umbral, tarifa fija en caso contrario.
+ * Calcula el costo de envio: siempre 0 (todos los envios son sin costo).
  *
- * @param {number} subtotal - Subtotal del carrito en COP.
- * @returns {number} Costo de envio (0 si es gratis).
+ * @param {number} _subtotal - Subtotal del carrito en COP (sin uso).
+ * @returns {number} 0 siempre.
  */
-export function calculateShipping(subtotal: number): number {
-  return subtotal >= FREE_SHIPPING_THRESHOLD ? 0 : SHIPPING_COST;
+export function calculateShipping(_subtotal: number): number {
+  return SHIPPING_COST;
 }
 
 /**

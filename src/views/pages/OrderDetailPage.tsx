@@ -10,7 +10,7 @@ import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
-import { DISPATCH_DELAY_WARNING, formatPrice } from '../../utils';
+import { DISPATCH_DELAY_WARNING, CANCEL_REFUND_NOTICE, formatPrice } from '../../utils';
 
 /** Formatea fecha y hora legibles. */
 function formatDateTime(value: string): string {
@@ -67,7 +67,14 @@ export function OrderDetailPage() {
                 <SectionTitle>Estado del pedido</SectionTitle>
                 <StatusBadge estado={order.Estado} />
               </div>
-              <OrderTracker estado={order.Estado} />
+              {order.Estado === 'cancelado' ? (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+                  <p className="text-red-700" style={{ fontSize: '0.85rem', fontWeight: 600 }}>Motivo: {order.Motivo_Cancelacion ?? '—'}</p>
+                  <p className="text-red-600 mt-1" style={{ fontSize: '0.8rem' }}>{CANCEL_REFUND_NOTICE}</p>
+                </div>
+              ) : (
+                <OrderTracker estado={order.Estado} />
+              )}
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
