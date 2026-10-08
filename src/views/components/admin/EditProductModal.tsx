@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import type { AdminProduct } from '../../../models';
 import { useScrollLock } from '../../../utils/useScrollLock';
+import { ProductImageInput } from './ProductImageInput';
 
 interface EditProductModalProps {
   product: AdminProduct | null;
@@ -100,13 +101,7 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
               style={{ fontSize: '0.9rem' }}
             />
           </div>
-          <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>URL de imagen <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>(opcional)</span></label>
-            <input type="url" placeholder="https://ejemplo.com/imagen.jpg" value={imagen} onChange={(e) => setImagen(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
-              style={{ fontSize: '0.9rem' }}
-            />
-          </div>
+          <ProductImageInput value={imagen} onChange={setImagen} />
           <div className="flex gap-3 mt-2">
             <button onClick={onClose} disabled={saving}
               className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[#212121] font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"

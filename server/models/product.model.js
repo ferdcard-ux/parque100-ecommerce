@@ -49,7 +49,7 @@ export const productModel = {
    * @param {string} data.ID_Producto - Identificador unico del producto.
    * @param {string} data.Nombre - Nombre comercial del producto.
    * @param {string} data.Descripcion - Descripcion corta.
-   * @param {string|null} data.Imagen - URL de imagen (opcional).
+   * @param {string|null} data.Imagen - URL web o imagen local en dataURL (opcional).
    * @param {number} data.Precio_Venta - Precio de venta al publico.
    * @param {number} data.Stock_Minimo - Stock disponible/umbral minimo.
    * @param {number} data.ID_Categoria - Categoria asociada.
