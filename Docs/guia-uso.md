@@ -40,8 +40,9 @@
 - El menú se cierra al hacer clic fuera de él
 
 ### Registro (`/register`)
-- Formulario con nombre, apellido, correo, contraseña y confirmación
-- Validación de campos (correo válido, contraseña 8+ caracteres, coincidencia)
+- Formulario con nombre, apellido, correo, teléfono (10 dígitos, obligatorio), contraseña y confirmación
+- Correo y teléfono únicos por cuenta: si ya existen muestra "El correo electronico ya esta registrado" / "El numero de telefono ya esta registrado"
+- Validación de campos (correo válido, teléfono de 10 dígitos, contraseña 8+ caracteres, coincidencia)
 - Aceptación de términos y condiciones (requerido para enviar, enlaza a `/terminos` y `/privacidad`)
 
 ### Catálogo (`/catalogo`)
@@ -57,8 +58,8 @@
 
 ### Mi cuenta (`/cuenta`), Perfil (`/perfil`) y Compras (`/compras`, `/compras/:id`)
 - Panel con accesos a perfil, direcciones y compras; cierre de sesión
-- Perfil editable (modo Editar/Guardar) y cambio de contraseña funcional
-- Historial de pedidos del usuario con tracker de estado y skeletons de carga; cancelación con motivo obligatorio en pendiente/preparando (inhabilitada en envío/entregado) y aviso de reembolso; detalle con productos, totales y entrega
+- Perfil editable (modo Editar/Guardar con persistencia real en la BD y mensajes de error) y cambio de contraseña funcional
+- Historial de pedidos: cada tarjeta abre su detalle al clic; botón rojo "Cancelar pedido" en pendiente/preparando (inhabilitado en envío/entregado) con motivo obligatorio y aviso de reembolso; detalle con productos, totales y entrega
 - Envío siempre sin costo
 
 ### Favoritos (`/favoritos`), Ayuda (`/ayuda`), Privacidad (`/privacidad`), Mapa (`/mapa-sitio`)
@@ -75,7 +76,7 @@
 - Requiere sesión: sin login redirige a `/login?next=/cart`
 
 ### Dirección de entrega (`/address`)
-- Formulario con datos del destinatario (nombre, apellido, teléfono)
+- Formulario con datos del destinatario (nombre, apellido, teléfono de 10 dígitos obligatorio)
 - Ubicación en el conjunto (torre, piso, apartamento)
 - Notas adicionales para el domiciliario
 - Resumen del pedido y tiempo estimado de entrega
@@ -109,21 +110,22 @@
 - Botón **Ver tienda** para volver a la página principal
 - Estadísticas: total productos, en stock, bajo stock, sin stock
 - Tabla de productos con búsqueda, filtro por estado y paginación
-- **CRUD completo**: agregar (modal con nombre, categoría, cantidad, precio, URL de imagen opcional), editar (modal precargado), eliminar (confirmación directa)
+- **CRUD completo**: agregar (modal con nombre, categoría, cantidad, precio e imagen por URL web o archivo local con vista previa), editar (modal precargado), eliminar (confirmación directa)
 - Botones de importar/exportar inventario
 
 ### Pedidos admin (`/admin/pedidos-pendientes`, `/admin/pedidos`, `/admin/pedidos/:id`)
 - Pendientes con botón "Tomar pedido" (pendiente → preparando)
-- Cancelación con motivo desde el select (opción "cancelado (con motivo)"); tarjeta Cancelados y aviso de devolución
+- Cancelación con motivos operativos propios del admin (distintos a los del cliente); el pedido cancelado no se puede reanudar (select deshabilitado y 409 en backend); tarjeta Cancelados y aviso de devolución
 - Efectivo prioritario: banner "llevar cambio", insignia en gestión y aviso en la campana
 - Comprobante Nequi visible en el detalle
 - Resumen por estado, tracker compacto, cambio de estado persistente y detalle con líneas
 
 ### Reportes (`/admin/reportes`)
 - KPIs (ventas, pedidos, ticket promedio, entregados), filtros hoy/semana/mes/personalizado y pedidos por estado
+- Ventas y ticket promedio excluyen pedidos cancelados
 
 ### Clientes (`/admin/clientes`) y Configuración (`/admin/configuracion`)
-- CRUD de usuarios: agregar, editar datos y rol (cliente, empleado, admin), eliminar con protección si tiene pedidos; búsqueda y filtro por rol
+- CRUD de usuarios: agregar, editar datos y rol (cliente, empleado, admin), eliminar con protección si tiene pedidos; correo y teléfono únicos (409 si existen); búsqueda y filtro por rol
 - Preferencias del panel persistidas en localStorage
 
 ## Flujo completo de compra (requiere sesión)
