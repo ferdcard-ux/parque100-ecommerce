@@ -4,19 +4,21 @@
  * Todos los datos del proyecto son ficticios (creados para pruebas), por lo
  * que el equipo comparte el estado completo de la BD via `.BD/parque100.sql`.
  *
- * Uso:
+ * Uso (comun en Windows, Linux y macOS):
  *   node scripts/db.mjs dump     -> Exporta la BD local `parque100`
  *                                   (esquema + datos) a .BD/parque100.sql.
  *   node scripts/db.mjs restore  -> Importa .BD/parque100.sql en la BD local,
  *                                   reemplazando las 5 tablas del proyecto.
  *
  * Requisitos:
- *   - MySQL levantado y accesible como `root` sin contrasena (o con
- *     `MYSQL_PWD` definida).
- *   - Localizacion del cliente MySQL (por defecto Windows):
- *       1) Variable de entorno `MYSQL_BIN` apuntando al directorio `bin`.
- *       2) C:\Program Files\MySQL\MySQL Server 8.4\bin (instalacion comun).
- *       3) `mysql` / `mysqldump` disponibles en el PATH.
+ *   - MySQL (o MariaDB) levantado y accesible localmente.
+ *   - Cliente MySQL: se busca en este orden:
+ *       1) Variable `MYSQL_BIN` con el directorio `bin` del cliente.
+ *       2) Rutas por defecto de la plataforma (Windows 8.4, /usr/bin, etc.).
+ *       3) `mysql` / `mysqldump` (o `mariadb` / `mariadb-dump`) en el PATH.
+ *   - Autenticacion: `root` sin contrasena, o `MYSQL_PWD` definida.
+ *     Usuario alternativo: `DB_USER`.
+ *   - Base de datos: `parque100` (o `DB_NAME`).
  */
 import { spawnSync } from 'node:child_process';
 import { existsSync, writeFileSync, readFileSync } from 'node:fs';
@@ -26,20 +28,42 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DUMP_FILE = join(ROOT, '.BD', 'parque100.sql');
 const DB = process.env.DB_NAME || 'parque100';
-const DEFAULT_BIN = 'C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin';
+const DB_USER = process.env.DB_USER || 'root';
 
-/** Resuelve el ejecutable pedido o lanza un error claro. */
-function resolveClient(name) {
-  const bin = process.env.MYSQL_BIN || DEFAULT_BIN;
-  const candidates = [join(bin, `${name}.exe`), join(bin, name)];
-  for (const c of candidates) {
-    if (existsSync(c)) return { cmd: c, shell: false };
+/** Directorios `bin` comunes por plataforma, cuando no se define MYSQL_BIN. */
+const DEFAULT_BIN_DIRS = {
+  win32: ['C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin'],
+  linux: ['/usr/bin', '/usr/local/bin', '/usr/local/mysql/bin'],
+  darwin: ['/usr/local/mysql/bin', '/opt/homebrew/bin'],
+};
+
+/** Sufijo de ejecutable segun plataforma. */
+const EXE_SUFFIX = process.platform === 'win32' ? '.exe' : '';
+
+/**
+ * Resuelve el ejecutable de un cliente (`mysql` o `mysqldump`), probando
+ * tambien los binarios equivalentes de MariaDB.
+ *
+ * @param {'mysql'|'mysqldump'} kind - Cliente a resolver.
+ * @returns {{cmd: string, shell: boolean}} Comando y si requiere shell (PATH).
+ */
+function resolveClient(kind) {
+  const names = kind === 'mysqldump' ? ['mysqldump', 'mariadb-dump'] : ['mysql', 'mariadb'];
+  const bin = (process.env.MYSQL_BIN || '').trim();
+  const dirs = bin ? [bin] : DEFAULT_BIN_DIRS[process.platform] || [];
+  for (const dir of dirs) {
+    for (const name of names) {
+      const candidates = EXE_SUFFIX ? [join(dir, `${name}${EXE_SUFFIX}`), join(dir, name)] : [join(dir, name)];
+      for (const c of candidates) {
+        if (existsSync(c)) return { cmd: c, shell: false };
+      }
+    }
   }
-  // Sin ruta absoluta conocida: se delega al PATH del sistema.
-  return { cmd: name, shell: true };
+  // Ruta no encontrada en directorios conocidos: se delega al PATH del sistema.
+  return { cmd: names[0], shell: true };
 }
 
-/** Ejecuta un comando; retorna el resultado con stdio controlado. */
+/** Ejecuta un comando y retorna el resultado con stdio controlado. */
 function run(cmd, args, options = {}) {
   return spawnSync(cmd, args, {
     shell: options.shell ?? false,
@@ -50,11 +74,17 @@ function run(cmd, args, options = {}) {
   });
 }
 
+/** Mensaje de error comun cuando el cliente no corre. */
+function clientError(action) {
+  console.error(`Error: no se pudo ${action}. Revisa que MySQL/MariaDB este levantado y que
+haya cliente disponible (MYSQL_BIN apuntando al directorio bin, o mysql/mysqldump en el PATH).`);
+}
+
 /** Exporta el esquema y los datos de la BD a .BD/parque100.sql (UTF-8). */
 function dump() {
   const { cmd, shell } = resolveClient('mysqldump');
   const result = run(cmd, [
-    '-u', 'root',
+    '-u', DB_USER,
     '--databases', DB,
     '--single-transaction',
     '--routines',
@@ -64,7 +94,7 @@ function dump() {
   ], { shell, stdio: ['ignore', 'pipe', 'inherit'] });
 
   if (result.status !== 0) {
-    console.error('Error: no se pudo exportar la BD. ¿Está MySQL levantado?');
+    clientError('exportar la BD');
     process.exit(result.status ?? 1);
   }
   writeFileSync(DUMP_FILE, result.stdout);
@@ -81,13 +111,13 @@ function restore() {
   }
   const { cmd, shell } = resolveClient('mysql');
   const sql = readFileSync(DUMP_FILE);
-  const result = run(cmd, ['-u', 'root', '--default-character-set=utf8mb4'], {
+  const result = run(cmd, ['-u', DB_USER, '--default-character-set=utf8mb4'], {
     shell,
     stdio: ['ignore', 'inherit', 'inherit'],
     input: sql,
   });
   if (result.status !== 0) {
-    console.error('Error: no se pudo restaurar la BD. ¿Está MySQL levantado?');
+    clientError('restaurar la BD');
     process.exit(result.status ?? 1);
   }
   console.log(`BD '${DB}' restaurada desde ${DUMP_FILE}`);

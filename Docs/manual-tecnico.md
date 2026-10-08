@@ -107,7 +107,7 @@ Los datos del proyecto son ficticios (creados para pruebas), por lo que el estad
 
 - **Exportar** (tras cambios en la BD local): `npm run db:dump` → guarda esquema + datos en `.BD/parque100.sql`; hay que commitear ese archivo.
 - **Importar** (tras hacer pull): `npm run db:restore` → reemplaza las 5 tablas del proyecto por las del dump (idempotente).
-- Ambos comandos (`scripts/db.mjs`) localizan el cliente MySQL en `MYSQL_BIN`, en `C:\Program Files\MySQL\MySQL Server 8.4\bin` o en el PATH; usan `root` sin contraseña (o `MYSQL_PWD`).
+- Ambos comandos (`scripts/db.mjs`) son multi-entorno (Windows, Linux, macOS) y localizan el cliente MySQL o MariaDB así: `MYSQL_BIN` → rutas por defecto de la plataforma (`C:\Program Files\MySQL\MySQL Server 8.4\bin`, `/usr/bin`, `/usr/local/bin`, `/usr/local/mysql/bin`, `/opt/homebrew/bin`) → `mysql`/`mysqldump` o `mariadb`/`mariadb-dump` en el PATH. Autenticación `root` sin contraseña, o `MYSQL_PWD` / `DB_USER`.
 - Para una BD nueva sin datos compartidos basta el esquema de `setup.sql`.
 
 ### Conexión
