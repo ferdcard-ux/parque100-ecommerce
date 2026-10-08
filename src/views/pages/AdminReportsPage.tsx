@@ -39,7 +39,7 @@ function inRange(fecha: string, period: Period, from: string, to: string): boole
   }
 }
 
-/** Dashboard de reportes: KPIs, top productos y pedidos por estado. */
+/** Dashboard de reportes: KPIs sobre pedidos validos y pedidos por estado. */
 export function AdminReportsPage() {
   const { orders, isLoading } = useAdminOrdersController();
   const [period, setPeriod] = useState<Period>('hoy');
@@ -51,8 +51,10 @@ export function AdminReportsPage() {
     [orders, period, from, to],
   );
 
-  const totalSales = filtered.reduce((sum, o) => sum + Number(o.Total), 0);
-  const avgTicket = filtered.length > 0 ? Math.round(totalSales / filtered.length) : 0;
+  /** Pedidos cancelados no suman a las ventas ni al ticket promedio. */
+  const validOrders = useMemo(() => filtered.filter((o) => o.Estado !== 'cancelado'), [filtered]);
+  const totalSales = validOrders.reduce((sum, o) => sum + Number(o.Total), 0);
+  const avgTicket = validOrders.length > 0 ? Math.round(totalSales / validOrders.length) : 0;
   const byStatus = ORDER_ESTADOS.map((estado) => ({
     estado,
     count: filtered.filter((o) => o.Estado === estado).length,

@@ -112,7 +112,8 @@ export const orderService = {
       if (!response.ok) throw new Error('No fue posible cargar los pedidos.');
       return (await response.json()) as ApiOrder[];
     } catch (err) {
-      if (err instanceof Error && err.message.startsWith('No fue posible')) throw err;
+      if (err instanceof TypeError) throw new Error('No fue posible conectar con el servidor.');
+      if (err instanceof Error) throw err;
       throw new Error('No fue posible conectar con el servidor.');
     }
   },
@@ -131,7 +132,8 @@ export const orderService = {
       if (!response.ok) throw new Error('No fue posible cargar el pedido.');
       return (await response.json()) as ApiOrder;
     } catch (err) {
-      if (err instanceof Error && err.message.startsWith('No fue posible')) throw err;
+      if (err instanceof TypeError) throw new Error('No fue posible conectar con el servidor.');
+      if (err instanceof Error) throw err;
       throw new Error('No fue posible conectar con el servidor.');
     }
   },
@@ -156,7 +158,8 @@ export const orderService = {
         throw new Error(data?.error || 'No fue posible actualizar el estado.');
       }
     } catch (err) {
-      if (err instanceof Error && err.message.startsWith('No fue posible')) throw err;
+      if (err instanceof TypeError) throw new Error('No fue posible conectar con el servidor.');
+      if (err instanceof Error) throw err;
       throw new Error('No fue posible conectar con el servidor.');
     }
   },
@@ -182,7 +185,8 @@ export const orderService = {
         throw new Error(data?.error || 'No fue posible cancelar el pedido.');
       }
     } catch (err) {
-      if (err instanceof Error && err.message.startsWith('No fue posible')) throw err;
+      if (err instanceof TypeError) throw new Error('No fue posible conectar con el servidor.');
+      if (err instanceof Error) throw err;
       throw new Error('No fue posible conectar con el servidor.');
     }
   },

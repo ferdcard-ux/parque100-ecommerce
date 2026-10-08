@@ -12,6 +12,15 @@ function createOrderError(message, statusCode) {
   return error;
 }
 
+/** Fecha actual en horario del servidor (YYYY-MM-DD), sin desfase UTC. */
+function localDate() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 /**
  * Modelo de pedidos.
  * @namespace orderModel
@@ -46,6 +55,11 @@ export const orderModel = {
    * @throws {Error} Si falla la consulta a la base de datos.
    */
   async updateStatus(id, estado) {
+    const [rows] = await pool.query('SELECT Estado FROM pedidos WHERE ID_Pedido = ?', [id]);
+    if (rows.length === 0) return false;
+    if (rows[0].Estado === 'cancelado' && estado !== 'cancelado') {
+      throw createOrderError('Un pedido cancelado no se puede reanudar', 409);
+    }
     const [result] = await pool.query('UPDATE pedidos SET Estado = ? WHERE ID_Pedido = ?', [estado, id]);
     return result.affectedRows === 1;
   },
@@ -196,7 +210,7 @@ export const orderModel = {
           (Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago, Monto_Recibido, Cambio, Comprobante)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
-          Fecha || new Date().toISOString().split('T')[0],
+          Fecha || localDate(),
           Estado || 'pendiente',
           Total,
           Tipo_Entrega,

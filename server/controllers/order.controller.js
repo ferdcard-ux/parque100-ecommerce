@@ -70,7 +70,7 @@ export const orderController = {
       if (!updated) return res.status(404).json({ error: 'Pedido no encontrado' });
       res.json({ message: 'Estado actualizado', estado: Estado });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      res.status(err.statusCode || 500).json({ error: err.message });
     }
   },
 
