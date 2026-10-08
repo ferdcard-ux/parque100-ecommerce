@@ -18,11 +18,13 @@ interface CancelOrderModalProps {
   onClose: () => void;
   /** Confirma la cancelacion con el motivo elegido. */
   onConfirm: (motivo: string) => void;
+  /** Lista de motivos a mostrar (por defecto los del cliente). */
+  reasons?: readonly string[];
 }
 
 /** Modal que exige motivo (lista o texto personalizado) y advierte del reembolso. */
-export function CancelOrderModal({ orderId, saving, error, onClose, onConfirm }: CancelOrderModalProps) {
-  const [reason, setReason] = useState<string>(CANCEL_REASONS[0]);
+export function CancelOrderModal({ orderId, saving, error, onClose, onConfirm, reasons = CANCEL_REASONS }: CancelOrderModalProps) {
+  const [reason, setReason] = useState<string>(reasons[0]);
   const [custom, setCustom] = useState('');
 
   const isCustom = reason === CUSTOM_OPTION;
@@ -43,7 +45,7 @@ export function CancelOrderModal({ orderId, saving, error, onClose, onConfirm }:
         {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{error}</div>}
         <p className="text-gray-500 mb-3" style={{ fontSize: '0.85rem' }}>Indica el motivo de la cancelación (obligatorio):</p>
         <div className="flex flex-col gap-2 mb-3">
-          {[...CANCEL_REASONS, CUSTOM_OPTION].map((r) => (
+          {[...reasons, CUSTOM_OPTION].map((r) => (
             <label key={r} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border cursor-pointer transition-colors ${reason === r ? 'border-[#C62828] bg-[#C62828]/5' : 'border-gray-200 hover:border-gray-300'}`}>
               <input
                 type="radio"

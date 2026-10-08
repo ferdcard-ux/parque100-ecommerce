@@ -9,7 +9,7 @@ import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
-import { ORDER_ESTADOS, formatPrice } from '../../utils';
+import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice } from '../../utils';
 import type { OrderEstado } from '../../models';
 
 /** Resumen y gestion de pedidos en curso, finalizados y cancelados. */
@@ -18,6 +18,7 @@ export function AdminOrdersPage() {
   const [cancelId, setCancelId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [statusError, setStatusError] = useState<string | null>(null);
 
   const summary = [
     { label: 'Pendientes', value: counts.pendiente },
@@ -27,13 +28,18 @@ export function AdminOrdersPage() {
     { label: 'Cancelados', value: counts.cancelado },
   ];
 
-  const handleSelect = (id: number, estado: OrderEstado) => {
+  const handleSelect = async (id: number, estado: OrderEstado) => {
     if (estado === 'cancelado') {
       setCancelError(null);
       setCancelId(id);
       return;
     }
-    changeStatus(id, estado);
+    setStatusError(null);
+    try {
+      await changeStatus(id, estado);
+    } catch (err) {
+      setStatusError(err instanceof Error ? err.message : 'No fue posible actualizar el estado.');
+    }
   };
 
   const handleCancel = async (motivo: string) => {
@@ -66,6 +72,10 @@ export function AdminOrdersPage() {
       ) : error ? (
         <p className="text-center text-[#C62828] py-16">{error}</p>
       ) : (
+        <>
+          {statusError && (
+            <p role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{statusError}</p>
+          )}
         <div className="flex flex-col gap-4">
           {orders.map((order) => (
             <div key={order.ID_Pedido} className="bg-white rounded-2xl border border-gray-100 p-5">
@@ -104,8 +114,10 @@ export function AdminOrdersPage() {
                 </Link>
                 <select
                   value={order.Estado}
+                  disabled={order.Estado === 'cancelado'}
+                  title={order.Estado === 'cancelado' ? 'Un pedido cancelado no se puede reanudar' : undefined}
                   onChange={(e) => handleSelect(order.ID_Pedido, e.target.value as OrderEstado)}
-                  className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828]"
+                  className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828] disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ fontSize: '0.8rem' }}
                 >
                   {ORDER_ESTADOS.map((estado) => (
@@ -116,12 +128,14 @@ export function AdminOrdersPage() {
             </div>
           ))}
         </div>
+        </>
       )}
       {cancelId !== null && (
         <CancelOrderModal
           orderId={cancelId}
           saving={saving}
           error={cancelError}
+          reasons={ADMIN_CANCEL_REASONS}
           onClose={() => setCancelId(null)}
           onConfirm={handleCancel}
         />

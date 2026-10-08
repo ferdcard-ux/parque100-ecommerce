@@ -29,8 +29,8 @@ const app = express();
 /** Habilita CORS para permitir peticiones desde el frontend (Vite :5173). */
 app.use(cors());
 
-/** Permite interpretar cuerpos JSON en las peticiones. */
-app.use(express.json());
+/** Permite interpretar cuerpos JSON en las peticiones (limite ampliado para imagenes en dataURL). */
+app.use(express.json({ limit: '10mb' }));
 
 /** Registro de routers por modulo. */
 app.use('/api', productsRouter);

@@ -40,12 +40,21 @@ export const ORDER_STATUS_META: Record<string, { label: string; badgeClass: stri
   cancelado: { label: 'Cancelado', badgeClass: 'bg-red-100 text-red-700 border-red-200', step: -1 },
 };
 
-/** Motivos predefinidos de cancelacion (mas opcion de texto libre en la UI). */
+/** Motivos predefinidos de cancelacion para el cliente (mas opcion de texto libre en la UI). */
 export const CANCEL_REASONS = [
   'Cambié de opinión',
   'Pedí por error',
   'Demora en la entrega',
   'Encontré mejores precios',
+] as const;
+
+/** Motivos predefinidos de cancelacion para el administrador (operativos, distintos a los del cliente). */
+export const ADMIN_CANCEL_REASONS = [
+  'Sin stock disponible',
+  'Producto no disponible',
+  'Datos de entrega incompletos',
+  'Pago no confirmado',
+  'Solicitado por el cliente por otro medio',
 ] as const;
 
 /** Aviso de reembolso mostrado al cancelar un pedido. */

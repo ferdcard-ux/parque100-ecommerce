@@ -11,7 +11,7 @@ import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { SectionTitle } from '../components/shared/section-title';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
-import { ORDER_ESTADOS, formatPrice } from '../../utils';
+import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice } from '../../utils';
 
 /** Detalle admin de un pedido con cambio de estado y cancelacion con motivo. */
 export function AdminOrderDetailPage() {
@@ -45,8 +45,16 @@ export function AdminOrderDetailPage() {
       setCancelOpen(true);
       return;
     }
-    await orderService.updateStatus(order.ID_Pedido, estado);
-    setOrder({ ...order, Estado: estado });
+    if (order.Estado === 'cancelado') {
+      setError('Un pedido cancelado no se puede reanudar.');
+      return;
+    }
+    try {
+      await orderService.updateStatus(order.ID_Pedido, estado);
+      setOrder({ ...order, Estado: estado });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible actualizar el estado.');
+    }
   };
 
   const handleCancel = async (motivo: string) => {
@@ -89,8 +97,10 @@ export function AdminOrderDetailPage() {
               <StatusBadge estado={order.Estado} />
               <select
                 value={order.Estado}
+                disabled={order.Estado === 'cancelado'}
+                title={order.Estado === 'cancelado' ? 'Un pedido cancelado no se puede reanudar' : undefined}
                 onChange={(e) => changeStatus(e.target.value as OrderEstado)}
-                className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828]"
+                className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828] disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ fontSize: '0.8rem' }}
               >
                 {ORDER_ESTADOS.map((estado) => (
@@ -156,6 +166,7 @@ export function AdminOrderDetailPage() {
           orderId={order.ID_Pedido}
           saving={saving}
           error={cancelError}
+          reasons={ADMIN_CANCEL_REASONS}
           onClose={() => setCancelOpen(false)}
           onConfirm={handleCancel}
         />
