@@ -2,8 +2,8 @@
  * @fileoverview Historial de compras del usuario.
  */
 import { useState } from 'react';
-import { Link } from 'react-router';
-import { ChevronRight, ShoppingBag } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
+import { ShoppingBag } from 'lucide-react';
 import { useApp } from '../../App';
 import { useOrdersController } from '../../controllers';
 import { orderService } from '../../services';
@@ -26,6 +26,7 @@ function formatDate(value: string): string {
 /** Lista de pedidos del usuario con tracker, cancelacion con motivo y reembolso. */
 export function OrdersPage() {
   const { user, isLoggedIn } = useApp();
+  const navigate = useNavigate();
   const { orders, isLoading, error, reload } = useOrdersController(user?.id ?? null);
   const [cancelId, setCancelId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -98,7 +99,11 @@ export function OrdersPage() {
               const cancellable = order.Estado === 'pendiente' || order.Estado === 'preparando';
               const locked = order.Estado === 'enviando';
               return (
-              <div key={order.ID_Pedido} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-[#C62828]/20 transition-all">
+              <div
+                key={order.ID_Pedido}
+                onClick={() => navigate(`/compras/${order.ID_Pedido}`)}
+                className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-[#C62828]/20 transition-all cursor-pointer"
+              >
                 <div className="flex items-center justify-between mb-3">
                   <span className="text-[#212121] font-bold">Pedido #{order.ID_Pedido}</span>
                   <StatusBadge estado={order.Estado} />
@@ -115,19 +120,20 @@ export function OrdersPage() {
                 ) : (
                   <OrderTracker estado={order.Estado} />
                 )}
-                <div className="flex items-center justify-between mt-3">
+                <div className="flex items-center justify-start mt-4">
                   {cancellable ? (
-                    <button onClick={() => { setCancelError(null); setCancelId(order.ID_Pedido); }} className="text-gray-400 hover:text-[#C62828] transition-colors" style={{ fontSize: '0.75rem' }}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setCancelError(null); setCancelId(order.ID_Pedido); }}
+                      className="bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full px-5 py-1.5 transition-colors"
+                      style={{ fontSize: '0.8rem', fontWeight: 600 }}
+                    >
                       Cancelar pedido
                     </button>
                   ) : locked ? (
-                    <span title="Ya no se puede cancelar en este estado" className="text-gray-300 cursor-not-allowed" style={{ fontSize: '0.75rem' }}>
+                    <span title="Ya no se puede cancelar en este estado" className="bg-red-50 text-red-300 border border-red-100 rounded-full px-5 py-1.5 cursor-not-allowed" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
                       Cancelar pedido
                     </span>
                   ) : <span />}
-                  <Link to={`/compras/${order.ID_Pedido}`} className="flex items-center gap-1 text-gray-400 ml-auto" style={{ fontSize: '0.75rem' }}>
-                    Ver detalle <ChevronRight size={14} />
-                  </Link>
                 </div>
               </div>
               );

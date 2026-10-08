@@ -14,7 +14,7 @@ export function FavoritesPage() {
   const { addToCart } = useApp();
   const { products } = useProductController();
   const { favorites, toggleFavorite, isFavorite } = useFavoritesController();
-  const favProducts = products.filter((p) => favorites.includes(p.id));
+  const favProducts = products.filter((p) => favorites.includes(String(p.id)));
 
   return (
     <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
