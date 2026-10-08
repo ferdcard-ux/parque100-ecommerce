@@ -72,7 +72,7 @@ CREATE TABLE `productos` (
   `ID_Producto` varchar(30) NOT NULL,
   `Nombre` varchar(50) DEFAULT NULL,
   `Descripcion` varchar(255) DEFAULT NULL,
-  `Imagen` varchar(500) DEFAULT NULL,
+  `Imagen` MEDIUMTEXT DEFAULT NULL,
   `Precio_Venta` int(20) DEFAULT NULL,
   `Stock_Minimo` int(30) DEFAULT NULL,
   `ID_Categoria` int(11) DEFAULT NULL

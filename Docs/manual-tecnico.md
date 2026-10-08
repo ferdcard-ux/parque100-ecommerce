@@ -95,7 +95,11 @@ npm run build
 
 La base de datos `parque100` consta de 5 tablas: `categorias`, `productos`, `usuario`, `pedidos`, `detalle_pedido`.
 
-La tabla `productos` incluye una columna `Imagen VARCHAR(500)` opcional para almacenar URLs de imágenes personalizadas al crear/editar productos desde el panel administrativo.
+La tabla `productos` incluye una columna `Imagen MEDIUMTEXT` opcional para almacenar URLs web o imagenes locales en dataURL al crear/editar productos desde el panel administrativo (el backend acepta cuerpos JSON de hasta 10 MB).
+
+La tabla `usuario` exige `Correo` y `Telefono` únicos en todo el sistema (índices `UNIQUE`; el teléfono admite `NULL`); el registro, el alta/edición admin y el perfil propio devuelven 409 específico si ya existen.
+
+Los pedidos se fechan en horario del servidor (fecha local, sin desfase UTC) y los cancelados no suman a las ventas: reportes calculan `Ventas totales` y `Ticket promedio` solo sobre pedidos no cancelados.
 
 ### Conexión
 
@@ -129,21 +133,21 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `DELETE /api/products/:id` | Eliminar producto |
 | `GET /api/categories` | Listar todas las categorías |
 | `POST /api/auth/login` | Iniciar sesión |
-| `POST /api/auth/register` | Registrar usuario |
+| `POST /api/auth/register` | Registrar usuario (nombre, correo y teléfono únicos; 409 si existen) |
 | `POST /api/auth/recover` | Generar clave temporal para un correo |
 | `PUT /api/auth/password` | Cambiar contraseña (valida la actual) |
 | `GET /api/users` | Listar usuarios registrados |
 | `POST /api/users` | Crear usuario desde el panel admin |
 | `PUT /api/users/:id/admin` | Editar nombre, correo, rol y teléfono |
+| `PUT /api/users/:id/profile` | Editar perfil propio (nombre, correo, teléfono; 409 si existen) |
 | `DELETE /api/users/:id` | Eliminar usuario sin pedidos (409 si tiene) |
 | `GET /api/users/:id` | Consultar datos de entrega del usuario |
 | `PUT /api/users/:id` | Actualizar teléfono, torre/bloque, piso y apartamento |
 | `GET /api/orders` | Listar pedidos |
 | `GET /api/orders/:id` | Detalle de pedido con sus líneas |
 | `POST /api/orders` | Crear pedido (con snapshot de entrega y pago) |
-| `PUT /api/orders/:id/status` | Cambiar estado (pendiente, preparando, enviando, entregado) |
-| `PUT /api/orders/:id/cancel` | Cancelar con motivo (devuelve stock; 409 si no admite) |
-| `DELETE /api/orders/:id` | Cancelar pedido pendiente con sus líneas |
+| `PUT /api/orders/:id/status` | Cambiar estado (pendiente, preparando, enviando, entregado; 409 al reanudar un cancelado) |
+| `PUT /api/orders/:id/cancel` | Cancelar con motivo (devuelve stock; 400 sin motivo, 409 si el estado no admite) |
 | `POST /api/payments/process` | Procesar pago |
 
 ## Scroll Lock en modales
@@ -161,7 +165,7 @@ Aplica `overflow: hidden` al `body` al montarse y lo restaura al desmontarse.
 
 El sistema maneja imágenes en este orden de prioridad:
 
-1. `Imagen` (columna BD) — URL personalizada al crear/editar producto
+1. `Imagen` (columna BD) — URL web o imagen local en dataURL al crear/editar producto
 2. `PRODUCT_IMAGES` (mapa fijo en `product.service.ts`) — imágenes por nombre de producto
 3. `CATEGORY_IMAGES` (mapa por categoría) — fallback genérico
 4. Imagen placeholder por defecto

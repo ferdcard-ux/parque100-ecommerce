@@ -19,7 +19,7 @@
 | Campo | Valor |
 |-------|-------|
 | **Nombre** | Tienda Parque 100 |
-| **Versión** | 1.5.0 |
+| **Versión** | 1.5.1 |
 | **Tecnologías** | React 18, TypeScript, Vite 6, Tailwind CSS 4, Express 4, MySQL (mysql2/promise) |
 | **Arquitectura** | MVC full-stack: frontend React (`src/`) + backend Express (`server/`) |
 | **Repositorio** | `github.com/ferdcard-ux/parque100-ecommerce` (público) |

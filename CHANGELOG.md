@@ -2,6 +2,18 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.5.1] — 2026-10-08
+
+### Correcciones y mejoras
+- Favoritos: los IDs se persisten como texto (antes se perdían al recargar) y se sincronizan entre vistas.
+- Inventario: agregar/editar acepta URL web o archivo local de imagen (vista previa, máx. 2 MB); columna `productos.Imagen` a `MEDIUMTEXT` y límite JSON del backend a 10 MB.
+- Mis compras: tarjeta clicable al detalle (sin botón "Ver detalle") y botón Cancelar rojo redondeado.
+- Cancelaciones admin: motivos operativos propios (distintos a los del cliente); cancelado terminal (sin reanudar) en UI y backend (409).
+- Dirección: el teléfono exige exactamente 10 dígitos.
+- Pedidos: el backend propaga el mensaje real de error (antes todo se mostraba como "sin conexión"); reportes excluyen cancelados de ventas/ticket y fechan en horario local.
+- Perfil: "Guardar" persiste nombre, correo y teléfono (`PUT /api/users/:id/profile`) y refleja la cuenta activa.
+- Cuentas: correo y teléfono únicos en registro, alta/edición admin y perfil (409 específico); el registro pide teléfono de 10 dígitos.
+
 ## [1.5.0] — 2026-10-07
 
 ### Compras

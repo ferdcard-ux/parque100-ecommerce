@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS productos (
   ID_Producto varchar(30) NOT NULL,
   Nombre varchar(50) DEFAULT NULL,
   Descripcion varchar(255) DEFAULT NULL,
+  Imagen MEDIUMTEXT DEFAULT NULL,
   Precio_Venta int(20) DEFAULT NULL,
   Stock_Minimo int(30) DEFAULT NULL,
   ID_Categoria int(11) DEFAULT NULL,
@@ -46,7 +47,8 @@ CREATE TABLE IF NOT EXISTS usuario (
   Piso varchar(20) DEFAULT NULL,
   Apartamento varchar(20) DEFAULT NULL,
   PRIMARY KEY (ID_Usuario),
-  UNIQUE KEY Correo (Correo)
+  UNIQUE KEY Correo (Correo),
+  UNIQUE KEY Telefono (Telefono)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
