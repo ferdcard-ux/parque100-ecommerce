@@ -56,6 +56,20 @@ function validateAdminUser(body) {
   };
 }
 
+function validateProfile(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
+  if (Object.keys(body).some((field) => !['Nombre', 'Correo', 'Telefono'].includes(field))) return null;
+  const { Nombre, Correo, Telefono } = body;
+  if (typeof Nombre !== 'string' || Nombre.trim().length === 0 || Nombre.trim().length > 30) return null;
+  if (typeof Correo !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Correo) || Correo.length > 50) return null;
+  if (Telefono !== null && Telefono !== undefined && Telefono !== '' && !/^\d{1,20}$/.test(String(Telefono))) return null;
+  return {
+    Nombre: Nombre.trim(),
+    Correo: Correo.trim(),
+    Telefono: Telefono === '' || Telefono === undefined ? null : String(Telefono),
+  };
+}
+
 export const usersController = {
   /**
    * GET /api/users
@@ -91,10 +105,22 @@ export const usersController = {
       return res.status(400).json({ error: 'La contrasena debe tener al menos 8 caracteres' });
     }
     try {
+      if (await userModel.existsByEmail(data.Correo)) {
+        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
+      }
+      if (data.Telefono !== null && await userModel.existsByPhone(data.Telefono)) {
+        return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
+      }
       const id = await userModel.createByAdmin({ ...data, Contrasena });
       res.status(201).json({ id, message: 'Usuario creado' });
     } catch (err) {
-      if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'El correo ya esta registrado' });
+      if (err.code === 'ER_DUP_ENTRY') {
+        const message = String(err.message || '');
+        if (message.includes('Telefono')) {
+          return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
+        }
+        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
+      }
       res.status(500).json({ error: err.message });
     }
   },
@@ -113,11 +139,23 @@ export const usersController = {
     const data = validateAdminUser(req.body);
     if (!data) return res.status(400).json({ error: 'Datos de usuario invalidos' });
     try {
+      if (await userModel.existsByEmail(data.Correo, id)) {
+        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
+      }
+      if (data.Telefono !== null && await userModel.existsByPhone(data.Telefono, id)) {
+        return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
+      }
       const updated = await userModel.updateById(id, data);
       if (!updated) return res.status(404).json({ error: 'Usuario no encontrado' });
       res.json({ message: 'Usuario actualizado' });
     } catch (err) {
-      if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'El correo ya esta registrado' });
+      if (err.code === 'ER_DUP_ENTRY') {
+        const message = String(err.message || '');
+        if (message.includes('Telefono')) {
+          return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
+        }
+        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
+      }
       res.status(500).json({ error: err.message });
     }
   },
@@ -142,6 +180,44 @@ export const usersController = {
       if (!deleted) return res.status(404).json({ error: 'Usuario no encontrado' });
       res.json({ message: 'Usuario eliminado' });
     } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  /**
+   * PUT /api/users/:id/profile - Actualiza el perfil propio del usuario
+   * (nombre, correo y telefono). No admite cambio de rol ni de contrasena.
+   *
+   * @async
+   * @param {import('express').Request} req - Peticion con id y campos del perfil.
+   * @param {import('express').Response} res - Respuesta HTTP.
+   * @returns {Promise<void>} 200 con el perfil actualizado, 409 si el correo ya existe.
+   */
+  async updateProfile(req, res) {
+    const id = parseUserId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'ID de usuario invalido' });
+    const data = validateProfile(req.body);
+    if (!data) return res.status(400).json({ error: 'Datos de perfil invalidos' });
+    try {
+      const existing = await userModel.findPublicById(id);
+      if (!existing) return res.status(404).json({ error: 'Usuario no encontrado' });
+      if (await userModel.existsByEmail(data.Correo, id)) {
+        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
+      }
+      if (data.Telefono !== null && await userModel.existsByPhone(data.Telefono, id)) {
+        return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
+      }
+      await userModel.updateProfileById(id, data);
+      const profile = await userModel.findPublicById(id);
+      res.json(profile);
+    } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        const message = String(err.message || '');
+        if (message.includes('Telefono')) {
+          return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
+        }
+        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
+      }
       res.status(500).json({ error: err.message });
     }
   },

@@ -5,7 +5,7 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import type { User, LoginCredentials, RegisterData } from '../models';
-import { authService } from '../services';
+import { authService, userService } from '../services';
 
 const SESSION_KEY = 'p100-session';
 const SESSIONS_KEY = 'p100-sessions';
@@ -133,6 +133,29 @@ export function useAuthController() {
     setActiveId(id);
   }, []);
 
+  /**
+   * Actualiza el perfil propio en el backend y refleja los cambios
+   * en la sesion activa (y en las demas sesiones de la misma cuenta).
+   */
+  const updateProfile = useCallback(async (data: { firstName: string; lastName: string; email: string; phone: string }) => {
+    if (activeId === null) throw new Error('Sin sesion activa');
+    const row = await userService.updateProfile(activeId, {
+      Nombre: `${data.firstName} ${data.lastName}`.trim(),
+      Correo: data.email.trim(),
+      Telefono: data.phone.replace(/\D/g, '').slice(0, 20),
+    });
+    const parts = (row.Nombre || '').split(' ');
+    const updated: User = {
+      id: row.ID_Usuario,
+      firstName: parts[0] || '',
+      lastName: parts.slice(1).join(' ') || '',
+      email: row.Correo,
+      isAdmin: row.Rol === 'admin',
+    };
+    setSessions((prev) => prev.map((s) => (s.id === activeId ? updated : s)));
+    return updated;
+  }, [activeId]);
+
   /** Cierra una sesion concreta (por defecto la activa). */
   const closeSession = useCallback((id?: number) => {
     const target = id ?? activeId;
@@ -166,5 +189,6 @@ export function useAuthController() {
     logout,
     switchSession,
     closeSession,
+    updateProfile,
   };
 }

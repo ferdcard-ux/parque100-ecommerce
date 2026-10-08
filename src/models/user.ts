@@ -57,6 +57,8 @@ export interface RegisterData {
   lastName: string;
   /** Correo electronico. */
   email: string;
+  /** Telefono de contacto (10 digitos, unico por cuenta). */
+  phone: string;
   /** Contrasena elegida. */
   password: string;
   /** Confirmacion de contrasena (validada solo en cliente). */

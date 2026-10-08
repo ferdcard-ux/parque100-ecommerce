@@ -46,6 +46,38 @@ export const userModel = {
   },
 
   /**
+   * Verifica si un correo ya esta registrado, opcionalmente
+   * excluyendo un usuario (util para ediciones).
+   *
+   * @async
+   * @param {string} correo - Correo a buscar.
+   * @param {number} [excludeId] - ID a excluir de la busqueda.
+   * @returns {Promise<boolean>} true si el correo ya existe.
+   */
+  async existsByEmail(correo, excludeId) {
+    const [rows] = excludeId
+      ? await pool.query('SELECT 1 FROM usuario WHERE Correo = ? AND ID_Usuario <> ? LIMIT 1', [correo, excludeId])
+      : await pool.query('SELECT 1 FROM usuario WHERE Correo = ? LIMIT 1', [correo]);
+    return rows.length > 0;
+  },
+
+  /**
+   * Verifica si un telefono ya esta registrado, opcionalmente
+   * excluyendo un usuario (util para ediciones).
+   *
+   * @async
+   * @param {string} telefono - Telefono a buscar.
+   * @param {number} [excludeId] - ID a excluir de la busqueda.
+   * @returns {Promise<boolean>} true si el telefono ya existe.
+   */
+  async existsByPhone(telefono, excludeId) {
+    const [rows] = excludeId
+      ? await pool.query('SELECT 1 FROM usuario WHERE Telefono = ? AND ID_Usuario <> ? LIMIT 1', [telefono, excludeId])
+      : await pool.query('SELECT 1 FROM usuario WHERE Telefono = ? LIMIT 1', [telefono]);
+    return rows.length > 0;
+  },
+
+  /**
    * Actualiza la contrasena de un usuario por correo.
    *
    * @param {string} correo - Correo del usuario.
@@ -113,6 +145,38 @@ export const userModel = {
       [Nombre, Correo, Rol, Telefono || null, id],
     );
     return result.affectedRows === 1;
+  },
+
+  /**
+   * Actualiza el perfil propio de un usuario (nombre, correo y telefono).
+   * No permite cambiar el rol ni la contrasena por esta via.
+   *
+   * @async
+   * @param {number} id - Identificador del usuario.
+   * @param {Object} data - Campos a actualizar.
+   * @returns {Promise<boolean>} true si actualizo una fila.
+   */
+  async updateProfileById(id, { Nombre, Correo, Telefono }) {
+    const [result] = await pool.query(
+      'UPDATE usuario SET Nombre = ?, Correo = ?, Telefono = ? WHERE ID_Usuario = ?',
+      [Nombre, Correo, Telefono || null, id],
+    );
+    return result.affectedRows === 1;
+  },
+
+  /**
+   * Obtiene el perfil publico de un usuario por su identificador.
+   *
+   * @async
+   * @param {number} id - Identificador del usuario.
+   * @returns {Promise<Object|null>} Fila sin contrasena o null si no existe.
+   */
+  async findPublicById(id) {
+    const [rows] = await pool.query(
+      'SELECT ID_Usuario, Nombre, Correo, Rol, Telefono FROM usuario WHERE ID_Usuario = ?',
+      [id],
+    );
+    return rows[0] || null;
   },
 
   /**

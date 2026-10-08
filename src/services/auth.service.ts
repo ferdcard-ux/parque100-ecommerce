@@ -64,13 +64,14 @@ export const authService = {
         Nombre: `${data.firstName} ${data.lastName}`.trim(),
         Correo: data.email,
         Contrasena: data.password,
+        Telefono: data.phone,
         Direccion: '',
       }),
     });
-    if (!res.ok) throw new Error('Error al registrar');
-    const result = await res.json();
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(body?.error || 'Error al registrar');
     return {
-      id: result.id,
+      id: body?.id,
       firstName: data.firstName,
       lastName: data.lastName,
       email: data.email,

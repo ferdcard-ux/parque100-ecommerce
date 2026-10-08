@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, Store } from 'lucide-react';
+import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowLeft, Store } from 'lucide-react';
 import type { RegisterData } from '../../../models';
 import { isValidEmail, isValidPassword } from '../../../utils';
 
@@ -20,12 +20,16 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     password: '',
     confirm: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    setForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.name === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value,
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -34,6 +38,10 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
 
     if (!isValidEmail(form.email)) {
       setError('Correo electrónico inválido');
+      return;
+    }
+    if (form.phone.length !== 10) {
+      setError('Ingresa un número de teléfono de 10 dígitos');
       return;
     }
     if (!isValidPassword(form.password)) {
@@ -51,6 +59,7 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
+        phone: form.phone,
         password: form.password,
         confirmPassword: form.confirm,
       });
@@ -125,6 +134,17 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
                 <div className="relative">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input type="email" name="email" required value={form.email} onChange={handleChange} placeholder="correo@ejemplo.com"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
+                    style={{ fontSize: '0.9rem' }}
+                  />
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Teléfono *</label>
+                <div className="relative">
+                  <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input type="tel" name="phone" inputMode="numeric" required minLength={10} maxLength={10} pattern="[0-9]{10}" title="Ingresa un número de 10 dígitos" value={form.phone} onChange={handleChange} placeholder="300 000 0000"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.9rem' }}
                   />
