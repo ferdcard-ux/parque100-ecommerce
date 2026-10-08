@@ -55,7 +55,8 @@ npm run dev
 ```
 
 > Si tu usuario root de MySQL tiene contraseña, edítala en `server/config/db.js` (o define `MYSQL_PWD`).
-> Si el cliente MySQL no está en `C:\Program Files\MySQL\MySQL Server 8.4\bin`, define `MYSQL_BIN` con su directorio `bin`.
+> Windows: si el cliente no está en `C:\Program Files\MySQL\MySQL Server 8.4\bin`, define `MYSQL_BIN` con su directorio `bin`.
+> Linux/macOS: instala el cliente (`sudo apt install mysql-client`, o `mariadb-client`) y usa los mismos comandos; si el binario no está en el PATH, define `MYSQL_BIN` (p. ej. `MYSQL_BIN=/usr/local/mysql/bin npm run db:dump`). El script también acepta clientes MariaDB (`mariadb`/`mariadb-dump`).
 
 ### Sincronizar la base de datos entre equipos
 
