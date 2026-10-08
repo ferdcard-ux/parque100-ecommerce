@@ -11,9 +11,11 @@ interface AddressFormProps {
 
 export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit }: AddressFormProps) {
   const [form, setForm] = useState<DeliveryAddress>(initialAddress);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     setForm(initialAddress);
+    setPhoneError(null);
   }, [initialAddress]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -21,10 +23,16 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit 
       ? e.target.value.replace(/\D/g, '').slice(0, 10)
       : e.target.value;
     setForm((prev) => ({ ...prev, [e.target.name]: value }));
+    if (e.target.name === 'phone' && phoneError && value.length === 10) setPhoneError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.phone.length !== 10) {
+      setPhoneError('Ingresa un número de 10 dígitos.');
+      return;
+    }
+    setPhoneError(null);
     await onSubmit(form);
   };
 
@@ -72,8 +80,9 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit 
           <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Teléfono *</label>
           <div className="relative">
             <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input type="tel" name="phone" inputMode="numeric" required value={form.phone} onChange={handleChange} placeholder="300 000 0000" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+            <input type="tel" name="phone" inputMode="numeric" required minLength={10} maxLength={10} pattern="[0-9]{10}" title="Ingresa un número de 10 dígitos" aria-invalid={phoneError !== null} aria-describedby={phoneError ? 'phone-error' : undefined} value={form.phone} onChange={handleChange} placeholder="300 000 0000" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
           </div>
+          {phoneError && <p id="phone-error" role="alert" className="text-[#C62828] mt-1.5" style={{ fontSize: '0.8rem' }}>{phoneError}</p>}
         </div>
 
         <div className="flex items-center gap-2 mb-4 mt-6">
