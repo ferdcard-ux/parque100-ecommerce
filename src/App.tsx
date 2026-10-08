@@ -44,7 +44,7 @@ interface AppContextValue {
   login: (credentials: LoginCredentials) => Promise<User>;
   register: (data: RegisterData) => Promise<User>;
   logout: () => void;
-  cartItems: CartItem[];
+  updateProfile: (data: { firstName: string; lastName: string; email: string; phone: string }) => Promise<User>;  cartItems: CartItem[];
   addToCart: (product: Product) => void;
   removeFromCart: (id: number) => void;
   updateQuantity: (id: number, qty: number) => void;
@@ -199,6 +199,7 @@ export default function App() {
     login: auth.login,
     register: auth.register,
     logout: auth.logout,
+    updateProfile: auth.updateProfile,
     cartItems: cart.items,
     addToCart: handleAddToCart,
     removeFromCart: cart.removeItem,
@@ -222,7 +223,7 @@ export default function App() {
     payWithNequi: handlePayWithNequi,
     payWithCash: handlePayWithCash,
   }), [
-    auth.user, auth.sessions, auth.switchSession, auth.isLoggedIn, auth.isAdmin,
+    auth.user, auth.sessions, auth.switchSession, auth.isLoggedIn, auth.isAdmin, auth.updateProfile,
     cart.items, cart.itemCount, cart.subtotal, cart.shipping, cart.total, handleAddToCart,
     productCtrl.products, productCtrl.adminProducts,
     payment.method, payment.isProcessing,

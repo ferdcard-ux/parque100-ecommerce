@@ -46,6 +46,13 @@ export interface AdminUserData {
   Telefono: string;
 }
 
+/** Datos editables del perfil propio (pantalla "Informacion de tu perfil"). */
+export interface ProfileData {
+  Nombre: string;
+  Correo: string;
+  Telefono: string;
+}
+
 export const userService = {
   /**
    * Consulta los datos de entrega guardados para un usuario.
@@ -88,6 +95,26 @@ export const userService = {
       throw new Error(await getErrorMessage(response, 'No fue posible guardar los datos de entrega.'));
     }
     return mapDeliveryDetails(await response.json() as ApiDeliveryDetails);
+  },
+
+  /**
+   * Actualiza el perfil propio (nombre, correo y telefono).
+   *
+   * @param {number} id - Identificador del usuario autenticado.
+   * @param {ProfileData} data - Datos editados del perfil.
+   * @returns {Promise<ApiUserRow>} Perfil actualizado segun el servidor.
+   * @throws {Error} Si el correo ya existe o los datos son invalidos.
+   */
+  async updateProfile(id: number, data: ProfileData): Promise<ApiUserRow> {
+    const response = await fetch(`${API}/users/${id}/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(await getErrorMessage(response, 'No fue posible guardar el perfil.'));
+    }
+    return (await response.json()) as ApiUserRow;
   },
 
   /**

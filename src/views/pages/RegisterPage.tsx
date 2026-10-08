@@ -6,7 +6,7 @@ export function RegisterPage() {
   const { register } = useApp();
   const navigate = useNavigate();
 
-  const handleRegister = async (data: { firstName: string; lastName: string; email: string; password: string; confirmPassword: string }) => {
+  const handleRegister = async (data: { firstName: string; lastName: string; email: string; phone: string; password: string; confirmPassword: string }) => {
     await register(data);
     navigate('/login');
   };

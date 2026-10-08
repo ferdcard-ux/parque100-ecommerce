@@ -18,6 +18,9 @@ router.put('/users/:id/admin', usersController.updateAdmin);
 /** DELETE /api/users/:id - Elimina un usuario sin pedidos. */
 router.delete('/users/:id', usersController.remove);
 
+/** PUT /api/users/:id/profile - Actualiza el perfil propio (nombre, correo, telefono). */
+router.put('/users/:id/profile', usersController.updateProfile);
+
 /** GET /api/users/:id - Consulta los datos de entrega de un usuario. */
 router.get('/users/:id', usersController.getDeliveryDetails);
 

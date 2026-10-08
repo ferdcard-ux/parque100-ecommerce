@@ -1,12 +1,12 @@
 /**
  * @fileoverview Pagina de informacion del perfil.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { User, Mail, Phone, Lock } from 'lucide-react';
 import { useApp } from '../../App';
 import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
-import { authService } from '../../services';
+import { authService, userService } from '../../services';
 
 interface FieldProps {
   label: string;
@@ -38,13 +38,15 @@ function ProfileField({ label, icon, value, editing, onChange }: FieldProps) {
 
 /** Vista/edicion de los datos personales del usuario. */
 export function ProfilePage() {
-  const { user, isLoggedIn } = useApp();
+  const { user, isLoggedIn, updateProfile } = useApp();
   const [editing, setEditing] = useState(false);
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState('');
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [pwdOpen, setPwdOpen] = useState(false);
   const [pwdCurrent, setPwdCurrent] = useState('');
   const [pwdNew, setPwdNew] = useState('');
@@ -52,6 +54,23 @@ export function ProfilePage() {
   const [pwdError, setPwdError] = useState<string | null>(null);
   const [pwdSuccess, setPwdSuccess] = useState(false);
   const [pwdLoading, setPwdLoading] = useState(false);
+
+  /** Refleja la cuenta activa (incluye cambio de sesion) y su telefono guardado. */
+  useEffect(() => {
+    setFirstName(user?.firstName ?? '');
+    setLastName(user?.lastName ?? '');
+    setEmail(user?.email ?? '');
+    setPhone('');
+    setEditing(false);
+    setSaved(false);
+    setSaveError(null);
+    if (user) {
+      userService
+        .getDeliveryDetails(user.id)
+        .then((details) => setPhone(details.phone))
+        .catch(() => { /* sin telefono guardado: se deja vacio */ });
+    }
+  }, [user?.id]);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,10 +108,34 @@ export function ProfilePage() {
 
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
-  const handleSave = () => {
-    setEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    if (!user) return;
+    if (firstName.trim().length === 0) {
+      setSaveError('Ingresa tu nombre.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setSaveError('Ingresa un correo electrónico válido.');
+      return;
+    }
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (cleanPhone.length > 0 && cleanPhone.length < 7) {
+      setSaveError('Ingresa un teléfono válido.');
+      return;
+    }
+    setSaveError(null);
+    setSaving(true);
+    try {
+      await updateProfile({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), phone: cleanPhone });
+      setPhone(cleanPhone);
+      setEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'No fue posible guardar.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -112,8 +155,8 @@ export function ProfilePage() {
           <div className="flex items-center justify-between mb-4">
             <SectionTitle>Datos personales</SectionTitle>
             {editing ? (
-              <button onClick={handleSave} className="bg-[#C62828] text-white rounded-full px-4 py-1.5" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
-                Guardar
+              <button onClick={() => void handleSave()} disabled={saving} className="bg-[#C62828] text-white rounded-full px-4 py-1.5 disabled:opacity-60" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                {saving ? 'Guardando...' : 'Guardar'}
               </button>
             ) : (
               <button onClick={() => setEditing(true)} className="border border-gray-200 rounded-full px-4 py-1.5 hover:bg-gray-50 transition-colors" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
@@ -122,11 +165,12 @@ export function ProfilePage() {
             )}
           </div>
           {saved && <p className="text-green-600 mb-3" style={{ fontSize: '0.8rem' }}>Cambios guardados.</p>}
+          {saveError && <p role="alert" className="text-[#C62828] mb-3" style={{ fontSize: '0.8rem' }}>{saveError}</p>}
           <div className="flex flex-col gap-4">
             <ProfileField label="Nombre" icon={<User size={16} />} value={firstName} editing={editing} onChange={setFirstName} />
             <ProfileField label="Apellido" icon={<User size={16} />} value={lastName} editing={editing} onChange={setLastName} />
             <ProfileField label="Correo" icon={<Mail size={16} />} value={email} editing={editing} onChange={setEmail} />
-            <ProfileField label="Telefono" icon={<Phone size={16} />} value={phone} editing={editing} onChange={setPhone} />
+            <ProfileField label="Telefono" icon={<Phone size={16} />} value={phone} editing={editing} onChange={(v) => setPhone(v.replace(/\D/g, '').slice(0, 20))} />
           </div>
         </div>
 
