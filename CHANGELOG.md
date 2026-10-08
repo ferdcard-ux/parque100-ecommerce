@@ -2,6 +2,12 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.5.2] — 2026-10-08
+
+### Herramientas de desarrollo
+- Sincronización de la BD entre equipos: `npm run db:dump` exporta `parque100` (esquema + datos) a `.BD/parque100.sql` y `npm run db:restore` lo importa reemplazando las tablas (script `scripts/db.mjs`, soporta `MYSQL_BIN`/`MYSQL_PWD`).
+- BD local alineada con el esquema del repo: `productos.Imagen` MEDIUMTEXT e índice único `usuario.Telefono`.
+
 ## [1.5.1] — 2026-10-08
 
 ### Correcciones y mejoras

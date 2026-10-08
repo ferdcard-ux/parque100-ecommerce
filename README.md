@@ -44,8 +44,8 @@ Convenciones completas en [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md)
 # 1. Instalar dependencias
 npm install
 
-# 2. Crear la base de datos (solo la primera vez)
-mysql -u root -p < setup.sql
+# 2. Restaurar la BD (esquema + datos de prueba). Reemplaza las 5 tablas.
+npm run db:restore
 
 # 3. Terminal 1 — Backend API en http://localhost:3001
 npm run server
@@ -54,7 +54,25 @@ npm run server
 npm run dev
 ```
 
-> Si tu usuario root de MySQL tiene contraseña, edítala en `server/config/db.js`.
+> Si tu usuario root de MySQL tiene contraseña, edítala en `server/config/db.js` (o define `MYSQL_PWD`).
+> Si el cliente MySQL no está en `C:\Program Files\MySQL\MySQL Server 8.4\bin`, define `MYSQL_BIN` con su directorio `bin`.
+
+### Sincronizar la base de datos entre equipos
+
+Los datos del proyecto son ficticios y se comparten con los commits mediante el dump `.BD/parque100.sql`:
+
+```bash
+# Después de hacer cambios en la BD local, compártelos:
+npm run db:dump
+git add .BD/parque100.sql && git commit -m "chore(db): sincronizar datos"
+
+# En el equipo del compañero, después de hacer pull:
+npm run db:restore
+```
+
+- `db:dump` exporta `parque100` (esquema + datos) a `.BD/parque100.sql`.
+- `db:restore` importa el archivo y **reemplaza** las tablas del proyecto por las del dump.
+- Alternativa esquema-only para una BD nueva: `mysql -u root < setup.sql`.
 
 ### Credenciales de prueba
 
