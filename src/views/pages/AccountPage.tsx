@@ -36,9 +36,13 @@ export function AccountPage() {
         <h1 className="text-[#212121] mb-6" style={{ fontSize: '1.4rem', fontWeight: 700 }}>Mi cuenta</h1>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-6 flex items-center gap-4 mb-6">
-          <div className="w-16 h-16 rounded-full bg-[#C62828] flex items-center justify-center shrink-0">
-            <span className="text-white font-bold" style={{ fontSize: '1.2rem' }}>{initials}</span>
-          </div>
+          {user.photo ? (
+            <img src={user.photo} alt="Foto de perfil" className="w-16 h-16 rounded-full object-cover shrink-0 border border-gray-100" />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-[#C62828] flex items-center justify-center shrink-0">
+              <span className="text-white font-bold" style={{ fontSize: '1.2rem' }}>{initials}</span>
+            </div>
+          )}
           <div className="min-w-0 flex-1">
             <p className="text-[#212121] font-semibold truncate">{user.firstName} {user.lastName}</p>
             <p className="text-gray-400 truncate" style={{ fontSize: '0.85rem' }}>{user.email}</p>

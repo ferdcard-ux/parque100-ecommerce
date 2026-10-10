@@ -44,6 +44,8 @@ export function ProfilePage() {
   const [lastName, setLastName] = useState(user?.lastName ?? '');
   const [email, setEmail] = useState(user?.email ?? '');
   const [phone, setPhone] = useState('');
+  const [photo, setPhoto] = useState<string | null>(user?.photo ?? null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -61,6 +63,8 @@ export function ProfilePage() {
     setLastName(user?.lastName ?? '');
     setEmail(user?.email ?? '');
     setPhone('');
+    setPhoto(user?.photo ?? null);
+    setPhotoError(null);
     setEditing(false);
     setSaved(false);
     setSaveError(null);
@@ -108,6 +112,23 @@ export function ProfilePage() {
 
   const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
 
+  const handlePhotoFile = (file: File | undefined) => {
+    setPhotoError(null);
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setPhotoError('El archivo debe ser una imagen.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setPhotoError('La imagen no puede superar 2 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setPhoto(typeof reader.result === 'string' ? reader.result : null);
+    reader.onerror = () => setPhotoError('No fue posible leer la imagen.');
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     if (!user) return;
     if (firstName.trim().length === 0) {
@@ -126,7 +147,7 @@ export function ProfilePage() {
     setSaveError(null);
     setSaving(true);
     try {
-      await updateProfile({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), phone: cleanPhone });
+      await updateProfile({ firstName: firstName.trim(), lastName: lastName.trim(), email: email.trim(), phone: cleanPhone, photo });
       setPhone(cleanPhone);
       setEditing(false);
       setSaved(true);
@@ -144,11 +165,29 @@ export function ProfilePage() {
         <PageHeader title="Informacion de tu perfil" subtitle="Gestiona tus datos personales" backTo="/cuenta" />
 
         <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col items-center mb-6">
-          <div className="w-20 h-20 rounded-full bg-[#C62828] flex items-center justify-center mb-3">
-            <span className="text-white font-bold" style={{ fontSize: '1.5rem' }}>{initials}</span>
-          </div>
+          {photo ? (
+            <img src={photo} alt="Foto de perfil" className="w-20 h-20 rounded-full object-cover mb-3 border border-gray-100" />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-[#C62828] flex items-center justify-center mb-3">
+              <span className="text-white font-bold" style={{ fontSize: '1.5rem' }}>{initials}</span>
+            </div>
+          )}
           <p className="text-[#212121] font-semibold">{firstName} {lastName}</p>
           <p className="text-gray-400" style={{ fontSize: '0.8rem' }}>{email}</p>
+          {editing && (
+            <div className="flex items-center gap-2 mt-3">
+              <label className="border border-gray-200 rounded-full px-4 py-1.5 hover:bg-gray-50 transition-colors cursor-pointer" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                Elegir foto
+                <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoFile(e.target.files?.[0])} />
+              </label>
+              {photo && (
+                <button onClick={() => setPhoto(null)} className="text-gray-400 hover:text-[#C62828] transition-colors" style={{ fontSize: '0.8rem' }}>
+                  Quitar
+                </button>
+              )}
+            </div>
+          )}
+          {photoError && <p role="alert" className="text-[#C62828] mt-2" style={{ fontSize: '0.8rem' }}>{photoError}</p>}
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
