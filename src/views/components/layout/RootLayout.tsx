@@ -1,18 +1,19 @@
 import { Outlet } from 'react-router';
 import { Navbar } from './Navbar';
-import type { User } from '../../../models';
+import type { User, UserRole } from '../../../models';
 
 interface RootLayoutProps {
   cartCount: number;
   isAdmin: boolean;
   isLoggedIn: boolean;
   user: User | null;
+  userRole?: UserRole | null;
   sessions: User[];
   onSwitchSession: (id: number) => void;
   onLogout: () => void;
 }
 
-export function RootLayout({ cartCount, isAdmin, isLoggedIn, user, sessions, onSwitchSession, onLogout }: RootLayoutProps) {
+export function RootLayout({ cartCount, isAdmin, isLoggedIn, user, userRole, sessions, onSwitchSession, onLogout }: RootLayoutProps) {
   return (
     <div className="min-h-screen bg-white">
       <Navbar
@@ -20,6 +21,7 @@ export function RootLayout({ cartCount, isAdmin, isLoggedIn, user, sessions, onS
         isAdmin={isAdmin}
         isLoggedIn={isLoggedIn}
         user={user}
+        userRole={userRole}
         sessions={sessions}
         onSwitchSession={onSwitchSession}
         onLogout={onLogout}

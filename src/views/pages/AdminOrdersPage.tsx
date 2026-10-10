@@ -1,10 +1,12 @@
 /**
  * @fileoverview Panel de administracion de pedidos.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { TriangleAlert } from 'lucide-react';
 import { useAdminOrdersController } from '../../controllers';
+import { useApp } from '../../App';
+import { userService } from '../../services';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
@@ -14,11 +16,21 @@ import type { OrderEstado } from '../../models';
 
 /** Resumen y gestion de pedidos en curso, finalizados y cancelados. */
 export function AdminOrdersPage() {
+  const { user, isAdmin } = useApp();
   const { orders, counts, isLoading, error, changeStatus, cancelOrder } = useAdminOrdersController();
   const [cancelId, setCancelId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
+  const [canCancel, setCanCancel] = useState(isAdmin);
+
+  useEffect(() => {
+    if (isAdmin || !user) {
+      setCanCancel(isAdmin);
+      return;
+    }
+    userService.getPermissions(user.id).then((p) => setCanCancel(p.puede_cancelar)).catch(() => setCanCancel(false));
+  }, [isAdmin, user?.id]);
 
   const summary = [
     { label: 'Pendientes', value: counts.pendiente },
@@ -30,6 +42,10 @@ export function AdminOrdersPage() {
 
   const handleSelect = async (id: number, estado: OrderEstado) => {
     if (estado === 'cancelado') {
+      if (!canCancel) {
+        setStatusError('No tienes permiso para cancelar pedidos. Pide al administrador que te delegue el permiso.');
+        return;
+      }
       setCancelError(null);
       setCancelId(id);
       return;
@@ -120,7 +136,7 @@ export function AdminOrdersPage() {
                   className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828] disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ fontSize: '0.8rem' }}
                 >
-                  {ORDER_ESTADOS.map((estado) => (
+                  {ORDER_ESTADOS.filter((estado) => canCancel || estado !== 'cancelado').map((estado) => (
                     <option key={estado} value={estado}>{estado === 'cancelado' ? 'cancelado (con motivo)' : estado}</option>
                   ))}
                 </select>
@@ -130,7 +146,7 @@ export function AdminOrdersPage() {
         </div>
         </>
       )}
-      {cancelId !== null && (
+      {cancelId !== null && canCancel && (
         <CancelOrderModal
           orderId={cancelId}
           saving={saving}

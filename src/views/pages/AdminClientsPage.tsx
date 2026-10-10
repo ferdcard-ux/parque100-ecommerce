@@ -7,7 +7,7 @@ import { Pencil, Trash2, Plus, X } from 'lucide-react';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { userService, type ApiUserRow, type AdminUserData } from '../../services/user.service';
 
-const ROLES = ['cliente', 'empleado', 'admin'] as const;
+const ROLES = ['cliente', 'domiciliario', 'empleado', 'admin'] as const;
 
 const EMPTY_FORM: AdminUserData & { Contrasena: string } = {
   Nombre: '',
@@ -99,12 +99,25 @@ export function AdminClientsPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<ApiUserRow | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [perms, setPerms] = useState<Record<number, boolean>>({});
 
   const load = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      setUsers(await userService.getAllUsers());
+      const list = await userService.getAllUsers();
+      setUsers(list);
+      const entries = await Promise.all(
+        list.map(async (u) => {
+          try {
+            const p = await userService.getPermissions(u.ID_Usuario);
+            return [u.ID_Usuario, p.puede_cancelar] as const;
+          } catch {
+            return [u.ID_Usuario, false] as const;
+          }
+        }),
+      );
+      setPerms(Object.fromEntries(entries));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al cargar.');
     } finally {
@@ -168,6 +181,17 @@ export function AdminClientsPage() {
     }
   };
 
+  const handleToggleCancel = async (u: ApiUserRow, value: boolean) => {
+    setPerms((prev) => ({ ...prev, [u.ID_Usuario]: value }));
+    try {
+      await userService.updatePermissions(u.ID_Usuario, value);
+      setNotice(`Permiso de cancelacion ${value ? 'otorgado a' : 'revocado a'} ${u.Nombre}.`);
+    } catch (err) {
+      setPerms((prev) => ({ ...prev, [u.ID_Usuario]: !value }));
+      setError(err instanceof Error ? err.message : 'No fue posible guardar el permiso.');
+    }
+  };
+
   return (
     <AdminPageShell active="clientes" title="Clientes" subtitle={`${users.length} usuarios registrados`}>
       <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -204,6 +228,7 @@ export function AdminClientsPage() {
                 <th className="px-5 py-3 font-medium">Correo</th>
                 <th className="px-5 py-3 font-medium">Telefono</th>
                 <th className="px-5 py-3 font-medium">Rol</th>
+                <th className="px-5 py-3 font-medium">Puede cancelar</th>
                 <th className="px-5 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
@@ -214,9 +239,23 @@ export function AdminClientsPage() {
                   <td className="px-5 py-3 text-gray-500">{u.Correo}</td>
                   <td className="px-5 py-3 text-gray-500">{u.Telefono ?? '—'}</td>
                   <td className="px-5 py-3">
-                    <span className={`px-2.5 py-1 rounded-full ${u.Rol === 'admin' ? 'bg-[#C62828]/10 text-[#C62828]' : u.Rol === 'empleado' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
-                      {u.Rol ?? 'cliente'}
+                    <span className={`px-2.5 py-1 rounded-full ${u.Rol === 'admin' ? 'bg-[#C62828]/10 text-[#C62828]' : u.Rol === 'empleado' || u.Rol === 'domiciliario' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                      {u.Rol === 'empleado' ? 'domiciliario' : (u.Rol ?? 'cliente')}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    {u.Rol === 'admin' ? (
+                      <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>Siempre</span>
+                    ) : (
+                      <input
+                        type="checkbox"
+                        checked={perms[u.ID_Usuario] ?? false}
+                        onChange={(e) => handleToggleCancel(u, e.target.checked)}
+                        className="w-4 h-4 accent-[#C62828]"
+                        aria-label={`Puede cancelar: ${u.Nombre}`}
+                        title="El admin delega el permiso de cancelar pedidos"
+                      />
+                    )}
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex justify-end gap-2">

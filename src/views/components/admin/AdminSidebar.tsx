@@ -4,6 +4,7 @@ import {
   Package, ShoppingCart, Users, BarChart2, Settings,
   Store, ChevronLeft, ChevronRight as ChevRight, LogOut, LayoutDashboard,
 } from 'lucide-react';
+import type { UserRole } from '../../../models';
 
 const SIDEBAR_ITEMS = [
   { key: 'inventario', icon: <Package size={18} />, label: 'Inventario', path: '/admin' },
@@ -14,15 +15,21 @@ const SIDEBAR_ITEMS = [
   { key: 'configuracion', icon: <Settings size={18} />, label: 'Configuración', path: '/admin/configuracion' },
 ];
 
+/** Secciones visibles para el domiciliario (sin cancelaciones ni gestion). */
+const DOMICILIARIO_KEYS = ['pendientes', 'pedidos'];
+
 interface AdminSidebarProps {
   /** Clave del item activo en el segundo plano. */
   active?: string;
   /** Cantidad de pedidos pendientes (badge en tiempo real). */
   pendingCount?: number;
+  /** Rol del usuario (filtra las secciones visibles). */
+  role?: UserRole | null;
 }
 
-export function AdminSidebar({ active = 'inventario', pendingCount = 0 }: AdminSidebarProps) {
+export function AdminSidebar({ active = 'inventario', pendingCount = 0, role = 'admin' }: AdminSidebarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const items = role === 'domiciliario' ? SIDEBAR_ITEMS.filter((item) => DOMICILIARIO_KEYS.includes(item.key)) : SIDEBAR_ITEMS;
 
   return (
     <aside className={`${sidebarOpen ? 'w-56' : 'w-16'} bg-[#212121] min-h-screen flex flex-col transition-all duration-300 shrink-0`}>
@@ -44,7 +51,7 @@ export function AdminSidebar({ active = 'inventario', pendingCount = 0 }: AdminS
       </div>
 
       <nav className="flex-1 py-4 flex flex-col gap-1 px-2">
-        {SIDEBAR_ITEMS.map((item) => (
+        {items.map((item) => (
           <Link
             key={item.label}
             to={item.path}

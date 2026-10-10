@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router';
 import {
   ShoppingCart, Heart, Search, Menu, X, Store, ShieldCheck, User, LogOut, RefreshCw,
 } from 'lucide-react';
-import type { User as UserType } from '../../../models';
+import type { User as UserType, UserRole } from '../../../models';
 import { useFavoritesController } from '../../../controllers';
 import { UserNotifications } from './UserNotifications';
 
@@ -12,12 +12,13 @@ interface NavbarProps {
   isAdmin: boolean;
   isLoggedIn: boolean;
   user: UserType | null;
+  userRole?: UserRole | null;
   sessions: UserType[];
   onSwitchSession: (id: number) => void;
   onLogout: () => void;
 }
 
-export function Navbar({ cartCount, isAdmin, isLoggedIn, user, sessions, onSwitchSession, onLogout }: NavbarProps) {
+export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, sessions, onSwitchSession, onLogout }: NavbarProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
@@ -78,9 +79,9 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, sessions, onSwitc
             <button onClick={handleCategoriesClick} className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Categorías</button>
             <Link to="/catalogo" className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Catálogo</Link>
             {isAdmin && (
-              <Link to="/admin" className="flex items-center gap-1.5 text-[#C62828] hover:text-[#b71c1c] transition-colors font-medium">
+              <Link to={userRole === 'domiciliario' ? '/admin/pedidos-pendientes' : '/admin'} className="flex items-center gap-1.5 text-[#C62828] hover:text-[#b71c1c] transition-colors font-medium">
                 <ShieldCheck size={15} />
-                Admin
+                {userRole === 'domiciliario' ? 'Pedidos' : 'Admin'}
               </Link>
             )}
           </div>
@@ -132,7 +133,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, sessions, onSwitc
                   <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
                     <span className="text-white font-bold" style={{ fontSize: '0.65rem' }}>{userInitials}</span>
                   </div>
-                  <span className="max-w-[100px] truncate">{isAdmin ? 'Admin' : user.firstName}</span>
+                  <span className="max-w-[100px] truncate">{userRole === 'admin' ? 'Admin' : userRole === 'domiciliario' ? 'Domiciliario' : user.firstName}</span>
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
@@ -144,7 +145,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, sessions, onSwitc
                       {isAdmin && (
                         <div className="flex items-center gap-1 mt-1.5">
                           <ShieldCheck size={12} className="text-[#C62828]" />
-                          <span className="text-[#C62828] font-medium" style={{ fontSize: '0.75rem' }}>Administrador</span>
+                          <span className="text-[#C62828] font-medium" style={{ fontSize: '0.75rem' }}>{userRole === 'domiciliario' ? 'Domiciliario' : 'Administrador'}</span>
                         </div>
                       )}
                     </div>
@@ -237,9 +238,9 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, sessions, onSwitc
           <Link to="/catalogo" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Catálogo</Link>
           <Link to="/mapa-sitio" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Mapa del Sitio</Link>
           {isAdmin && (
-            <Link to="/admin" className="flex items-center gap-1.5 text-[#C62828] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>
+            <Link to={userRole === 'domiciliario' ? '/admin/pedidos-pendientes' : '/admin'} className="flex items-center gap-1.5 text-[#C62828] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>
               <ShieldCheck size={15} />
-              Admin
+              {userRole === 'domiciliario' ? 'Pedidos' : 'Admin'}
             </Link>
           )}
           {isLoggedIn && user ? (
