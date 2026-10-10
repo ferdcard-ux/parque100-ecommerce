@@ -32,7 +32,7 @@ import { HelpPage } from './views/pages/HelpPage';
 import { PrivacyPage } from './views/pages/PrivacyPage';
 import { TermsPage } from './views/pages/TermsPage';
 import { SitemapPage } from './views/pages/SitemapPage';
-import type { CardPaymentData, User, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, Product, CartItem, AdminProduct, Order } from './models';
+import type { CardPaymentData, User, UserRole, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, Product, CartItem, AdminProduct, Order } from './models';
 
 /* ── Context Definition ── */
 interface AppContextValue {
@@ -41,10 +41,12 @@ interface AppContextValue {
   switchSession: (id: number) => void;
   isLoggedIn: boolean;
   isAdmin: boolean;
+  userRole: UserRole | null;
+  isDomiciliario: boolean;
   login: (credentials: LoginCredentials) => Promise<User>;
   register: (data: RegisterData) => Promise<User>;
   logout: () => void;
-  updateProfile: (data: { firstName: string; lastName: string; email: string; phone: string }) => Promise<User>;  cartItems: CartItem[];
+  updateProfile: (data: { firstName: string; lastName: string; email: string; phone: string; photo?: string | null }) => Promise<User>;  cartItems: CartItem[];
   addToCart: (product: Product) => void;
   removeFromCart: (id: number) => void;
   updateQuantity: (id: number, qty: number) => void;
@@ -116,13 +118,28 @@ function RequireAdmin({ children }: { children: React.JSX.Element }) {
   return children;
 }
 
+/**
+ * Protege rutas operativas (pedidos): admin total o domiciliario.
+ * El cliente solo accede a su flujo de compras, perfil y sus compras.
+ */
+function RequireStaff({ children }: { children: React.JSX.Element }) {
+  const { isLoggedIn, isAdmin, isDomiciliario } = useApp();
+  const location = useLocation();
+  if (!isLoggedIn) {
+    const next = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/login?next=${next}`} replace />;
+  }
+  if (!isAdmin && !isDomiciliario) return <Navigate to="/" replace />;
+  return children;
+}
+
 function Protected({ children }: { children: React.JSX.Element }) {
   return <RequireAuth>{children}</RequireAuth>;
 }
 
 function LayoutWrapper() {
-  const { cartCount, isAdmin, isLoggedIn, user, sessions, switchSession, logout } = useApp();
-  return <RootLayout cartCount={cartCount} isAdmin={isAdmin} isLoggedIn={isLoggedIn} user={user} sessions={sessions} onSwitchSession={switchSession} onLogout={logout} />;
+  const { cartCount, isAdmin, isDomiciliario, isLoggedIn, user, sessions, switchSession, logout } = useApp();
+  return <RootLayout cartCount={cartCount} isAdmin={isAdmin || isDomiciliario} isLoggedIn={isLoggedIn} user={user} userRole={user?.role ?? null} sessions={sessions} onSwitchSession={switchSession} onLogout={logout} />;
 }
 
 function HomeWrapper() { const { addToCart } = useApp(); return <HomePage onAddToCart={addToCart} />; }
@@ -196,6 +213,8 @@ export default function App() {
     switchSession: auth.switchSession,
     isLoggedIn: auth.isLoggedIn,
     isAdmin: auth.isAdmin,
+    userRole: auth.user?.role ?? null,
+    isDomiciliario: (auth.user?.role ?? null) === 'domiciliario',
     login: auth.login,
     register: auth.register,
     logout: auth.logout,
@@ -256,9 +275,9 @@ export default function App() {
     { path: '/register', Component: RegisterPage },
     { path: '/payment-success', Component: PaymentSuccessPage },
     { path: '/admin', Component: () => <RequireAdmin><AdminWrapper /></RequireAdmin> },
-    { path: '/admin/pedidos-pendientes', Component: () => <RequireAdmin><AdminPendingOrdersPage /></RequireAdmin> },
-    { path: '/admin/pedidos', Component: () => <RequireAdmin><AdminOrdersPage /></RequireAdmin> },
-    { path: '/admin/pedidos/:id', Component: () => <RequireAdmin><AdminOrderDetailPage /></RequireAdmin> },
+    { path: '/admin/pedidos-pendientes', Component: () => <RequireStaff><AdminPendingOrdersPage /></RequireStaff> },
+    { path: '/admin/pedidos', Component: () => <RequireStaff><AdminOrdersPage /></RequireStaff> },
+    { path: '/admin/pedidos/:id', Component: () => <RequireStaff><AdminOrderDetailPage /></RequireStaff> },
     { path: '/admin/reportes', Component: () => <RequireAdmin><AdminReportsPage /></RequireAdmin> },
     { path: '/admin/clientes', Component: () => <RequireAdmin><AdminClientsPage /></RequireAdmin> },
     { path: '/admin/configuracion', Component: () => <RequireAdmin><AdminSettingsPage /></RequireAdmin> },

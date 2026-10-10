@@ -7,6 +7,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { ApiOrder } from '../../../models';
 import { orderService } from '../../../services';
+import { useApp } from '../../../App';
 import { AdminSidebar } from './AdminSidebar';
 
 interface AdminPageShellProps {
@@ -26,6 +27,7 @@ export function AdminPageShell({ active, title, subtitle, children }: AdminPageS
   const [pending, setPending] = useState<ApiOrder[]>([]);
   const bellRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { userRole } = useApp();
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +54,7 @@ export function AdminPageShell({ active, title, subtitle, children }: AdminPageS
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex">
-      <AdminSidebar active={active} pendingCount={pending.length} />
+      <AdminSidebar active={active} pendingCount={pending.length} role={userRole} />
       <main className="flex-1 min-w-0 overflow-auto">
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
