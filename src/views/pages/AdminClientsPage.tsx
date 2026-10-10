@@ -9,6 +9,19 @@ import { userService, type ApiUserRow, type AdminUserData } from '../../services
 
 const ROLES = ['cliente', 'domiciliario', 'admin'] as const;
 
+/**
+ * Normaliza el rol crudo de la BD a los roles vigentes
+ * (legados: `empleado` -> domiciliario, `usuario`/null -> cliente).
+ *
+ * @param {string|null} raw - Rol crudo de la fila.
+ * @returns {string} Rol normalizado.
+ */
+function normalizeRole(raw: string | null): string {
+  if (raw === 'admin') return 'admin';
+  if (raw === 'empleado' || raw === 'domiciliario') return 'domiciliario';
+  return 'cliente';
+}
+
 const EMPTY_FORM: AdminUserData & { Contrasena: string } = {
   Nombre: '',
   Correo: '',
@@ -132,7 +145,7 @@ export function AdminClientsPage() {
   const q = query.toLowerCase();
   const filtered = users.filter(
     (u) =>
-      (roleFilter === 'todos' || (u.Rol ?? 'cliente') === roleFilter) &&
+      (roleFilter === 'todos' || normalizeRole(u.Rol) === roleFilter) &&
       (u.Nombre.toLowerCase().includes(q) || u.Correo.toLowerCase().includes(q)),
   );
 
@@ -239,8 +252,8 @@ export function AdminClientsPage() {
                   <td className="px-5 py-3 text-gray-500">{u.Correo}</td>
                   <td className="px-5 py-3 text-gray-500">{u.Telefono ?? '—'}</td>
                   <td className="px-5 py-3">
-                    <span className={`px-2.5 py-1 rounded-full ${u.Rol === 'admin' ? 'bg-[#C62828]/10 text-[#C62828]' : u.Rol === 'domiciliario' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
-                      {u.Rol === 'empleado' ? 'domiciliario' : u.Rol === 'usuario' ? 'cliente' : (u.Rol ?? 'cliente')}
+                    <span className={`px-2.5 py-1 rounded-full ${normalizeRole(u.Rol) === 'admin' ? 'bg-[#C62828]/10 text-[#C62828]' : normalizeRole(u.Rol) === 'domiciliario' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                      {normalizeRole(u.Rol)}
                     </span>
                   </td>
                   <td className="px-5 py-3">
@@ -283,7 +296,7 @@ export function AdminClientsPage() {
       )}
       {modal === 'edit' && editing && (
         <UserModal title={`Editar ${editing.Nombre}`} showPassword={false} error={modalError} saving={saving}
-          initial={{ Nombre: editing.Nombre, Correo: editing.Correo, Rol: editing.Rol === 'empleado' ? 'domiciliario' : editing.Rol === 'usuario' ? 'cliente' : (editing.Rol ?? 'cliente'), Telefono: editing.Telefono === null ? '' : String(editing.Telefono), Contrasena: '' }}
+          initial={{ Nombre: editing.Nombre, Correo: editing.Correo, Rol: normalizeRole(editing.Rol), Telefono: editing.Telefono === null ? '' : String(editing.Telefono), Contrasena: '' }}
           onClose={() => { setModal(null); setEditing(null); }} onSubmit={handleUpdate} />
       )}
       {deleting && (
