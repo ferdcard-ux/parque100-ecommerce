@@ -112,25 +112,25 @@ export function AdminSettingsPage() {
                 <input name="NIT" value={form.NIT} onChange={handleBusinessChange} maxLength={30} className={inputClass} />
               </label>
               <label className="block">
-                <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Teléfono</span>
-                <input name="Telefono" value={form.Telefono} onChange={handleBusinessChange} maxLength={30} className={inputClass} />
+                <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Teléfono *</span>
+                <input name="Telefono" value={form.Telefono} onChange={handleBusinessChange} required maxLength={30} className={inputClass} />
               </label>
             </div>
             <label className="block">
-              <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Dirección</span>
-              <input name="Direccion" value={form.Direccion} onChange={handleBusinessChange} maxLength={120} className={inputClass} />
+              <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Dirección *</span>
+              <input name="Direccion" value={form.Direccion} onChange={handleBusinessChange} required maxLength={120} className={inputClass} />
             </label>
             <label className="block">
-              <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Correo</span>
-              <input name="Email" type="email" value={form.Email} onChange={handleBusinessChange} maxLength={80} className={inputClass} />
+              <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Correo *</span>
+              <input name="Email" type="email" value={form.Email} onChange={handleBusinessChange} required maxLength={80} className={inputClass} />
             </label>
             <label className="block">
-              <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Horario de atención</span>
-              <input name="Horario" value={form.Horario} onChange={handleBusinessChange} maxLength={80} placeholder="Lun–Sáb 8:00–18:00" className={inputClass} />
+              <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Horario de atención *</span>
+              <input name="Horario" value={form.Horario} onChange={handleBusinessChange} required maxLength={80} placeholder="Lun–Sáb 8:00–18:00" className={inputClass} />
             </label>
             <label className="block">
-              <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Descripción</span>
-              <textarea name="Descripcion" value={form.Descripcion} onChange={handleBusinessChange} maxLength={255} rows={2} className={inputClass} />
+              <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Descripción *</span>
+              <textarea name="Descripcion" value={form.Descripcion} onChange={handleBusinessChange} required maxLength={255} rows={2} className={inputClass} />
             </label>
             {saveError && <p className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{saveError}</p>}
             <div className="flex items-center gap-3">

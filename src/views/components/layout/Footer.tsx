@@ -1,8 +1,21 @@
 /**
  * @fileoverview Pie de pagina con enlaces, categorias y contacto.
+ * Los datos del negocio (nombre, descripcion, horario y contacto) se
+ * leen de la ficha guardada en Admin > Configuracion (GET /business);
+ * si la consulta falla se usan valores de respaldo sin romper la pagina.
  */
 import { Link } from 'react-router';
 import { APP_ADDRESS, APP_PHONE, APP_EMAIL } from '../../../utils';
+import { useBusinessController } from '../../../controllers';
+
+/** Valores de respaldo cuando la ficha del negocio no carga. */
+const FALLBACK = {
+  Nombre: 'Tienda Parque 100',
+  Descripcion: 'Los mejores productos del conjunto, frescos y a precios accesibles para toda la familia.',
+  Direccion: APP_ADDRESS,
+  Telefono: APP_PHONE,
+  Email: APP_EMAIL,
+};
 
 const FOOTER_CATEGORIES = ['Verduras', 'Frutas', 'Carnes', 'Lácteos', 'Bebidas', 'Limpieza'];
 const FOOTER_HELP = ['¿Cómo comprar?', 'Seguimiento de pedido', 'Política de devolución', 'Términos y condiciones', 'Preguntas frecuentes'];
@@ -13,8 +26,33 @@ const SOCIAL_LINKS = [
   { label: '💬', href: 'https://wa.me/573046068846' },
 ];
 
-/** Footer con navegacion por categoria, ayuda y contacto. */
+/** Esqueleto con el mismo espacio reservado para evitar saltos de layout. */
+function FooterSkeleton() {
+  return (
+    <div>
+      <div className="h-5 w-40 bg-white/10 rounded animate-pulse" />
+      <div className="h-4 w-28 bg-white/10 rounded animate-pulse mt-2" />
+      <div className="h-4 w-full bg-white/10 rounded animate-pulse mt-4" />
+      <div className="h-4 w-5/6 bg-white/10 rounded animate-pulse mt-2" />
+      <div className="h-4 w-4/6 bg-white/10 rounded animate-pulse mt-2" />
+      <div className="h-4 w-full bg-white/10 rounded animate-pulse mt-4" />
+      <div className="h-4 w-full bg-white/10 rounded animate-pulse mt-2" />
+      <div className="h-4 w-5/6 bg-white/10 rounded animate-pulse mt-2" />
+    </div>
+  );
+}
+
+/** Footer con navegacion por categoria, ayuda y contacto del negocio. */
 export function Footer() {
+  const { business, isLoading } = useBusinessController();
+
+  const nombre = business?.Nombre?.trim() || FALLBACK.Nombre;
+  const descripcion = business?.Descripcion?.trim() || FALLBACK.Descripcion;
+  const horario = business?.Horario?.trim() || '';
+  const direccion = business?.Direccion?.trim() || FALLBACK.Direccion;
+  const telefono = business?.Telefono?.trim() || FALLBACK.Telefono;
+  const correo = business?.Email?.trim() || FALLBACK.Email;
+
   return (
     <footer className="bg-[#212121] text-white pt-12 pb-6 px-4">
       <div className="max-w-7xl mx-auto">
@@ -28,13 +66,22 @@ export function Footer() {
                 <span style={{ fontSize: '1.1rem' }}>🏪</span>
               </div>
               <div>
-                <span className="text-white font-bold block" style={{ fontSize: '0.95rem' }}>Tienda Parque 100</span>
+                <span className="text-white font-bold block" style={{ fontSize: '0.95rem' }}>{nombre}</span>
                 <span className="text-white/50" style={{ fontSize: '0.75rem' }}>Tu tienda de confianza</span>
               </div>
             </div>
-            <p className="text-white/50" style={{ fontSize: '0.875rem', lineHeight: '1.6' }}>
-              Los mejores productos del conjunto, frescos y a precios accesibles para toda la familia.
-            </p>
+            {isLoading ? (
+              <FooterSkeleton />
+            ) : (
+              <>
+                <p className="text-white/50" style={{ fontSize: '0.875rem', lineHeight: '1.6' }}>
+                  {descripcion}
+                </p>
+                {horario && (
+                  <p className="text-white/50 mt-2" style={{ fontSize: '0.875rem', whiteSpace: 'pre-line' }}>🕒 {horario}</p>
+                )}
+              </>
+            )}
           </div>
 
           <div>
@@ -53,9 +100,15 @@ export function Footer() {
 
           <div>
             <h4 className="text-[#FBC02D] font-semibold mb-4" style={{ fontSize: '0.95rem' }}>Contáctanos</h4>
-            <p className="text-white/50 mb-2" style={{ fontSize: '0.875rem' }}>📍 {APP_ADDRESS}</p>
-            <p className="text-white/50 mb-2" style={{ fontSize: '0.875rem' }}>📞 {APP_PHONE}</p>
-            <p className="text-white/50 mb-4" style={{ fontSize: '0.875rem' }}>✉️ {APP_EMAIL}</p>
+            {isLoading ? (
+              <FooterSkeleton />
+            ) : (
+              <>
+                {direccion && <p className="text-white/50 mb-2" style={{ fontSize: '0.875rem' }}>📍 {direccion}</p>}
+                {telefono && <p className="text-white/50 mb-2" style={{ fontSize: '0.875rem' }}>📞 {telefono}</p>}
+                {correo && <p className="text-white/50 mb-4" style={{ fontSize: '0.875rem' }}>✉️ {correo}</p>}
+              </>
+            )}
             <div className="flex gap-3">
               {SOCIAL_LINKS.map(({ label, href }) => (
                 <a
@@ -74,7 +127,7 @@ export function Footer() {
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-6">
-          <p className="text-white/40" style={{ fontSize: '0.8rem' }}>© 2026 Tienda Parque 100. Todos los derechos reservados.</p>
+          <p className="text-white/40" style={{ fontSize: '0.8rem' }}>© 2026 {nombre}. Todos los derechos reservados.</p>
           <div className="flex gap-4">
             <Link to="/privacidad" className="text-white/40 hover:text-white transition-colors" style={{ fontSize: '0.8rem' }}>Privacidad</Link>
             <Link to="/privacidad#cookies" className="text-white/40 hover:text-white transition-colors" style={{ fontSize: '0.8rem' }}>Cookies</Link>
