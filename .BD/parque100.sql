@@ -32,8 +32,8 @@ DROP TABLE IF EXISTS `categorias`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `categorias` (
   `ID_Categoria` int NOT NULL AUTO_INCREMENT,
-  `Nombre_Categoria` varchar(30) COLLATE utf8mb4_general_ci NOT NULL,
-  `Descripcion` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Nombre_Categoria` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `Descripcion` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`ID_Categoria`)
 ) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -58,7 +58,7 @@ DROP TABLE IF EXISTS `detalle_pedido`;
 CREATE TABLE `detalle_pedido` (
   `ID_Detalle` int NOT NULL AUTO_INCREMENT,
   `ID_Pedido` int DEFAULT NULL,
-  `ID_Producto` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ID_Producto` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `Cantidad` int DEFAULT NULL,
   `Subtotal` int DEFAULT NULL,
   PRIMARY KEY (`ID_Detalle`),
@@ -80,6 +80,36 @@ INSERT INTO `detalle_pedido` VALUES (1,1,'P001',2,7000),(2,1,'P002',1,2800),(3,2
 UNLOCK TABLES;
 
 --
+-- Table structure for table `negocio`
+--
+
+DROP TABLE IF EXISTS `negocio`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `negocio` (
+  `ID_Negocio` int NOT NULL,
+  `Nombre` varchar(80) COLLATE utf8mb4_general_ci NOT NULL,
+  `NIT` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Direccion` varchar(120) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Telefono` varchar(30) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Email` varchar(80) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Horario` varchar(80) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Descripcion` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  PRIMARY KEY (`ID_Negocio`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `negocio`
+--
+
+LOCK TABLES `negocio` WRITE;
+/*!40000 ALTER TABLE `negocio` DISABLE KEYS */;
+INSERT INTO `negocio` VALUES (1,'Tienda Parque 100','900000000-1','Cra 98 #76-54, Bogota','300987654','admin@parque100.com','Lun-Sab 8:00-18:00','Productos frescos y de canasta familiar');
+/*!40000 ALTER TABLE `negocio` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `pedidos`
 --
 
@@ -89,20 +119,20 @@ DROP TABLE IF EXISTS `pedidos`;
 CREATE TABLE `pedidos` (
   `ID_Pedido` int NOT NULL AUTO_INCREMENT,
   `Fecha` date DEFAULT NULL,
-  `Estado` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Estado` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `Total` int DEFAULT NULL,
-  `Tipo_Entrega` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Tipo_Entrega` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `ID_Usuario` int DEFAULT NULL,
-  `Destinatario` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Telefono` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Torre` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Piso` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Apartamento` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Metodo_Pago` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Destinatario` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Telefono` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Torre` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Piso` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Apartamento` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Metodo_Pago` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `Monto_Recibido` int DEFAULT NULL,
   `Cambio` int DEFAULT NULL,
-  `Comprobante` mediumtext COLLATE utf8mb4_general_ci,
-  `Motivo_Cancelacion` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Comprobante` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `Motivo_Cancelacion` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`ID_Pedido`),
   KEY `ID_Usuario` (`ID_Usuario`),
   CONSTRAINT `pedidos_ibfk_1` FOREIGN KEY (`ID_Usuario`) REFERENCES `usuario` (`ID_Usuario`)
@@ -127,13 +157,13 @@ DROP TABLE IF EXISTS `productos`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `productos` (
-  `ID_Producto` varchar(30) COLLATE utf8mb4_general_ci NOT NULL,
-  `Nombre` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Descripcion` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `ID_Producto` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `Nombre` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Descripcion` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `Precio_Venta` int DEFAULT NULL,
   `Stock_Minimo` int DEFAULT NULL,
   `ID_Categoria` int DEFAULT NULL,
-  `Imagen` mediumtext COLLATE utf8mb4_general_ci,
+  `Imagen` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`ID_Producto`),
   KEY `ID_Categoria` (`ID_Categoria`),
   CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`ID_Categoria`) REFERENCES `categorias` (`ID_Categoria`)
@@ -159,15 +189,15 @@ DROP TABLE IF EXISTS `usuario`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `usuario` (
   `ID_Usuario` int NOT NULL AUTO_INCREMENT,
-  `Nombre` varchar(30) COLLATE utf8mb4_general_ci NOT NULL,
-  `Correo` varchar(50) COLLATE utf8mb4_general_ci NOT NULL,
-  `Contrasena` varchar(30) COLLATE utf8mb4_general_ci NOT NULL,
-  `Rol` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Telefono` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Direccion` varchar(20) COLLATE utf8mb4_general_ci NOT NULL,
-  `Torre_Bloque` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Piso` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
-  `Apartamento` varchar(20) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Nombre` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `Correo` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `Contrasena` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `Rol` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Telefono` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Direccion` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `Torre_Bloque` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Piso` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Apartamento` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   PRIMARY KEY (`ID_Usuario`),
   UNIQUE KEY `Correo` (`Correo`),
   UNIQUE KEY `Telefono` (`Telefono`)
@@ -197,4 +227,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-09 19:07:58
+-- Dump completed on 2026-10-09 21:59:09
