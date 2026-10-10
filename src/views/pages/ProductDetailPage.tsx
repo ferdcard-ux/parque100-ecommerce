@@ -5,20 +5,26 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { Star, Minus, Plus, Truck, ShieldCheck, Leaf } from 'lucide-react';
 import { useApp } from '../../App';
-import { useFavoritesController, useProductController } from '../../controllers';
+import { useFavoritesController, useProductController, useRatingsController } from '../../controllers';
 import { PageHeader } from '../components/shared/page-header';
 import { ProductCard } from '../components/shop/product-card';
+import { StarRating } from '../components/shared/star-rating';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatPrice } from '../../utils';
 
 /** Detalle de producto con cantidad, stock y relacionados. */
 export function ProductDetailPage() {
   const { id } = useParams();
-  const { addToCart } = useApp();
+  const { addToCart, user, isLoggedIn } = useApp();
   const { products, isLoading } = useProductController();
   const { toggleFavorite, isFavorite } = useFavoritesController();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const { summary, ratings, isSaving, rate } = useRatingsController({ producto: id });
+  const [myStars, setMyStars] = useState(5);
+  const [myComment, setMyComment] = useState('');
+  const [rateError, setRateError] = useState<string | null>(null);
+  const [rateOk, setRateOk] = useState(false);
 
   const product = products.find((p) => String(p.id) === id);
   const related = product
@@ -30,6 +36,25 @@ export function ProductDetailPage() {
     for (let i = 0; i < quantity; i++) addToCart(product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
+  };
+
+  const handleRate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRateError(null);
+    setRateOk(false);
+    try {
+      await rate({
+        ID_Usuario: user?.id ?? null,
+        ID_Producto: String(product?.id ?? id ?? ''),
+        Tipo: 'producto',
+        Estrellas: myStars,
+        Comentario: myComment.trim(),
+      });
+      setMyComment('');
+      setRateOk(true);
+    } catch (err) {
+      setRateError(err instanceof Error ? err.message : 'No fue posible guardar.');
+    }
   };
 
   if (isLoading) {
@@ -132,6 +157,55 @@ export function ProductDetailPage() {
             </div>
           </section>
         )}
+
+        <section className="mt-12 bg-white rounded-2xl border border-gray-100 p-6">
+          <h2 className="text-[#212121] mb-2" style={{ fontSize: '1.1rem', fontWeight: 700 }}>Calificaciones</h2>
+          <div className="flex items-center gap-3 mb-4">
+            <StarRating value={summary?.promedio ?? 0} />
+            <span className="text-gray-500" style={{ fontSize: '0.85rem' }}>
+              {summary && summary.total > 0 && summary.promedio !== null
+                ? `${summary.promedio.toFixed(1)} · ${summary.total} calificaciones`
+                : 'Sin calificaciones aun'}
+            </span>
+          </div>
+          {isLoggedIn ? (
+            <form onSubmit={handleRate} className="flex flex-col gap-3 max-w-md">
+              <StarRating value={myStars} editable onChange={setMyStars} />
+              <input
+                value={myComment}
+                onChange={(e) => setMyComment(e.target.value)}
+                maxLength={255}
+                placeholder="Comentario opcional"
+                className="border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#C62828]"
+                style={{ fontSize: '0.85rem' }}
+              />
+              {rateError && <p className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{rateError}</p>}
+              {rateOk && <p className="text-green-600" style={{ fontSize: '0.8rem' }}>Calificacion guardada.</p>}
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="w-fit bg-[#212121] hover:bg-black disabled:opacity-60 text-white rounded-full px-6 py-2 transition-colors"
+                style={{ fontSize: '0.85rem', fontWeight: 600 }}
+              >
+                {isSaving ? 'Guardando...' : 'Calificar producto'}
+              </button>
+            </form>
+          ) : (
+            <p className="text-gray-400" style={{ fontSize: '0.85rem' }}>
+              <Link to="/login" className="text-[#C62828] hover:underline">Inicia sesion</Link> para calificar este producto.
+            </p>
+          )}
+          {ratings.length > 0 && (
+            <ul className="mt-6 flex flex-col divide-y divide-gray-50">
+              {ratings.slice(0, 5).map((r) => (
+                <li key={r.ID_Calificacion} className="py-3">
+                  <StarRating value={r.Estrellas} size={14} />
+                  {r.Comentario && <p className="text-gray-600 mt-1" style={{ fontSize: '0.85rem' }}>{r.Comentario}</p>}
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
     </main>
   );

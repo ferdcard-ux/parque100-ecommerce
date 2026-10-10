@@ -4,12 +4,15 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router';
 import { TriangleAlert } from 'lucide-react';
-import type { ApiOrder } from '../../models';
+import type { ApiOrder, RatingType } from '../../models';
 import { orderService } from '../../services';
+import { useApp } from '../../App';
+import { useRatingsController } from '../../controllers';
 import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
+import { StarRating } from '../components/shared/star-rating';
 import { DISPATCH_DELAY_WARNING, CANCEL_REFUND_NOTICE, formatPrice } from '../../utils';
 
 /** Formatea fecha y hora legibles. */
@@ -24,9 +27,36 @@ function formatDateTime(value: string): string {
 /** Detalle completo de un pedido: estado, productos, totales y entrega. */
 export function OrderDetailPage() {
   const { id } = useParams();
+  const { user } = useApp();
   const [order, setOrder] = useState<ApiOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const orderId = Number(id);
+  const { ratings, isSaving, rate } = useRatingsController({ pedido: Number.isInteger(orderId) ? orderId : undefined });
+  const [stars, setStars] = useState(5);
+  const [kind, setKind] = useState<RatingType>('pedido');
+  const [comment, setComment] = useState('');
+  const [rateError, setRateError] = useState<string | null>(null);
+  const [rateOk, setRateOk] = useState(false);
+
+  const handleRate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRateError(null);
+    setRateOk(false);
+    try {
+      await rate({
+        ID_Usuario: user?.id ?? null,
+        ID_Pedido: orderId,
+        Tipo: kind,
+        Estrellas: stars,
+        Comentario: comment.trim(),
+      });
+      setComment('');
+      setRateOk(true);
+    } catch (err) {
+      setRateError(err instanceof Error ? err.message : 'No fue posible guardar.');
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -120,6 +150,54 @@ export function OrderDetailPage() {
                 </div>
               )}
             </div>
+
+            {order.Estado === 'entregado' && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <SectionTitle>Califica tu pedido y el envio</SectionTitle>
+                <form onSubmit={handleRate} className="flex flex-col gap-3 mt-3">
+                  <div className="flex items-center gap-3">
+                    <select
+                      value={kind}
+                      onChange={(e) => setKind(e.target.value as RatingType)}
+                      className="border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-[#C62828]"
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      <option value="pedido">El pedido</option>
+                      <option value="envio">El repartidor / envio</option>
+                    </select>
+                    <StarRating value={stars} editable onChange={setStars} />
+                  </div>
+                  <input
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    maxLength={255}
+                    placeholder="Comentario opcional"
+                    className="border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#C62828]"
+                    style={{ fontSize: '0.85rem' }}
+                  />
+                  {rateError && <p className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{rateError}</p>}
+                  {rateOk && <p className="text-green-600" style={{ fontSize: '0.8rem' }}>Calificacion guardada.</p>}
+                  <button
+                    type="submit"
+                    disabled={isSaving || !Number.isInteger(orderId)}
+                    className="w-fit bg-[#212121] hover:bg-black disabled:opacity-60 text-white rounded-full px-6 py-2 transition-colors"
+                    style={{ fontSize: '0.85rem', fontWeight: 600 }}
+                  >
+                    {isSaving ? 'Guardando...' : 'Enviar calificacion'}
+                  </button>
+                </form>
+                {ratings.length > 0 && (
+                  <ul className="mt-4 flex flex-col divide-y divide-gray-50">
+                    {ratings.slice(0, 5).map((r) => (
+                      <li key={r.ID_Calificacion} className="py-2 flex items-center gap-3">
+                        <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>{r.Tipo}</span>
+                        <StarRating value={r.Estrellas} size={14} />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
