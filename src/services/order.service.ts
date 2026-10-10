@@ -165,20 +165,24 @@ export const orderService = {
   },
 
   /**
-   * Cancela un pedido con motivo obligatorio (solo pendiente o preparando
-   * desde la vista del cliente; el servidor admite tambien en envio).
+   * Cancela un pedido con motivo obligatorio.
+   * Reglas por actor (el backend las hace cumplir):
+   * cliente solo antes del envio; domiciliario requiere permiso
+   * delegado; admin tiene acceso total.
    *
    * @param {string|number} id - Identificador del pedido.
    * @param {string} motivo - Motivo de la cancelacion.
+   * @param {string} [actor='cliente'] - 'cliente', 'domiciliario' o 'admin'.
+   * @param {number|null} [actorId=null] - Usuario que ejecuta la cancelacion.
    * @returns {Promise<void>}
-   * @throws {Error} Sin motivo, estado no cancelable o falla del servidor.
+   * @throws {Error} Sin motivo, sin permiso, estado no cancelable o falla del servidor.
    */
-  async cancel(id: string | number, motivo: string): Promise<void> {
+  async cancel(id: string | number, motivo: string, actor: string = 'cliente', actorId: number | null = null): Promise<void> {
     try {
       const response = await fetch(`${API}/orders/${id}/cancel`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Motivo: motivo }),
+        body: JSON.stringify({ Motivo: motivo, Actor: actor, ActorId: actorId }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);

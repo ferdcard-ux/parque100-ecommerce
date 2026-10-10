@@ -37,7 +37,7 @@ export function OrdersPage() {
     setCancelError(null);
     setSaving(true);
     try {
-      await orderService.cancel(cancelId, motivo);
+      await orderService.cancel(cancelId, motivo, 'cliente', user?.id ?? null);
       setCancelId(null);
       await reload();
     } catch (err) {

@@ -65,17 +65,23 @@ export const orderModel = {
   },
 
   /**
-   * Cancela un pedido pendiente, en preparacion o en envio: guarda el
-   * motivo, devuelve el stock reservado y marca el estado como
-   * 'cancelado' dentro de una misma transaccion.
+   * Cancela un pedido guardando el motivo, devolviendo el stock
+   * reservado y marcando el estado como 'cancelado' en transaccion.
+   * Reglas por actor:
+   *   - cliente: solo pendiente o preparando (antes del envio);
+   *     siempre puede cancelar por defecto, sin permisos.
+   *   - domiciliario: requiere `puede_cancelar` delegado por el admin.
+   *   - admin: acceso total (pendiente, preparando, enviando).
    *
    * @async
    * @param {number} id - Identificador del pedido.
    * @param {string} motivo - Motivo obligatorio de la cancelacion.
+   * @param {string} [actor='cliente'] - 'cliente', 'domiciliario' o 'admin'.
+   * @param {number|null} [actorUserId=null] - Usuario que ejecuta (permiso domiciliario).
    * @returns {Promise<boolean>} true si cancelo el pedido.
-   * @throws {Error} Si el estado no admite cancelacion o falla la operacion.
+   * @throws {Error} 403 sin permiso, 409 si el estado no lo admite.
    */
-  async cancelById(id, motivo) {
+  async cancelById(id, motivo, actor = 'cliente', actorUserId = null) {
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
@@ -91,7 +97,27 @@ export const orderModel = {
       if (estado === 'cancelado') {
         throw createOrderError('El pedido ya esta cancelado', 409);
       }
-      if (estado !== 'pendiente' && estado !== 'preparando' && estado !== 'enviando') {
+
+      if (actor === 'domiciliario') {
+        const [perms] = await connection.query(
+          'SELECT puede_cancelar FROM permisos_usuario WHERE ID_Usuario = ?',
+          [actorUserId],
+        );
+        if (perms.length === 0 || Number(perms[0].puede_cancelar) !== 1) {
+          throw createOrderError('No tienes permiso para cancelar pedidos', 403);
+        }
+      }
+
+      let allowed;
+      if (actor === 'cliente') {
+        allowed = ['pendiente', 'preparando'];
+      } else {
+        allowed = ['pendiente', 'preparando', 'enviando'];
+      }
+      if (!allowed.includes(estado)) {
+        if (actor === 'cliente') {
+          throw createOrderError('Solo puedes cancelar el pedido antes del envio', 409);
+        }
         throw createOrderError(`No se puede cancelar un pedido en estado '${estado}'`, 409);
       }
 

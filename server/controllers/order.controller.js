@@ -76,13 +76,14 @@ export const orderController = {
 
   /**
    * PUT /api/orders/:id/cancel
-   * Cancela un pedido en estado pendiente, preparando o enviando,
-   * guardando el motivo obligatorio y devolviendo el stock.
+   * Cancela con motivo obligatorio. Reglas por actor (`Actor` en el cuerpo):
+   * cliente (por defecto) solo antes del envio; domiciliario requiere
+   * permiso delegado; admin tiene acceso total.
    *
    * @async
-   * @param {import('express').Request} req - Peticion con `{ Motivo }` en el cuerpo.
+   * @param {import('express').Request} req - Peticion con `{ Motivo, Actor, ActorId }`.
    * @param {import('express').Response} res - Respuesta HTTP.
-   * @returns {Promise<void>} 400 sin motivo, 409 si el estado no lo admite.
+   * @returns {Promise<void>} 400 sin motivo/actor invalido, 403 sin permiso, 409 si el estado no lo admite.
    */
   async cancel(req, res) {
     try {
@@ -93,7 +94,17 @@ export const orderController = {
       if (motivo.length > 255) {
         return res.status(400).json({ error: 'El motivo no puede superar 255 caracteres.' });
       }
-      const cancelled = await orderModel.cancelById(req.params.id, motivo);
+      const actor = req.body?.Actor ?? 'cliente';
+      if (!['cliente', 'domiciliario', 'admin'].includes(actor)) {
+        return res.status(400).json({ error: 'Actor invalido. Usa: cliente, domiciliario, admin.' });
+      }
+      const actorUserId = Number(req.body?.ActorId);
+      const cancelled = await orderModel.cancelById(
+        req.params.id,
+        motivo,
+        actor,
+        Number.isInteger(actorUserId) ? actorUserId : null,
+      );
       if (!cancelled) return res.status(404).json({ error: 'Pedido no encontrado' });
       res.json({ message: 'Pedido cancelado' });
     } catch (err) {

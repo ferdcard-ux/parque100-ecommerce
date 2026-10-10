@@ -7,7 +7,7 @@ import { Pencil, Trash2, Plus, X } from 'lucide-react';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { userService, type ApiUserRow, type AdminUserData } from '../../services/user.service';
 
-const ROLES = ['cliente', 'domiciliario', 'empleado', 'admin'] as const;
+const ROLES = ['cliente', 'domiciliario', 'admin'] as const;
 
 const EMPTY_FORM: AdminUserData & { Contrasena: string } = {
   Nombre: '',
@@ -239,8 +239,8 @@ export function AdminClientsPage() {
                   <td className="px-5 py-3 text-gray-500">{u.Correo}</td>
                   <td className="px-5 py-3 text-gray-500">{u.Telefono ?? '—'}</td>
                   <td className="px-5 py-3">
-                    <span className={`px-2.5 py-1 rounded-full ${u.Rol === 'admin' ? 'bg-[#C62828]/10 text-[#C62828]' : u.Rol === 'empleado' || u.Rol === 'domiciliario' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
-                      {u.Rol === 'empleado' ? 'domiciliario' : (u.Rol ?? 'cliente')}
+                    <span className={`px-2.5 py-1 rounded-full ${u.Rol === 'admin' ? 'bg-[#C62828]/10 text-[#C62828]' : u.Rol === 'domiciliario' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                      {u.Rol === 'empleado' ? 'domiciliario' : u.Rol === 'usuario' ? 'cliente' : (u.Rol ?? 'cliente')}
                     </span>
                   </td>
                   <td className="px-5 py-3">
@@ -283,7 +283,7 @@ export function AdminClientsPage() {
       )}
       {modal === 'edit' && editing && (
         <UserModal title={`Editar ${editing.Nombre}`} showPassword={false} error={modalError} saving={saving}
-          initial={{ Nombre: editing.Nombre, Correo: editing.Correo, Rol: editing.Rol ?? 'cliente', Telefono: editing.Telefono === null ? '' : String(editing.Telefono), Contrasena: '' }}
+          initial={{ Nombre: editing.Nombre, Correo: editing.Correo, Rol: editing.Rol === 'empleado' ? 'domiciliario' : editing.Rol === 'usuario' ? 'cliente' : (editing.Rol ?? 'cliente'), Telefono: editing.Telefono === null ? '' : String(editing.Telefono), Contrasena: '' }}
           onClose={() => { setModal(null); setEditing(null); }} onSubmit={handleUpdate} />
       )}
       {deleting && (

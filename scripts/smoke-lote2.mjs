@@ -109,7 +109,60 @@ await test('Login admin y cliente conservan roles', async () => {
   assert(client.status === 200, `login cliente status ${client.status}`);
 });
 
-/* --- Foto de perfil (lote 2) --- */
+/* --- Reglas de cancelacion por actor --- */
+let cancelOrderId = null;
+
+await test('POST /orders crea pedido de prueba (pendiente)', async () => {
+  const { status, data } = await call('POST', '/orders', {
+    Total: 4500,
+    Tipo_Entrega: 'domicilio',
+    ID_Usuario: 1,
+    Destinatario: 'Prueba Auto',
+    Telefono: '300123456',
+    Torre: '1',
+    Piso: '1',
+    Apartamento: '101',
+    Metodo_Pago: 'Efectivo',
+    productos: [{ ID_Producto: 'P010', Cantidad: 1, Subtotal: 4500 }],
+  });
+  assert(status === 201, `status ${status} ${JSON.stringify(data)}`);
+  cancelOrderId = data.id;
+  const st = await call('PUT', `/orders/${cancelOrderId}/status`, { Estado: 'enviando' });
+  assert(st.status === 200, `a enviando status ${st.status}`);
+});
+
+await test('Cliente NO cancela en enviando (409)', async () => {
+  const { status, data } = await call('PUT', `/orders/${cancelOrderId}/cancel`, {
+    Motivo: 'Ya no lo quiero',
+    Actor: 'cliente',
+    ActorId: 1,
+  });
+  assert(status === 409, `status ${status} ${JSON.stringify(data)}`);
+});
+
+await test('Domiciliario sin permiso NO cancela (403)', async () => {
+  const orig = await call('GET', '/users/4/permissions');
+  await call('PUT', '/users/4/permissions', { puede_cancelar: false });
+  const { status } = await call('PUT', `/orders/${cancelOrderId}/cancel`, {
+    Motivo: 'Prueba',
+    Actor: 'domiciliario',
+    ActorId: 4,
+  });
+  assert(status === 403, `status ${status}`);
+  await call('PUT', '/users/4/permissions', { puede_cancelar: orig.data?.puede_cancelar ?? false });
+});
+
+await test('Domiciliario con permiso SI cancela en enviando', async () => {
+  const orig = await call('GET', '/users/4/permissions');
+  await call('PUT', '/users/4/permissions', { puede_cancelar: true });
+  const { status } = await call('PUT', `/orders/${cancelOrderId}/cancel`, {
+    Motivo: 'Prueba automatizada',
+    Actor: 'domiciliario',
+    ActorId: 4,
+  });
+  assert(status === 200, `status ${status}`);
+  await call('PUT', '/users/4/permissions', { puede_cancelar: orig.data?.puede_cancelar ?? false });
+});
 const PIXEL = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
 
 await test('PUT /users/1/profile guarda y devuelve Foto', async () => {
@@ -187,12 +240,20 @@ await test('GET /orders responde lista para el badge', async () => {
   console.log(`  info: ${data.filter((o) => o.Estado === 'pendiente').length} pendientes de ${data.length}`);
 });
 
-/* --- Limpieza: elimina la calificacion de prueba --- */
+/* --- Limpieza: elimina la calificacion y el pedido de prueba --- */
 await test('DELETE /ratings/:id limpia la prueba', async () => {
   const ratingId = results.find((r) => r.ratingId)?.ratingId;
   assert(ratingId, 'sin id de prueba');
   const response = await fetch(`${API}/ratings/${ratingId}`, { method: 'DELETE' });
   assert(response.status === 200, `status ${response.status}`);
+});
+
+await test('Limpieza del pedido de prueba en BD', async () => {
+  assert(cancelOrderId, 'sin pedido de prueba');
+  const { execSync } = await import('node:child_process');
+  execSync(
+    `"C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin\\mysql.exe" -u root -e "DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${cancelOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${cancelOrderId};"`,
+  );
 });
 
 console.log(`\n${passed} pasadas, ${failed} fallidas`);
