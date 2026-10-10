@@ -12,4 +12,5 @@ export { useOrdersController } from './use-orders-controller';
 export { useAdminOrdersController } from './use-admin-orders-controller';
 export { useFavoritesController } from './use-favorites-controller';
 export { useCatalogController, CATALOG_SORT_OPTIONS, countByCategory } from './use-catalog-controller';
+export { useBusinessController } from './use-business-controller';
 export type { CatalogSort } from './use-catalog-controller';

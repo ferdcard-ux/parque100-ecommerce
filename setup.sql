@@ -93,6 +93,21 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
+-- NEGOCIO (ficha unica editable desde el panel admin)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS negocio (
+  ID_Negocio int(11) NOT NULL,
+  Nombre varchar(80) NOT NULL,
+  NIT varchar(30) DEFAULT NULL,
+  Direccion varchar(120) DEFAULT NULL,
+  Telefono varchar(30) DEFAULT NULL,
+  Email varchar(80) DEFAULT NULL,
+  Horario varchar(80) DEFAULT NULL,
+  Descripcion varchar(255) DEFAULT NULL,
+  PRIMARY KEY (ID_Negocio)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
 -- DATOS DE PRUEBA
 -- --------------------------------------------------------
 
@@ -129,3 +144,7 @@ INSERT INTO productos (ID_Producto, Nombre, Descripcion, Precio_Venta, Stock_Min
 INSERT INTO usuario (ID_Usuario, Nombre, Correo, Contrasena, Rol, Telefono, Direccion) VALUES
 (1, 'Usuario Demo', 'usuario@ejemplo.com', '12345678', 'usuario', 300123456, 'Calle 123 #45-67'),
 (2, 'Admin Parque100', 'admin@parque100.com', 'admin123', 'admin', 300987654, 'Cra 98 #76-54');
+
+INSERT INTO negocio (ID_Negocio, Nombre, NIT, Direccion, Telefono, Email, Horario, Descripcion) VALUES
+(1, 'Tienda Parque 100', '900000000-1', 'Cra 98 #76-54, Bogota', '300987654', 'admin@parque100.com', 'Lun-Sab 8:00-18:00', 'Productos frescos y de canasta familiar')
+ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre);
