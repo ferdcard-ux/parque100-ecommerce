@@ -2,6 +2,7 @@
  * @fileoverview Controlador de consulta y actualizacion de datos de entrega.
  */
 import userModel from '../models/user.model.js';
+import permissionModel from '../models/permission.model.js';
 
 const MAX_USER_ID = 2147483647;
 
@@ -39,7 +40,7 @@ function validateDeliveryDetails(body) {
   };
 }
 
-const VALID_ROLES = ['admin', 'empleado', 'cliente', 'usuario'];
+const VALID_ROLES = ['admin', 'empleado', 'domiciliario', 'cliente', 'usuario'];
 
 function validateAdminUser(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
@@ -58,15 +59,19 @@ function validateAdminUser(body) {
 
 function validateProfile(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;
-  if (Object.keys(body).some((field) => !['Nombre', 'Correo', 'Telefono'].includes(field))) return null;
-  const { Nombre, Correo, Telefono } = body;
+  if (Object.keys(body).some((field) => !['Nombre', 'Correo', 'Telefono', 'Foto'].includes(field))) return null;
+  const { Nombre, Correo, Telefono, Foto } = body;
   if (typeof Nombre !== 'string' || Nombre.trim().length === 0 || Nombre.trim().length > 30) return null;
   if (typeof Correo !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Correo) || Correo.length > 50) return null;
   if (Telefono !== null && Telefono !== undefined && Telefono !== '' && !/^\d{1,20}$/.test(String(Telefono))) return null;
+  if (Foto !== null && Foto !== undefined && Foto !== '') {
+    if (typeof Foto !== 'string' || Foto.length > 7000000 || !Foto.startsWith('data:image/')) return null;
+  }
   return {
     Nombre: Nombre.trim(),
     Correo: Correo.trim(),
     Telefono: Telefono === '' || Telefono === undefined ? null : String(Telefono),
+    Foto: Foto === '' || Foto === undefined ? null : Foto,
   };
 }
 
@@ -264,6 +269,46 @@ export const usersController = {
 
       await userModel.updateDeliveryDetailsById(id, details);
       res.json(details);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  /**
+   * GET /api/users/:id/permissions - Permisos delegables de un usuario.
+   *
+   * @async
+   * @param {import('express').Request} req - Peticion con el ID del usuario.
+   * @param {import('express').Response} res - Respuesta HTTP.
+   * @returns {Promise<void>}
+   */
+  async getPermissions(req, res) {
+    const id = parseUserId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'ID de usuario invalido' });
+    try {
+      res.json(await permissionModel.findByUser(id));
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
+
+  /**
+   * PUT /api/users/:id/permissions - El admin delega `puede_cancelar`.
+   *
+   * @async
+   * @param {import('express').Request} req - Cuerpo con `{ puede_cancelar }`.
+   * @param {import('express').Response} res - Respuesta HTTP.
+   * @returns {Promise<void>}
+   */
+  async updatePermissions(req, res) {
+    const id = parseUserId(req.params.id);
+    if (!id) return res.status(400).json({ error: 'ID de usuario invalido' });
+    const puede_cancelar = req.body?.puede_cancelar;
+    if (typeof puede_cancelar !== 'boolean') {
+      return res.status(400).json({ error: 'puede_cancelar debe ser booleano.' });
+    }
+    try {
+      res.json(await permissionModel.upsert(id, { puede_cancelar }));
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

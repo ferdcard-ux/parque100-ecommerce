@@ -24,6 +24,12 @@ router.put('/users/:id/profile', usersController.updateProfile);
 /** GET /api/users/:id - Consulta los datos de entrega de un usuario. */
 router.get('/users/:id', usersController.getDeliveryDetails);
 
+/** GET /api/users/:id/permissions - Permisos delegables de un usuario. */
+router.get('/users/:id/permissions', usersController.getPermissions);
+
+/** PUT /api/users/:id/permissions - El admin delega permisos. */
+router.put('/users/:id/permissions', usersController.updatePermissions);
+
 /** PUT /api/users/:id - Actualiza los datos de entrega de un usuario. */
 router.put('/users/:id', usersController.updateDeliveryDetails);
 

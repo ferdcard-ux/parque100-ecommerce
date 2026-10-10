@@ -19,7 +19,7 @@ export const userModel = {
    */
   async findAll() {
     const [rows] = await pool.query(
-      'SELECT ID_Usuario, Nombre, Correo, Rol, Telefono FROM usuario ORDER BY ID_Usuario',
+      'SELECT ID_Usuario, Nombre, Correo, Rol, Telefono, Foto FROM usuario ORDER BY ID_Usuario',
     );
     return rows;
   },
@@ -156,10 +156,10 @@ export const userModel = {
    * @param {Object} data - Campos a actualizar.
    * @returns {Promise<boolean>} true si actualizo una fila.
    */
-  async updateProfileById(id, { Nombre, Correo, Telefono }) {
+  async updateProfileById(id, { Nombre, Correo, Telefono, Foto }) {
     const [result] = await pool.query(
-      'UPDATE usuario SET Nombre = ?, Correo = ?, Telefono = ? WHERE ID_Usuario = ?',
-      [Nombre, Correo, Telefono || null, id],
+      'UPDATE usuario SET Nombre = ?, Correo = ?, Telefono = ?, Foto = ? WHERE ID_Usuario = ?',
+      [Nombre, Correo, Telefono || null, Foto || null, id],
     );
     return result.affectedRows === 1;
   },
@@ -173,7 +173,7 @@ export const userModel = {
    */
   async findPublicById(id) {
     const [rows] = await pool.query(
-      'SELECT ID_Usuario, Nombre, Correo, Rol, Telefono FROM usuario WHERE ID_Usuario = ?',
+      'SELECT ID_Usuario, Nombre, Correo, Rol, Telefono, Foto FROM usuario WHERE ID_Usuario = ?',
       [id],
     );
     return rows[0] || null;
@@ -246,6 +246,7 @@ export const userModel = {
       rol: row.Rol,
       telefono: row.Telefono,
       direccion: row.Direccion,
+      foto: row.Foto || null,
     };
   },
 };

@@ -18,6 +18,7 @@ import ordersRouter from './routes/orders.js';
 import paymentsRouter from './routes/payments.js';
 import usersRouter from './routes/users.js';
 import businessRouter from './routes/business.js';
+import ratingsRouter from './routes/ratings.js';
 
 /**
  * Puerto de escucha del backend.
@@ -41,6 +42,7 @@ app.use('/api', ordersRouter);
 app.use('/api', paymentsRouter);
 app.use('/api', usersRouter);
 app.use('/api', businessRouter);
+app.use('/api', ratingsRouter);
 
 app.use((req, res) => {
   res.status(404).json({
