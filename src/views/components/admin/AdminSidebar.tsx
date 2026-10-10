@@ -17,9 +17,11 @@ const SIDEBAR_ITEMS = [
 interface AdminSidebarProps {
   /** Clave del item activo en el segundo plano. */
   active?: string;
+  /** Cantidad de pedidos pendientes (badge en tiempo real). */
+  pendingCount?: number;
 }
 
-export function AdminSidebar({ active = 'inventario' }: AdminSidebarProps) {
+export function AdminSidebar({ active = 'inventario', pendingCount = 0 }: AdminSidebarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   return (
@@ -52,6 +54,15 @@ export function AdminSidebar({ active = 'inventario' }: AdminSidebarProps) {
           >
             <span className="shrink-0">{item.icon}</span>
             {sidebarOpen && <span style={{ fontSize: '0.875rem' }}>{item.label}</span>}
+            {item.key === 'pendientes' && pendingCount > 0 && (
+              <span
+                className="ml-auto min-w-6 h-6 px-1.5 rounded-full bg-[#C62828] text-white flex items-center justify-center font-bold"
+                style={{ fontSize: '0.7rem' }}
+                aria-label={`${pendingCount} pedidos pendientes`}
+              >
+                {pendingCount > 99 ? '99+' : pendingCount}
+              </span>
+            )}
           </Link>
         ))}
       </nav>

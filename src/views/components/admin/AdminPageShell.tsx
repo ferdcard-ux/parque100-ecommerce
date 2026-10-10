@@ -28,7 +28,18 @@ export function AdminPageShell({ active, title, subtitle, children }: AdminPageS
   const navigate = useNavigate();
 
   useEffect(() => {
-    orderService.getAll().then((all) => setPending(all.filter((o) => o.Estado === 'pendiente'))).catch(() => {});
+    let cancelled = false;
+    const loadPending = () => {
+      orderService.getAll().then((all) => {
+        if (!cancelled) setPending(all.filter((o) => o.Estado === 'pendiente'));
+      }).catch(() => {});
+    };
+    loadPending();
+    const timer = setInterval(loadPending, 15000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
   }, []);
 
   useEffect(() => {
@@ -41,7 +52,7 @@ export function AdminPageShell({ active, title, subtitle, children }: AdminPageS
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex">
-      <AdminSidebar active={active} />
+      <AdminSidebar active={active} pendingCount={pending.length} />
       <main className="flex-1 min-w-0 overflow-auto">
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between sticky top-0 z-10">
           <div>
