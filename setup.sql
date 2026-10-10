@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS usuario (
   Torre_Bloque varchar(50) DEFAULT NULL,
   Piso varchar(20) DEFAULT NULL,
   Apartamento varchar(20) DEFAULT NULL,
+  Foto mediumtext DEFAULT NULL,
   PRIMARY KEY (ID_Usuario),
   UNIQUE KEY Correo (Correo),
   UNIQUE KEY Telefono (Telefono)
@@ -94,8 +95,7 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
 
 -- --------------------------------------------------------
 -- NEGOCIO (ficha unica editable desde el panel admin)
--- --------------------------------------------------------
-CREATE TABLE IF NOT EXISTS negocio (
+-- --------------------------------------------------------CREATE TABLE IF NOT EXISTS negocio (
   ID_Negocio int(11) NOT NULL,
   Nombre varchar(80) NOT NULL,
   NIT varchar(30) DEFAULT NULL,
@@ -108,12 +108,45 @@ CREATE TABLE IF NOT EXISTS negocio (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
+-- PERMISOS DE USUARIO (delegados por el admin)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS permisos_usuario (
+  ID_Usuario int(11) NOT NULL,
+  puede_cancelar tinyint(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (ID_Usuario),
+  CONSTRAINT permisos_usuario_ibfk_1 FOREIGN KEY (ID_Usuario) REFERENCES usuario (ID_Usuario) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- CALIFICACIONES (productos, pedidos y envios, 1 a 5 estrellas)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS calificaciones (
+  ID_Calificacion int(11) NOT NULL AUTO_INCREMENT,
+  ID_Usuario int(11) DEFAULT NULL,
+  ID_Producto varchar(30) DEFAULT NULL,
+  ID_Pedido int(255) DEFAULT NULL,
+  Tipo varchar(20) NOT NULL,
+  Estrellas tinyint NOT NULL,
+  Comentario varchar(255) DEFAULT NULL,
+  Fecha datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (ID_Calificacion),
+  KEY ID_Usuario (ID_Usuario),
+  KEY ID_Producto (ID_Producto),
+  KEY ID_Pedido (ID_Pedido),
+  CONSTRAINT calificaciones_ibfk_1 FOREIGN KEY (ID_Usuario) REFERENCES usuario (ID_Usuario) ON DELETE SET NULL,
+  CONSTRAINT calificaciones_ibfk_2 FOREIGN KEY (ID_Producto) REFERENCES productos (ID_Producto) ON DELETE CASCADE,
+  CONSTRAINT calificaciones_ibfk_3 FOREIGN KEY (ID_Pedido) REFERENCES pedidos (ID_Pedido) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
 -- DATOS DE PRUEBA
 -- --------------------------------------------------------
 
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE detalle_pedido;
 TRUNCATE pedidos;
+TRUNCATE calificaciones;
+TRUNCATE permisos_usuario;
 TRUNCATE productos;
 TRUNCATE usuario;
 TRUNCATE categorias;
@@ -148,3 +181,8 @@ INSERT INTO usuario (ID_Usuario, Nombre, Correo, Contrasena, Rol, Telefono, Dire
 INSERT INTO negocio (ID_Negocio, Nombre, NIT, Direccion, Telefono, Email, Horario, Descripcion) VALUES
 (1, 'Tienda Parque 100', '900000000-1', 'Cra 98 #76-54, Bogota', '300987654', 'admin@parque100.com', 'Lun-Sab 8:00-18:00', 'Productos frescos y de canasta familiar')
 ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre);
+
+INSERT INTO permisos_usuario (ID_Usuario, puede_cancelar) VALUES
+(1, 0),
+(2, 1)
+ON DUPLICATE KEY UPDATE puede_cancelar = VALUES(puede_cancelar);
