@@ -106,6 +106,18 @@ export const ratingModel = {
     );
     return result.insertId;
   },
+
+  /**
+   * Elimina una calificacion por su identificador (moderacion).
+   *
+   * @async
+   * @param {number} id - Identificador de la calificacion.
+   * @returns {Promise<boolean>} true si elimino una fila.
+   */
+  async deleteById(id) {
+    const [result] = await pool.query('DELETE FROM calificaciones WHERE ID_Calificacion = ?', [id]);
+    return result.affectedRows === 1;
+  },
 };
 
 export default ratingModel;
