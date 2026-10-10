@@ -68,6 +68,29 @@ export const ratingController = {
       res.status(err.statusCode || 500).json({ error: err.message });
     }
   },
+
+  /**
+   * DELETE /api/ratings/:id
+   * Elimina una calificacion (moderacion del panel admin).
+   *
+   * @async
+   * @param {import('express').Request} req - Peticion con `req.params.id`.
+   * @param {import('express').Response} res - Respuesta HTTP.
+   * @returns {Promise<void>} 404 si no existe.
+   */
+  async remove(req, res) {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'ID de calificacion invalido.' });
+      }
+      const deleted = await ratingModel.deleteById(id);
+      if (!deleted) return res.status(404).json({ error: 'Calificacion no encontrada' });
+      res.json({ message: 'Calificacion eliminada' });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  },
 };
 
 export default ratingController;
