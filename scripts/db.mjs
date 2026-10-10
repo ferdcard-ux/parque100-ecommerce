@@ -65,11 +65,15 @@ function resolveClient(kind) {
 
 /** Ejecuta un comando y retorna el resultado con stdio controlado. */
 function run(cmd, args, options = {}) {
+  const stdio = options.stdio ?? ['inherit', 'pipe', 'inherit'];
+  // `input` debe entregarse por stdin: sin esto Node no crea el pipe y el
+  // proceso hijo recibe un stdin vacio (restore silencioso sin efecto).
+  if (options.input !== undefined) stdio[0] = 'pipe';
   return spawnSync(cmd, args, {
     shell: options.shell ?? false,
     encoding: options.encoding ?? 'buffer',
     maxBuffer: options.maxBuffer ?? 64 * 1024 * 1024,
-    stdio: options.stdio ?? ['inherit', 'pipe', 'inherit'],
+    stdio,
     ...(options.input !== undefined ? { input: options.input } : {}),
   });
 }

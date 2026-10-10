@@ -2,6 +2,12 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.5.3] — 2026-10-09
+
+### Correcciones
+- `npm run db:restore` **no aplicaba el dump** (bug del tooling): el stdin llegaba vacío al cliente MySQL y el restore era un no-op silencioso con salida `0`. Corregido: el `input` se entrega por pipe (`stdio[0]='pipe'`).
+- Adoptada la BD canónica de v1.5.1 (`.BD/parque100.sql`, commit del equipo): pedidos con comprobante Nequi, 9 pedidos / 2 usuarios / 10 productos.
+
 ## [1.5.2] — 2026-10-08
 
 ### Herramientas de desarrollo
