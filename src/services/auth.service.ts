@@ -4,10 +4,22 @@
  * peticiones HTTP contra el backend y normaliza las respuestas al
  * modelo `User` del cliente (arquitectura MVC - Service/DAO).
  */
-import type { User, LoginCredentials, RegisterData } from '../models';
+import type { User, UserRole, LoginCredentials, RegisterData } from '../models';
 
 /** URL base de la API REST del backend. */
 const API = 'http://localhost:3001/api';
+
+/**
+ * Normaliza el rol crudo del backend a `UserRole`.
+ *
+ * @param {any} raw - Rol crudo (`admin`, `empleado`, `domiciliario`, `cliente`, `usuario`).
+ * @returns {UserRole} Rol normalizado.
+ */
+function mapRole(raw: any): UserRole {
+  if (raw === 'admin') return 'admin';
+  if (raw === 'empleado' || raw === 'domiciliario') return 'domiciliario';
+  return 'cliente';
+}
 
 /**
  * Convierte una fila cruda del backend (columnas en espanol) al
@@ -17,12 +29,15 @@ const API = 'http://localhost:3001/api';
  * @returns {User} Usuario normalizado para la interfaz.
  */
 function mapUser(row: any): User {
+  const role = mapRole(row.Rol || row.rol);
   return {
     id: row.ID_Usuario || row.id,
     firstName: (row.Nombre || row.nombre || '').split(' ')[0],
     lastName: (row.Nombre || row.nombre || '').split(' ').slice(1).join(' ') || '',
     email: row.Correo || row.correo,
-    isAdmin: (row.Rol || row.rol) === 'admin',
+    isAdmin: role === 'admin',
+    role,
+    photo: row.Foto || row.foto || null,
   };
 }
 
@@ -76,6 +91,8 @@ export const authService = {
       lastName: data.lastName,
       email: data.email,
       isAdmin: false,
+      role: 'cliente',
+      photo: null,
     };
   },
 

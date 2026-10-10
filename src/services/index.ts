@@ -9,3 +9,4 @@ export { paymentService } from './payment.service';
 export { orderService } from './order.service';
 export { userService } from './user.service';
 export { businessService } from './business.service';
+export { ratingService } from './rating.service';
