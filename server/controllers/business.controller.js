@@ -32,23 +32,52 @@ export const businessController = {
 
   /**
    * PUT /api/business
-   * Actualiza los datos del negocio (nombre obligatorio).
+   * Actualiza los datos del negocio. Todos los campos visibles en la
+   * tienda son obligatorios (nombre, direccion, telefono, email,
+   * horario y descripcion); solo el NIT es opcional.
    *
    * @async
    * @param {import('express').Request} req - Cuerpo con campos del negocio.
    * @param {import('express').Response} res - Respuesta HTTP.
-   * @returns {Promise<void>} 400 sin nombre, 404 si no existe la fila.
+   * @returns {Promise<void>} 400 si falta un campo o es invalido.
    */
   async update(req, res) {
     try {
-      const nombre = typeof req.body?.Nombre === 'string' ? req.body.Nombre.trim() : '';
-      if (!nombre) {
-        return res.status(400).json({ error: 'El nombre del negocio es obligatorio.' });
+      const body = req.body || {};
+      const text = (value) => (typeof value === 'string' ? value.trim() : '');
+      const required = [
+        ['Nombre', 80],
+        ['Direccion', 120],
+        ['Telefono', 30],
+        ['Email', 80],
+        ['Horario', 80],
+        ['Descripcion', 255],
+      ];
+      for (const [field, max] of required) {
+        const value = text(body[field]);
+        if (!value) {
+          return res.status(400).json({ error: `El campo ${field} es obligatorio.` });
+        }
+        if (value.length > max) {
+          return res.status(400).json({ error: `El campo ${field} no puede superar ${max} caracteres.` });
+        }
       }
-      if (nombre.length > 80) {
-        return res.status(400).json({ error: 'El nombre no puede superar 80 caracteres.' });
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text(body.Email))) {
+        return res.status(400).json({ error: 'El correo del negocio no es valido.' });
       }
-      const updated = await businessModel.update({ ...req.body, Nombre: nombre });
+      const nit = text(body.NIT);
+      if (nit.length > 30) {
+        return res.status(400).json({ error: 'El NIT no puede superar 30 caracteres.' });
+      }
+      const updated = await businessModel.update({
+        Nombre: text(body.Nombre),
+        NIT: nit,
+        Direccion: text(body.Direccion),
+        Telefono: text(body.Telefono),
+        Email: text(body.Email),
+        Horario: text(body.Horario),
+        Descripcion: text(body.Descripcion),
+      });
       if (!updated) return res.status(404).json({ error: 'Datos del negocio no encontrados' });
       const business = await businessModel.find();
       res.json(business);
