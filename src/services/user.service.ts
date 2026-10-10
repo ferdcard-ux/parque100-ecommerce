@@ -36,6 +36,7 @@ export interface ApiUserRow {
   Correo: string;
   Rol: string | null;
   Telefono: string | number | null;
+  Foto?: string | null;
 }
 
 /** Datos editables de un usuario desde el panel admin. */
@@ -51,6 +52,13 @@ export interface ProfileData {
   Nombre: string;
   Correo: string;
   Telefono: string;
+  Foto?: string | null;
+}
+
+/** Permisos delegables de un usuario. */
+export interface UserPermissions {
+  ID_Usuario: number;
+  puede_cancelar: boolean;
 }
 
 export const userService = {
@@ -182,5 +190,40 @@ export const userService = {
     if (!response.ok) {
       throw new Error(await getErrorMessage(response, 'No fue posible eliminar el usuario.'));
     }
+  },
+
+  /**
+   * Consulta los permisos delegables de un usuario.
+   *
+   * @param {number} id - Identificador del usuario.
+   * @returns {Promise<UserPermissions>} Permisos del usuario.
+   * @throws {Error} Si el servidor rechaza la consulta.
+   */
+  async getPermissions(id: number): Promise<UserPermissions> {
+    const response = await fetch(`${API}/users/${id}/permissions`);
+    if (!response.ok) {
+      throw new Error(await getErrorMessage(response, 'No fue posible cargar los permisos.'));
+    }
+    return (await response.json()) as UserPermissions;
+  },
+
+  /**
+   * El admin delega el permiso de cancelar pedidos.
+   *
+   * @param {number} id - Identificador del usuario.
+   * @param {boolean} puede_cancelar - Puede cancelar pedidos.
+   * @returns {Promise<UserPermissions>} Permisos actualizados.
+   * @throws {Error} Si el servidor rechaza la actualizacion.
+   */
+  async updatePermissions(id: number, puede_cancelar: boolean): Promise<UserPermissions> {
+    const response = await fetch(`${API}/users/${id}/permissions`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ puede_cancelar }),
+    });
+    if (!response.ok) {
+      throw new Error(await getErrorMessage(response, 'No fue posible guardar los permisos.'));
+    }
+    return (await response.json()) as UserPermissions;
   },
 };

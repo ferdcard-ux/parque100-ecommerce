@@ -137,20 +137,24 @@ export function useAuthController() {
    * Actualiza el perfil propio en el backend y refleja los cambios
    * en la sesion activa (y en las demas sesiones de la misma cuenta).
    */
-  const updateProfile = useCallback(async (data: { firstName: string; lastName: string; email: string; phone: string }) => {
+  const updateProfile = useCallback(async (data: { firstName: string; lastName: string; email: string; phone: string; photo?: string | null }) => {
     if (activeId === null) throw new Error('Sin sesion activa');
     const row = await userService.updateProfile(activeId, {
       Nombre: `${data.firstName} ${data.lastName}`.trim(),
       Correo: data.email.trim(),
       Telefono: data.phone.replace(/\D/g, '').slice(0, 20),
+      Foto: data.photo ?? null,
     });
     const parts = (row.Nombre || '').split(' ');
+    const role = row.Rol === 'admin' ? 'admin' : row.Rol === 'empleado' || row.Rol === 'domiciliario' ? 'domiciliario' : 'cliente';
     const updated: User = {
       id: row.ID_Usuario,
       firstName: parts[0] || '',
       lastName: parts.slice(1).join(' ') || '',
       email: row.Correo,
-      isAdmin: row.Rol === 'admin',
+      isAdmin: role === 'admin',
+      role,
+      photo: row.Foto || null,
     };
     setSessions((prev) => prev.map((s) => (s.id === activeId ? updated : s)));
     return updated;
