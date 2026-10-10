@@ -15,7 +15,7 @@ export interface User {
   email: string;
   /** Indica si el usuario tiene rol administrador. */
   isAdmin: boolean;
-  /** Rol del usuario (`admin`, `domiciliario`/`empleado`, `cliente`). */
+  /** Rol del usuario (`admin`, `domiciliario`, `cliente`). */
   role: UserRole;
   /** Foto de perfil (dataURL) o null. */
   photo: string | null;

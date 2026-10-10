@@ -77,7 +77,7 @@ export function AdminOrderDetailPage() {
     setCancelError(null);
     setSaving(true);
     try {
-      await orderService.cancel(order.ID_Pedido, motivo);
+      await orderService.cancel(order.ID_Pedido, motivo, isAdmin ? 'admin' : 'domiciliario', user?.id ?? null);
       setOrder({ ...order, Estado: 'cancelado', Motivo_Cancelacion: motivo });
       setCancelOpen(false);
     } catch (err) {

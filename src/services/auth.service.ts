@@ -12,7 +12,8 @@ const API = 'http://localhost:3001/api';
 /**
  * Normaliza el rol crudo del backend a `UserRole`.
  *
- * @param {any} raw - Rol crudo (`admin`, `empleado`, `domiciliario`, `cliente`, `usuario`).
+ * @param {any} raw - Rol crudo (`admin`, `domiciliario`, `cliente`;
+ *   legados `empleado` -> domiciliario, `usuario` -> cliente).
  * @returns {UserRole} Rol normalizado.
  */
 function mapRole(raw: any): UserRole {

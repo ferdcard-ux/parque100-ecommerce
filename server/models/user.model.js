@@ -118,7 +118,7 @@ export const userModel = {
    * @param {string} data.Nombre - Nombre completo.
    * @param {string} data.Correo - Correo electronico (unico).
    * @param {string} data.Contrasena - Contrasena inicial.
-   * @param {string} [data.Rol] - Rol ('admin', 'empleado', 'cliente').
+   * @param {string} [data.Rol] - Rol ('admin', 'domiciliario', 'cliente').
    * @param {string|null} [data.Telefono] - Telefono de contacto.
    * @returns {Promise<number>} El `insertId` generado.
    * @throws {Error} Si el correo ya existe o falla la insercion.

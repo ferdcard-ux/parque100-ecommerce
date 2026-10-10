@@ -40,7 +40,7 @@ function validateDeliveryDetails(body) {
   };
 }
 
-const VALID_ROLES = ['admin', 'empleado', 'domiciliario', 'cliente', 'usuario'];
+const VALID_ROLES = ['admin', 'domiciliario', 'cliente', 'usuario'];
 
 function validateAdminUser(body) {
   if (!body || typeof body !== 'object' || Array.isArray(body)) return null;

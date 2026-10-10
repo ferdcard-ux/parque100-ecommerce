@@ -125,7 +125,7 @@
 - Ventas y ticket promedio excluyen pedidos cancelados
 
 ### Clientes (`/admin/clientes`) y Configuración (`/admin/configuracion`)
-- CRUD de usuarios: agregar, editar datos y rol (cliente, empleado, admin), eliminar con protección si tiene pedidos; correo y teléfono únicos (409 si existen); búsqueda y filtro por rol
+- CRUD de usuarios: agregar, editar datos y rol (cliente, domiciliario, admin), eliminar con protección si tiene pedidos; correo y teléfono únicos (409 si existen); búsqueda y filtro por rol
 - Preferencias del panel persistidas en localStorage
 
 ## Flujo completo de compra (requiere sesión)

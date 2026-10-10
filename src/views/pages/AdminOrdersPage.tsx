@@ -63,7 +63,7 @@ export function AdminOrdersPage() {
     setCancelError(null);
     setSaving(true);
     try {
-      await cancelOrder(cancelId, motivo);
+      await cancelOrder(cancelId, motivo, isAdmin ? 'admin' : 'domiciliario', user?.id ?? null);
       setCancelId(null);
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : 'No fue posible cancelar.');

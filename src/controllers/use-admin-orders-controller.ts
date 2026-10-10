@@ -56,8 +56,8 @@ export function useAdminOrdersController() {
   }, []);
 
   /** Cancela con motivo en backend y actualiza el estado local. */
-  const cancelOrder = useCallback(async (id: number, motivo: string) => {
-    await orderService.cancel(id, motivo);
+  const cancelOrder = useCallback(async (id: number, motivo: string, actor: string = 'admin', actorId: number | null = null) => {
+    await orderService.cancel(id, motivo, actor, actorId);
     setOrders((prev) =>
       prev.map((o) => (o.ID_Pedido === id ? { ...o, Estado: 'cancelado', Motivo_Cancelacion: motivo } : o)),
     );
