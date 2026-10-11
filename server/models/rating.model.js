@@ -78,8 +78,8 @@ export const ratingModel = {
    *
    * Reglas de negocio:
    *   - Tipo 'producto': exige ID_Usuario e ID_Pedido y verifica que el
-   *     usuario compro ese producto en ese pedido con estado 'enviando'
-   *     o 'entregado'. Solo una resena por producto y pedido (409 si existe).
+   *     usuario compro ese producto en ese pedido con estado 'entregado'.
+   *     Solo una resena por producto y pedido (409 si existe).
    *
    * @async
    * @param {Object} data - Datos validados.
@@ -112,13 +112,13 @@ export const ratingModel = {
       const [purchase] = await pool.query(
         `SELECT 1 FROM pedidos p
          INNER JOIN detalle_pedido d ON d.ID_Pedido = p.ID_Pedido AND d.ID_Producto = ?
-         WHERE p.ID_Pedido = ? AND p.ID_Usuario = ? AND p.Estado IN ('enviando', 'entregado')
+         WHERE p.ID_Pedido = ? AND p.ID_Usuario = ? AND p.Estado = 'entregado'
          LIMIT 1`,
         [ID_Producto, orderId, userId],
       );
       if (purchase.length === 0) {
         throw createRatingError(
-          'Solo puedes calificar productos que compraste en un pedido enviado o entregado.',
+          'Solo puedes calificar productos de un pedido entregado.',
           403,
         );
       }

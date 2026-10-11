@@ -74,8 +74,8 @@ export function ratingLabel(stars: number): string {
   return RATING_LABELS[stars] ?? '';
 }
 
-/** Estados de pedido que habilitan calificar productos (compra verificada). */
-export const REVIEWABLE_ORDER_ESTADOS = ['enviando', 'entregado'] as const;
+/** Estados de pedido que habilitan calificar productos (solo entregados). */
+export const REVIEWABLE_ORDER_ESTADOS = ['entregado'] as const;
 
 /** Indica si un pedido permite dejar resenas de sus productos. */
 export function canReviewOrder(estado: string): boolean {
