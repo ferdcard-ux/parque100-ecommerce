@@ -13,7 +13,8 @@ import mysql from 'mysql2/promise';
  * @constant
  */
 const pool = mysql.createPool({
-  host: 'localhost',
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
   user: 'root',
   password: '',
   database: 'parque100',
