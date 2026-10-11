@@ -118,7 +118,7 @@ export function AdminOrdersPage() {
 
   return (
     <AdminPageShell active="pedidos" title="Administrar Pedidos" subtitle="Gestiona el estado de cada pedido">
-      <div className="sticky top-[60px] z-10 bg-[#F5F5F5]/95 backdrop-blur -mt-3 pt-1 pb-2">
+      <div className="sticky top-[60px] z-10 bg-[#F5F5F5] -mt-3 pt-1 pb-2">
         <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
           {summary.map((s) => {
             const isActive = estadoFilter === s.estado;
@@ -180,7 +180,7 @@ export function AdminOrdersPage() {
                 <button
                   onClick={() => setCollapsed((prev) => ({ ...prev, [dateKey]: !isCollapsed }))}
                   aria-expanded={!isCollapsed}
-                  className="sticky top-[154px] z-[5] w-full flex items-center justify-between gap-3 bg-white/95 backdrop-blur border border-gray-100 rounded-xl px-4 py-2.5 shadow-sm hover:border-[#C62828]/40 transition-colors text-left"
+                  className="sticky top-[154px] z-[5] w-full flex items-center justify-between gap-3 bg-white border border-gray-100 rounded-xl px-4 py-2.5 shadow-sm hover:border-[#C62828]/40 transition-colors text-left"
                 >
                   <span className="min-w-0">
                     <span className="block text-[#212121] font-bold truncate" style={{ fontSize: '0.85rem' }}>{formatGroupTitle(dateKey)}</span>

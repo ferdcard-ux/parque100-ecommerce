@@ -25,7 +25,7 @@ export function OrderTracker({ estado, compact = false }: OrderTrackerProps) {
               <span className={`absolute top-3.5 right-1/2 w-full h-0.5 ${done || active ? 'bg-[#22C55E]' : 'bg-gray-200'}`} />
             )}
             <span
-              className={`relative z-10 w-7 h-7 rounded-full flex items-center justify-center border-2 ${
+              className={`relative w-7 h-7 rounded-full flex items-center justify-center border-2 ${
                 done
                   ? 'bg-[#22C55E] border-[#22C55E] text-white'
                   : active
