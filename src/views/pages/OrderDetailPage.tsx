@@ -111,15 +111,26 @@ export function OrderDetailPage() {
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
               <SectionTitle>Productos</SectionTitle>
               <ul className="flex flex-col divide-y divide-gray-50">
-                {(order.detalles ?? []).map((item, idx) => (
-                  <li key={idx} className="py-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-[#212121] font-medium" style={{ fontSize: '0.9rem' }}>{item.Producto_Nombre ?? item.ID_Producto}</p>
-                      <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>x{item.Cantidad}</p>
-                    </div>
-                    <span className="text-[#212121] font-semibold">{formatPrice(Number(item.Subtotal))}</span>
-                  </li>
-                ))}
+                {(order.detalles ?? []).map((item, idx) => {
+                  const catalog = products.find((p) => String(p.id) === String(item.ID_Producto));
+                  const name = item.Producto_Nombre ?? catalog?.name ?? String(item.ID_Producto);
+                  const qty = Number(item.Cantidad);
+                  const unit = qty > 0 ? Number(item.Subtotal) / qty : Number(item.Subtotal);
+                  return (
+                    <li key={idx} className="py-3 flex items-center gap-3">
+                      <ImageWithFallback
+                        src={catalog?.image ?? ''}
+                        alt={name}
+                        className="w-12 h-12 object-cover rounded-xl shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[#212121] font-medium truncate" style={{ fontSize: '0.9rem' }}>{name}</p>
+                        <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>x{qty} - {formatPrice(unit)} c/u</p>
+                      </div>
+                      <span className="text-[#212121] font-semibold shrink-0">{formatPrice(Number(item.Subtotal))}</span>
+                    </li>
+                  );
+                })}
               </ul>
               <dl className="border-t border-gray-100 mt-2 pt-3 flex flex-col gap-1" style={{ fontSize: '0.85rem' }}>
                 <div className="flex justify-between text-gray-500"><dt>Subtotal</dt><dd>{formatPrice(subtotal)}</dd></div>
