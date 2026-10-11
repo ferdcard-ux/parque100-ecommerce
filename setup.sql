@@ -25,6 +25,15 @@ CREATE TABLE IF NOT EXISTS productos (
   Descripcion varchar(255) DEFAULT NULL,
   Imagen MEDIUMTEXT DEFAULT NULL,
   Precio_Venta int(20) DEFAULT NULL,
+  Precio_Anterior int(20) DEFAULT NULL,
+  Marca varchar(50) DEFAULT NULL,
+  Contenido_Cantidad decimal(12,2) DEFAULT NULL,
+  Contenido_Unidad varchar(10) DEFAULT NULL,
+  Embalaje varchar(60) DEFAULT NULL,
+  Ingredientes varchar(255) DEFAULT NULL,
+  Conservacion varchar(255) DEFAULT NULL,
+  Promo_Desde date DEFAULT NULL,
+  Promo_Hasta date DEFAULT NULL,
   Stock_Minimo int(30) DEFAULT NULL,
   ID_Categoria int(11) DEFAULT NULL,
   PRIMARY KEY (ID_Producto),
@@ -162,17 +171,17 @@ INSERT INTO categorias (ID_Categoria, Nombre_Categoria, Descripcion) VALUES
 (7, 'Bebidas', 'Bebidas naturales'),
 (8, 'Limpieza', 'Productos de limpieza');
 
-INSERT INTO productos (ID_Producto, Nombre, Descripcion, Precio_Venta, Stock_Minimo, ID_Categoria) VALUES
-('P001', 'Tomates Cherry 500g', 'Tomates cherry frescos y jugosos', 3500, 45, 1),
-('P002', 'Bananos x6 und', 'Bananos maduros de la mejor calidad', 2800, 32, 2),
-('P003', 'Fresas Frescas 500g', 'Fresas frescas de temporada', 4200, 8, 2),
-('P004', 'Canasta de Frutas', 'Canasta con variedad de frutas', 12000, 10, 2),
-('P005', 'Verduras Mixtas 1kg', 'Seleccion de verduras del dia', 6500, 3, 1),
-('P006', 'Manzanas Rojas x5', 'Manzanas rojas importadas', 4800, 25, 2),
-('P007', 'Surtido Verduras', 'Verduras variadas conservadas', 7200, 15, 1),
-('P008', 'Mix Frutas Tropicales', 'Frutas tropicales frescas', 5500, 20, 2),
-('P009', 'Leche Entera 1L', 'Leche entera pasteurizada', 3200, 5, 5),
-('P010', 'Pan Tajado 500g', 'Pan de molde blanco', 4500, 18, 6);
+INSERT INTO productos (ID_Producto, Nombre, Descripcion, Precio_Venta, Precio_Anterior, Marca, Contenido_Cantidad, Contenido_Unidad, Stock_Minimo, ID_Categoria) VALUES
+('P001', 'Tomates Cherry 500g', 'Tomates cherry frescos y jugosos', 3500, 4200, 'Parque100', 500, 'g', 45, 1),
+('P002', 'Bananos x6 und', 'Bananos maduros de la mejor calidad', 2800, NULL, 'Parque100', 6, 'un', 32, 2),
+('P003', 'Fresas Frescas 500g', 'Fresas frescas de temporada', 4200, 5000, 'Parque100', 500, 'g', 8, 2),
+('P004', 'Canasta de Frutas', 'Canasta con variedad de frutas', 12000, NULL, 'Parque100', 1, 'un', 10, 2),
+('P005', 'Verduras Mixtas 1kg', 'Seleccion de verduras del dia', 6500, NULL, 'Parque100', 1000, 'g', 3, 1),
+('P006', 'Manzanas Rojas x5', 'Manzanas rojas importadas', 4800, NULL, 'Importado', 5, 'un', 25, 2),
+('P007', 'Surtido Verduras', 'Verduras variadas conservadas', 7200, NULL, 'Parque100', 1000, 'g', 15, 1),
+('P008', 'Mix Frutas Tropicales', 'Frutas tropicales frescas', 5500, NULL, 'Parque100', 800, 'g', 20, 2),
+('P009', 'Leche Entera 1L', 'Leche entera pasteurizada', 3200, 3800, 'Colanta', 1000, 'ml', 5, 5),
+('P010', 'Pan Tajado 500g', 'Pan de molde blanco', 4500, NULL, 'Comapan', 500, 'g', 18, 6);
 
 INSERT INTO usuario (ID_Usuario, Nombre, Correo, Contrasena, Rol, Telefono, Direccion) VALUES
 (1, 'Usuario Demo', 'usuario@ejemplo.com', '12345678', 'usuario', 300123456, 'Calle 123 #45-67'),

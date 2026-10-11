@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router';
 import {
   ShoppingCart, Heart, Search, Menu, X, Store, ShieldCheck, User, LogOut, RefreshCw,
 } from 'lucide-react';
-import type { User as UserType, UserRole } from '../../../models';
+import type { User as UserType, UserRole, Product } from '../../../models';
 import { useFavoritesController } from '../../../controllers';
-import { userService } from '../../../services';
+import { userService, productService } from '../../../services';
+import { formatPrice } from '../../../utils';
+import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { UserAvatar } from '../shared/user-avatar';
 import { UserNotifications } from './UserNotifications';
 
@@ -24,7 +26,10 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [searchValue, setSearchValue] = useState('');
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestItems, setSuggestItems] = useState<Product[]>([]);
   const userMenuRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -32,10 +37,34 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
       }
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setSuggestOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    const q = searchValue.trim().toLowerCase();
+    if (q.length < 2) {
+      setSuggestItems([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      productService.getAll().then((all) => {
+        setSuggestItems(all.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 6));
+        setSuggestOpen(true);
+      }).catch(() => {});
+    }, 200);
+    return () => clearTimeout(t);
+  }, [searchValue]);
+
+  const goSearch = () => {
+    if (!searchValue.trim()) return;
+    setSuggestOpen(false);
+    navigate(`/catalogo?q=${encodeURIComponent(searchValue.trim())}`);
+  };
 
   const handleCategoriesClick = () => {
     const onHome = window.location.pathname === '/';
@@ -101,18 +130,36 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
           </div>
 
           <div className="hidden md:flex items-center flex-1 max-w-xs mx-6">
-            <div className="relative w-full">
+            <div className="relative w-full" ref={searchRef}>
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Buscar productos..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
+                onFocus={() => searchValue.trim().length >= 2 && setSuggestOpen(true)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && searchValue.trim()) navigate(`/catalogo?q=${encodeURIComponent(searchValue.trim())}`);
+                  if (e.key === 'Enter') goSearch();
                 }}
                 className="w-full pl-9 pr-4 py-2 rounded-full bg-[#F5F5F5] border border-gray-200 focus:outline-none focus:border-[#C62828] focus:ring-1 focus:ring-[#C62828] text-sm text-[#212121]"
               />
+              {suggestOpen && suggestItems.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
+                  {suggestItems.map((p) => (
+                    <button key={p.id} onClick={() => { setSuggestOpen(false); navigate(`/producto/${p.id}`); }}
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F5F5F5] transition-colors text-left">
+                      <ImageWithFallback src={p.image} alt={p.name} className="w-10 h-10 rounded-xl object-cover shrink-0" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[#212121]" style={{ fontSize: '0.82rem', fontWeight: 600 }}>{p.name}</span>
+                        <span className="block text-[#C62828] font-bold" style={{ fontSize: '0.78rem' }}>{formatPrice(p.price)}</span>
+                      </span>
+                    </button>
+                  ))}
+                  <button onClick={goSearch} className="w-full px-3 py-2 text-center text-[#C62828] font-semibold hover:bg-red-50 transition-colors" style={{ fontSize: '0.8rem' }}>
+                    Ver todos los resultados
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 

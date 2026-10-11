@@ -90,3 +90,37 @@ export function generateOrderId(): string {
   const num = Math.floor(100000 + Math.random() * 900000);
   return `${ORDER_ID_PREFIX}${num}`;
 }
+
+/** true si el producto tiene promo válida (antes > actual). */
+export function hasPromo(price: number, previousPrice?: number | null): boolean {
+  return previousPrice != null && previousPrice > price;
+}
+
+/** Ahorro en COP (0 si no hay promo). */
+export function savingsAmount(price: number, previousPrice?: number | null): number {
+  return hasPromo(price, previousPrice) ? (previousPrice as number) - price : 0;
+}
+
+/** Porcentaje de descuento redondeado (0 si no hay promo). */
+export function discountPercent(price: number, previousPrice?: number | null): number {
+  if (!hasPromo(price, previousPrice)) return 0;
+  return Math.round((((previousPrice as number) - price) / (previousPrice as number)) * 100);
+}
+
+/**
+ * Texto de precio unitario ("2000 g (g a $12.21)").
+ * Devuelve null si no hay contenido válido.
+ */
+export function formatUnitPrice(price: number, qty?: number | null, unit?: string | null): string | null {
+  if (qty == null || !unit || Number(qty) <= 0) return null;
+  const u = unit.trim();
+  const perUnit = price / Number(qty);
+  const perUnitFmt = new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: perUnit < 100 ? 2 : 0,
+    maximumFractionDigits: 2,
+  }).format(perUnit);
+  const qtyFmt = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 2 }).format(Number(qty));
+  return `${qtyFmt} ${u} (${u} a ${perUnitFmt})`;
+}
