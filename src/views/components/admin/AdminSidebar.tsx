@@ -1,22 +1,23 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import {
-  Package, ShoppingCart, Users, BarChart2, Settings,
+  Package, ShoppingCart, Users, BarChart2, Settings, ClipboardList,
   Store, ChevronLeft, ChevronRight as ChevRight, LogOut, LayoutDashboard,
 } from 'lucide-react';
 import type { UserRole } from '../../../models';
 
 const SIDEBAR_ITEMS = [
-  { key: 'inventario', icon: <Package size={18} />, label: 'Inventario', path: '/admin' },
+  { key: 'dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard', path: '/admin' },
+  { key: 'inventario', icon: <Package size={18} />, label: 'Inventario', path: '/admin/inventario' },
   { key: 'pendientes', icon: <ShoppingCart size={18} />, label: 'Pedidos pendientes', path: '/admin/pedidos-pendientes' },
-  { key: 'pedidos', icon: <LayoutDashboard size={18} />, label: 'Administrar pedidos', path: '/admin/pedidos' },
+  { key: 'pedidos', icon: <ClipboardList size={18} />, label: 'Administrar pedidos', path: '/admin/pedidos' },
   { key: 'reportes', icon: <BarChart2 size={18} />, label: 'Reportes', path: '/admin/reportes' },
   { key: 'clientes', icon: <Users size={18} />, label: 'Clientes', path: '/admin/clientes' },
   { key: 'configuracion', icon: <Settings size={18} />, label: 'Configuración', path: '/admin/configuracion' },
 ];
 
 /** Secciones visibles para el domiciliario (sin cancelaciones ni gestion). */
-const DOMICILIARIO_KEYS = ['pendientes', 'pedidos'];
+const DOMICILIARIO_KEYS = ['dashboard', 'pendientes', 'pedidos'];
 
 interface AdminSidebarProps {
   /** Clave del item activo en el segundo plano. */
@@ -27,7 +28,7 @@ interface AdminSidebarProps {
   role?: UserRole | null;
 }
 
-export function AdminSidebar({ active = 'inventario', pendingCount = 0, role = 'admin' }: AdminSidebarProps) {
+export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'admin' }: AdminSidebarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const items = role === 'domiciliario' ? SIDEBAR_ITEMS.filter((item) => DOMICILIARIO_KEYS.includes(item.key)) : SIDEBAR_ITEMS;
 

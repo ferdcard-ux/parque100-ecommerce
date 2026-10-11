@@ -15,6 +15,7 @@ import { PaymentMethodPage } from './views/pages/PaymentMethodPage';
 import { CardPaymentPage } from './views/pages/CardPaymentPage';
 import { PaymentSuccessPage } from './views/pages/PaymentSuccessPage';
 import { AdminInventoryPage } from './views/pages/AdminInventoryPage';
+import { AdminDashboardPage } from './views/pages/AdminDashboardPage';
 import { CatalogPage } from './views/pages/CatalogPage';
 import { ProductDetailPage } from './views/pages/ProductDetailPage';
 import { AccountPage } from './views/pages/AccountPage';
@@ -295,7 +296,8 @@ export default function App() {
     { path: '/login', Component: LoginPage },
     { path: '/register', Component: RegisterPage },
     { path: '/payment-success', Component: PaymentSuccessPage },
-    { path: '/admin', Component: () => <RequireAdmin><AdminWrapper /></RequireAdmin> },
+    { path: '/admin', Component: () => <RequireStaff><AdminDashboardPage /></RequireStaff> },
+    { path: '/admin/inventario', Component: () => <RequireAdmin><AdminWrapper /></RequireAdmin> },
     { path: '/admin/pedidos-pendientes', Component: () => <RequireStaff><AdminPendingOrdersPage /></RequireStaff> },
     { path: '/admin/pedidos', Component: () => <RequireStaff><AdminOrdersPage /></RequireStaff> },
     { path: '/admin/pedidos/:id', Component: () => <RequireStaff><AdminOrderDetailPage /></RequireStaff> },
