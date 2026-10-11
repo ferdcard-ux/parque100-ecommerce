@@ -1,9 +1,9 @@
 /**
  * @fileoverview Pagina de detalle de un producto.
  */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useParams } from 'react-router';
-import { Star, Minus, Plus, Truck, ShieldCheck, Leaf } from 'lucide-react';
+import { Heart, Minus, Plus, Truck, ShieldCheck, Leaf, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../../App';
 import { useFavoritesController, useProductController, useRatingsController } from '../../controllers';
 import type { Rating } from '../../models';
@@ -13,7 +13,7 @@ import { StarRating } from '../components/shared/star-rating';
 import { ReviewCard } from '../components/ratings/review-card';
 import { ReviewFormModal } from '../components/ratings/review-form-modal';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { formatPrice } from '../../utils';
+import { formatPrice, formatUnitPrice, hasPromo, savingsAmount } from '../../utils';
 
 /** Detalle de producto con cantidad, stock y relacionados. */
 export function ProductDetailPage() {
@@ -29,8 +29,11 @@ export function ProductDetailPage() {
 
   const product = products.find((p) => String(p.id) === id);
   const related = product
-    ? products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 4)
+    ? products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 8)
     : [];
+  const relatedRef = useRef<HTMLDivElement>(null);
+  const promo = product ? hasPromo(product.price, product.previousPrice) : false;
+  const unit = product ? formatUnitPrice(product.price, product.contentQty, product.contentUnit) : null;
 
   const handleAdd = () => {
     if (!product) return;
@@ -105,17 +108,33 @@ export function ProductDetailPage() {
               aria-label="Favorito"
               className="absolute top-6 right-6 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center z-10"
             >
-              <Star size={16} className={isFavorite(product.id) ? 'fill-[#FBC02D] text-[#FBC02D]' : 'text-gray-400'} />
+              <Heart size={16} className={isFavorite(product.id) ? 'fill-[#C62828] text-[#C62828]' : 'text-gray-400'} />
             </button>
             <ImageWithFallback src={product.image} alt={product.name} className="w-full h-72 object-cover rounded-xl" />
+            <p className="text-gray-400 mt-2" style={{ fontSize: '0.7rem' }}>*Las imágenes del producto son de referencia.</p>
           </div>
 
           <div>
-            <span className="inline-block px-3 py-1 rounded-full bg-[#C62828]/10 text-[#C62828] mb-3" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+            {product.brand && (
+              <Link to={`/catalogo?marca=${encodeURIComponent(product.brand)}`} className="inline-block underline underline-offset-2 text-gray-500 mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+                {product.brand}
+              </Link>
+            )}
+            <span className="inline-block px-3 py-1 rounded-full bg-[#C62828]/10 text-[#C62828] mb-3 ml-2" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
               {product.category}
             </span>
-            <h2 className="text-[#212121] mb-2" style={{ fontSize: '1.5rem', fontWeight: 700 }}>{product.name}</h2>
-            <p className="text-[#C62828] font-bold mb-4" style={{ fontSize: '1.6rem' }}>{formatPrice(product.price)}</p>
+            <h2 className="text-[#212121] mb-1" style={{ fontSize: '1.5rem', fontWeight: 700 }}>{product.name}</h2>
+            {unit && <p className="text-gray-500 mb-1" style={{ fontSize: '0.85rem' }}>{unit}</p>}
+            <p className="text-gray-400 mb-2" style={{ fontSize: '0.75rem' }}>SKU: {product.sku ?? product.id}</p>
+            {promo ? (
+              <div className="mb-4">
+                <p className="text-gray-400" style={{ fontSize: '0.85rem' }}>Antes <span className="line-through">{formatPrice(product.previousPrice as number)}</span></p>
+                <p className="text-[#C62828] font-bold" style={{ fontSize: '1.6rem' }}>{formatPrice(product.price)}</p>
+                <p className="text-green-700 font-semibold" style={{ fontSize: '0.85rem' }}>Ahorro {formatPrice(savingsAmount(product.price, product.previousPrice))}</p>
+              </div>
+            ) : (
+              <p className="text-[#C62828] font-bold mb-4" style={{ fontSize: '1.6rem' }}>{formatPrice(product.price)}</p>
+            )}
             <p className="text-gray-500 mb-6" style={{ fontSize: '0.9rem' }}>{product.description}</p>
             <ul className="flex flex-col gap-3 text-gray-600" style={{ fontSize: '0.85rem' }}>
               <li className="flex items-center gap-2"><Truck size={16} className="text-[#C62828]" /> Entrega en 45-60 minutos</li>
@@ -125,6 +144,9 @@ export function ProductDetailPage() {
           </div>
 
           <aside className="bg-white rounded-2xl border border-gray-100 p-6 h-fit">
+            {promo && (
+              <p className="text-gray-400" style={{ fontSize: '0.8rem' }}>Antes <span className="line-through">{formatPrice(product.previousPrice as number)}</span></p>
+            )}
             <p className="text-[#C62828] font-bold mb-1" style={{ fontSize: '1.4rem' }}>{formatPrice(product.price)}</p>
             <p className="flex items-center gap-2 text-green-600 mb-6" style={{ fontSize: '0.85rem' }}>
               <span className="w-2 h-2 rounded-full bg-green-500" /> {product.stock} disponibles
@@ -146,12 +168,38 @@ export function ProductDetailPage() {
 
         {related.length > 0 && (
           <section className="mt-12">
-            <h2 className="text-[#212121] mb-6" style={{ fontSize: '1.2rem', fontWeight: 700 }}>Tambien te puede interesar</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-[#212121]" style={{ fontSize: '1.2rem', fontWeight: 700 }}>También puede interesarte</h2>
+              <div className="flex gap-2">
+                <button onClick={() => relatedRef.current?.scrollBy({ left: -320, behavior: 'smooth' })} className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#C62828] hover:text-[#C62828]" aria-label="Anterior">
+                  <ChevronLeft size={16} />
+                </button>
+                <button onClick={() => relatedRef.current?.scrollBy({ left: 320, behavior: 'smooth' })} className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#C62828] hover:text-[#C62828]" aria-label="Siguiente">
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            </div>
+            <div ref={relatedRef} className="flex gap-4 overflow-x-auto pb-2 snap-x">
               {related.map((p) => (
-                <ProductCard key={p.id} product={p} isFavorite={isFavorite(p.id)} onToggleFavorite={toggleFavorite} />
+                <div key={p.id} className="min-w-[220px] max-w-[220px] snap-start">
+                  <ProductCard key={p.id} product={p} isFavorite={isFavorite(p.id)} onToggleFavorite={toggleFavorite} />
+                </div>
               ))}
             </div>
+          </section>
+        )}
+
+        {(product.brand || product.packaging || product.ingredients || product.storage) && (
+          <section className="mt-8 bg-white rounded-2xl border border-gray-100 p-6">
+            <h2 className="text-[#212121] mb-4" style={{ fontSize: '1.1rem', fontWeight: 700 }}>Descripción</h2>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3" style={{ fontSize: '0.85rem' }}>
+              <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">Nombre</dt><dd className="text-[#212121] font-medium">{product.name}</dd></div>
+              {product.brand && <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">Marca</dt><dd className="text-[#212121] font-medium">{product.brand}</dd></div>}
+              <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">SKU</dt><dd className="text-[#212121] font-medium">{product.sku ?? product.id}</dd></div>
+              {product.packaging && <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">Embalaje</dt><dd className="text-[#212121]">{product.packaging}</dd></div>}
+              {product.ingredients && <div className="flex gap-2 sm:col-span-2"><dt className="text-gray-400 w-28 shrink-0">Ingredientes</dt><dd className="text-[#212121]">{product.ingredients}</dd></div>}
+              {product.storage && <div className="flex gap-2 sm:col-span-2"><dt className="text-gray-400 w-28 shrink-0">Conservación</dt><dd className="text-[#212121]">{product.storage}</dd></div>}
+            </dl>
           </section>
         )}
 

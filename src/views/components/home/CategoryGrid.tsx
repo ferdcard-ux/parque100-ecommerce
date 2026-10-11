@@ -13,7 +13,7 @@ export function CategoryGrid({ categories, onCategoryClick, onViewAllClick }: Ca
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-[#212121]" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Explorar Categorías</h2>
+            <h2 className="text-[#212121]" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Explorar Categorías ({categories.length})</h2>
             <p className="text-gray-500 mt-1" style={{ fontSize: '0.9rem' }}>Encuentra lo que necesitas</p>
           </div>
           <button onClick={onViewAllClick} className="flex items-center gap-1 text-[#C62828] hover:underline font-medium" style={{ fontSize: '0.9rem' }}>

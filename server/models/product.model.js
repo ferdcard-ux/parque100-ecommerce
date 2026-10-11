@@ -56,10 +56,10 @@ export const productModel = {
    * @returns {Promise<void>}
    * @throws {Error} Si falla la insercion (ej. categoria inexistente, ID duplicado).
    */
-  async create({ ID_Producto, Nombre, Descripcion, Imagen, Precio_Venta, Stock_Minimo, ID_Categoria }) {
+  async create({ ID_Producto, Nombre, Descripcion, Imagen, Precio_Venta, Precio_Anterior, Marca, Contenido_Cantidad, Contenido_Unidad, Embalaje, Ingredientes, Conservacion, Promo_Desde, Promo_Hasta, Stock_Minimo, ID_Categoria }) {
     await pool.query(
-      'INSERT INTO productos (ID_Producto, Nombre, Descripcion, Imagen, Precio_Venta, Stock_Minimo, ID_Categoria) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [ID_Producto, Nombre, Descripcion, Imagen || null, Precio_Venta, Stock_Minimo, ID_Categoria],
+      'INSERT INTO productos (ID_Producto, Nombre, Descripcion, Imagen, Precio_Venta, Precio_Anterior, Marca, Contenido_Cantidad, Contenido_Unidad, Embalaje, Ingredientes, Conservacion, Promo_Desde, Promo_Hasta, Stock_Minimo, ID_Categoria) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [ID_Producto, Nombre, Descripcion, Imagen || null, Precio_Venta, Precio_Anterior ?? null, Marca ?? null, Contenido_Cantidad ?? null, Contenido_Unidad ?? null, Embalaje ?? null, Ingredientes ?? null, Conservacion ?? null, Promo_Desde ?? null, Promo_Hasta ?? null, Stock_Minimo, ID_Categoria],
     );
   },
 
@@ -72,11 +72,19 @@ export const productModel = {
    * @returns {Promise<void>}
    * @throws {Error} Si falla la actualizacion.
    */
-  async update(id, { Nombre, Descripcion, Imagen, Precio_Venta, Stock_Minimo, ID_Categoria }) {
-    await pool.query(
-      'UPDATE productos SET Nombre=?, Descripcion=?, Imagen=?, Precio_Venta=?, Stock_Minimo=?, ID_Categoria=? WHERE ID_Producto=?',
-      [Nombre, Descripcion, Imagen || null, Precio_Venta, Stock_Minimo, ID_Categoria, id],
-    );
+  async update(id, data) {
+    const allowed = ['Nombre', 'Descripcion', 'Imagen', 'Precio_Venta', 'Precio_Anterior', 'Marca', 'Contenido_Cantidad', 'Contenido_Unidad', 'Embalaje', 'Ingredientes', 'Conservacion', 'Promo_Desde', 'Promo_Hasta', 'Stock_Minimo', 'ID_Categoria'];
+    const sets = [];
+    const vals = [];
+    for (const k of allowed) {
+      if (k in data) {
+        sets.push(`${k}=?`);
+        vals.push(data[k] ?? null);
+      }
+    }
+    if (sets.length === 0) return;
+    vals.push(id);
+    await pool.query(`UPDATE productos SET ${sets.join(', ')} WHERE ID_Producto=?`, vals);
   },
 
   /**

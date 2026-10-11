@@ -64,6 +64,13 @@ export function useProductController() {
     Descripcion: string;
     Imagen?: string;
     Precio_Venta: number;
+    Precio_Anterior?: number | null;
+    Marca?: string | null;
+    Contenido_Cantidad?: number | null;
+    Contenido_Unidad?: string | null;
+    Embalaje?: string | null;
+    Ingredientes?: string | null;
+    Conservacion?: string | null;
     Stock_Minimo: number;
     ID_Categoria: number;
   }) => {
@@ -76,6 +83,13 @@ export function useProductController() {
     Descripcion: string;
     Imagen?: string;
     Precio_Venta: number;
+    Precio_Anterior?: number | null;
+    Marca?: string | null;
+    Contenido_Cantidad?: number | null;
+    Contenido_Unidad?: string | null;
+    Embalaje?: string | null;
+    Ingredientes?: string | null;
+    Conservacion?: string | null;
     Stock_Minimo: number;
     ID_Categoria: number;
   }) => {

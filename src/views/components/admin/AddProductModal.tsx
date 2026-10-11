@@ -12,6 +12,10 @@ interface AddProductModalProps {
     Descripcion: string;
     Imagen?: string;
     Precio_Venta: number;
+    Precio_Anterior?: number | null;
+    Marca?: string | null;
+    Contenido_Cantidad?: number | null;
+    Contenido_Unidad?: string | null;
     Stock_Minimo: number;
     ID_Categoria: number;
   }) => Promise<void>;
@@ -23,6 +27,10 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
   const [categoria, setCategoria] = useState('');
   const [cantidad, setCantidad] = useState('');
   const [precio, setPrecio] = useState('');
+  const [precioAnterior, setPrecioAnterior] = useState('');
+  const [marca, setMarca] = useState('');
+  const [contQty, setContQty] = useState('');
+  const [contUnit, setContUnit] = useState('g');
   const [imagen, setImagen] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -45,6 +53,10 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
         Descripcion: nombre.trim(),
         Imagen: imagen.trim() || undefined,
         Precio_Venta: parseInt(precio),
+        Precio_Anterior: precioAnterior ? parseInt(precioAnterior) : null,
+        Marca: marca.trim() || null,
+        Contenido_Cantidad: contQty ? Number(contQty) : null,
+        Contenido_Unidad: contQty ? contUnit : null,
         Stock_Minimo: parseInt(cantidad),
         ID_Categoria: catId,
       });
@@ -52,6 +64,9 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
       setCategoria('');
       setCantidad('');
       setPrecio('');
+      setPrecioAnterior('');
+      setMarca('');
+      setContQty('');
       setImagen('');
       onClose();
     } finally {
@@ -96,6 +111,42 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio anterior (opcional)</label>
+              <input type="number" placeholder="Ej: 5200" value={precioAnterior} onChange={(e) => setPrecioAnterior(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+                style={{ fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Marca (opcional)</label>
+              <input type="text" placeholder="Ej: Colanta" value={marca} onChange={(e) => setMarca(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+                style={{ fontSize: '0.9rem' }}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Contenido (opcional)</label>
+              <input type="number" placeholder="Ej: 500" value={contQty} onChange={(e) => setContQty(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+                style={{ fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Unidad</label>
+              <select value={contUnit} onChange={(e) => setContUnit(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121]"
+                style={{ fontSize: '0.9rem' }}>
+                <option value="g">g</option>
+                <option value="ml">ml</option>
+                <option value="un">un</option>
+                <option value="kg">kg</option>
+              </select>
+            </div>
           </div>
           <ProductImageInput value={imagen} onChange={setImagen} />
           <div className="flex gap-3 mt-2">

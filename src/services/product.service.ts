@@ -65,10 +65,24 @@ function mapProduct(row: any): Product {
   const rawCategory = row.Nombre_Categoria || row.category || '';
   const categoryName = normalizeCategory(rawCategory);
   const productName = row.Nombre || row.name || '';
+  const price = row.Precio_Venta ?? row.price;
+  const prev = row.Precio_Anterior ?? row.previousPrice ?? null;
+  const contentQty = row.Contenido_Cantidad ?? row.contentQty ?? null;
+  const contentUnit = row.Contenido_Unidad ?? row.contentUnit ?? null;
   return {
     id: row.ID_Producto || row.id,
     name: productName,
-    price: row.Precio_Venta || row.price,
+    price,
+    previousPrice: prev != null ? Number(prev) : null,
+    brand: row.Marca ?? row.brand ?? null,
+    sku: row.ID_Producto || row.sku || row.id || null,
+    contentQty: contentQty != null ? Number(contentQty) : null,
+    contentUnit: contentUnit || null,
+    packaging: row.Embalaje ?? row.packaging ?? null,
+    ingredients: row.Ingredientes ?? row.ingredients ?? null,
+    storage: row.Conservacion ?? row.storage ?? null,
+    promoFrom: row.Promo_Desde ?? row.promoFrom ?? null,
+    promoTo: row.Promo_Hasta ?? row.promoTo ?? null,
     image: row.Imagen || PRODUCT_IMAGES[productName] || CATEGORY_IMAGES[categoryName] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
     category: categoryName,
     stock: row.Stock_Minimo || row.stock || 0,
@@ -147,7 +161,7 @@ export const productService = {
     }
   },
 
-  async createProduct(product: { ID_Producto: string; Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
+  async createProduct(product: { ID_Producto: string; Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Precio_Anterior?: number | null; Marca?: string | null; Contenido_Cantidad?: number | null; Contenido_Unidad?: string | null; Embalaje?: string | null; Ingredientes?: string | null; Conservacion?: string | null; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
     await fetch(`${API}/products`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -155,7 +169,7 @@ export const productService = {
     });
   },
 
-  async updateProduct(id: string, product: { Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
+  async updateProduct(id: string, product: { Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Precio_Anterior?: number | null; Marca?: string | null; Contenido_Cantidad?: number | null; Contenido_Unidad?: string | null; Embalaje?: string | null; Ingredientes?: string | null; Conservacion?: string | null; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
     await fetch(`${API}/products/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },

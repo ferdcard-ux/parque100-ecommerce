@@ -27,6 +27,7 @@ export function PromoBanner() {
               <p className="text-white/70" style={{ fontSize: '0.95rem' }}>
                 Ahorra hasta un 25% en tu primera compra de la semana
               </p>
+              <p className="text-white/50 mt-1" style={{ fontSize: '0.72rem' }}>Vigencia hasta agotar existencias. No acumulable con otras ofertas.</p>
             </div>
             <div className="flex flex-col items-center gap-3 shrink-0">
               <div className="text-center">

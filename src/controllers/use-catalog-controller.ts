@@ -33,15 +33,20 @@ function normalize(text: string): string {
  * @param {CatalogSort} sort - Orden seleccionado.
  * @returns Productos filtrados, categorias y estado de carga.
  */
-export function useCatalogController(category: string, query: string, sort: CatalogSort) {
+export function useCatalogController(category: string, query: string, sort: CatalogSort, opts?: { brand?: string; promoOnly?: boolean; minPrice?: number; maxPrice?: number }) {
   const { products, categories, isLoading } = useProductController();
 
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
+    const brand = normalize((opts?.brand ?? '').trim());
     let list = products.filter((p) => {
       const matchCategory = category === 'Todos' || normalize(p.category) === normalize(category);
-      const matchQuery = q === '' || normalize(p.name).includes(q) || normalize(p.description).includes(q);
-      return matchCategory && matchQuery;
+      const matchQuery = q === '' || normalize(p.name).includes(q) || normalize(p.description).includes(q) || normalize(p.brand ?? '').includes(q);
+      const matchBrand = brand === '' || normalize(p.brand ?? '') === brand;
+      const matchPromo = !opts?.promoOnly || (p.previousPrice != null && p.previousPrice > p.price);
+      const matchMin = opts?.minPrice == null || p.price >= opts.minPrice;
+      const matchMax = opts?.maxPrice == null || p.price <= opts.maxPrice;
+      return matchCategory && matchQuery && matchBrand && matchPromo && matchMin && matchMax;
     });
     switch (sort) {
       case 'price_asc':
@@ -57,9 +62,17 @@ export function useCatalogController(category: string, query: string, sort: Cata
         break;
     }
     return list;
-  }, [products, category, query, sort]);
+  }, [products, category, query, sort, opts?.brand, opts?.promoOnly, opts?.minPrice, opts?.maxPrice]);
 
-  return { products: filtered, categories, isLoading };
+  const brands = useMemo(() => {
+    const set = new Map<string, string>();
+    for (const p of products) {
+      if (p.brand) set.set(normalize(p.brand), p.brand);
+    }
+    return [...set.values()].sort((a, b) => a.localeCompare(b));
+  }, [products]);
+
+  return { products: filtered, categories, isLoading, brands };
 }
 
 /** Cuenta por categoria para la cabecera del catalogo. */

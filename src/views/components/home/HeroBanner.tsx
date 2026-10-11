@@ -30,12 +30,13 @@ export function HeroBanner() {
                 Comprar ahora
               </button>
             </Link>
-            <Link to="/catalogo">
+            <Link to="/catalogo?promo=1">
               <button className="px-6 py-3 rounded-xl bg-white/20 text-white font-semibold border border-white/40 hover:bg-white/30 transition-all" style={{ fontSize: '1rem' }}>
                 Ver ofertas
               </button>
             </Link>
           </div>
+          <p className="text-white/70 mt-4" style={{ fontSize: '0.75rem' }}>Promoción válida hasta agotar existencias. Aplican términos y condiciones.</p>
         </div>
 
         <div className="flex-1 flex justify-center">

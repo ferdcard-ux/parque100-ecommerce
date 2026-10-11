@@ -10,6 +10,26 @@ export interface Product {
   name: string;
   /** Precio de venta en COP. */
   price: number;
+  /** Precio anterior tachado (promo). Solo se muestra si > price. */
+  previousPrice?: number | null;
+  /** Marca del producto (ej. 'MCCAIN'). */
+  brand?: string | null;
+  /** SKU visible en ficha (por defecto ID_Producto). */
+  sku?: string | null;
+  /** Cantidad de contenido (ej. 2000). */
+  contentQty?: number | null;
+  /** Unidad de contenido (g, ml, un). */
+  contentUnit?: string | null;
+  /** Tipo de embalaje (ej. 'PC PAQUETE'). */
+  packaging?: string | null;
+  /** Ingredientes / componentes. */
+  ingredients?: string | null;
+  /** Conservación / restricciones de uso. */
+  storage?: string | null;
+  /** Inicio de vigencia promo (YYYY-MM-DD). */
+  promoFrom?: string | null;
+  /** Fin de vigencia promo (YYYY-MM-DD). */
+  promoTo?: string | null;
   /** URL de la imagen. */
   image: string;
   /** Nombre de categoria normalizado (sin tildes). */
