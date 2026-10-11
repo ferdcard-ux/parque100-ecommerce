@@ -19,9 +19,12 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit 
   }, [initialAddress]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const value = e.target.name === 'phone'
-      ? e.target.value.replace(/\D/g, '').slice(0, 10)
-      : e.target.value;
+    const { name, value: raw } = e.target;
+    const value = name === 'phone'
+      ? raw.replace(/\D/g, '').slice(0, 10)
+      : name === 'tower' || name === 'floor' || name === 'apartment'
+        ? raw.replace(/\D/g, '')
+        : raw;
     setForm((prev) => ({ ...prev, [e.target.name]: value }));
     if (e.target.name === 'phone' && phoneError && value.length === 10) setPhoneError(null);
   };
@@ -95,21 +98,21 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit 
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Torre / Bloque *</label>
             <div className="relative">
               <Building size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="tower" required value={form.tower} onChange={handleChange} placeholder="Torre 1" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="tower" required inputMode="numeric" pattern="[0-9]+" title="Solo numeros" value={form.tower} onChange={handleChange} placeholder="1" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
           <div>
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Piso *</label>
             <div className="relative">
               <Hash size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="floor" required value={form.floor} onChange={handleChange} placeholder="Piso 4" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="floor" required inputMode="numeric" pattern="[0-9]+" title="Solo numeros" value={form.floor} onChange={handleChange} placeholder="4" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
           <div>
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Apartamento *</label>
             <div className="relative">
               <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="apartment" required value={form.apartment} onChange={handleChange} placeholder="Apto 401" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="apartment" required inputMode="numeric" pattern="[0-9]+" title="Solo numeros" value={form.apartment} onChange={handleChange} placeholder="401" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
         </div>
