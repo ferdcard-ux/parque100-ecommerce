@@ -16,9 +16,17 @@ import { StarRating } from '../components/shared/star-rating';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
 import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice, ratingLabel } from '../../utils';
 
+/** Extension del comprobante segun su dataURL (png por defecto). */
+function receiptExtension(comprobante: string): string {
+  const match = /^data:image\/(png|jpe?g|webp|gif)/i.exec(comprobante);
+  const type = match?.[1]?.toLowerCase();
+  if (type === 'jpeg' || type === 'jpg') return 'jpg';
+  if (type === 'webp' || type === 'gif' || type === 'png') return type;
+  return 'png';
+}
+
 /** Detalle admin de un pedido con cambio de estado y cancelacion con motivo. */
-export function AdminOrderDetailPage() {
-  const { id } = useParams();
+export function AdminOrderDetailPage() {  const { id } = useParams();
   const { user, isAdmin } = useApp();
   const [order, setOrder] = useState<ApiOrder | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -159,7 +167,17 @@ export function AdminOrderDetailPage() {
             </dl>
             {order.Comprobante && (
               <div className="mt-4">
-                <p className="text-gray-400 mb-2" style={{ fontSize: '0.7rem' }}>Comprobante Nequi</p>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-gray-400" style={{ fontSize: '0.7rem' }}>Comprobante Nequi</p>
+                  <a
+                    href={order.Comprobante}
+                    download={`comprobante-pedido-${order.ID_Pedido}.${receiptExtension(order.Comprobante)}`}
+                    className="bg-[#212121] hover:bg-black text-white rounded-full px-4 py-1.5 transition-colors"
+                    style={{ fontSize: '0.75rem', fontWeight: 600 }}
+                  >
+                    Descargar imagen
+                  </a>
+                </div>
                 <img src={order.Comprobante} alt="Comprobante de pago Nequi" className="w-full max-h-72 object-contain rounded-xl border border-gray-100 bg-[#F5F5F5]" />
               </div>
             )}
