@@ -80,5 +80,34 @@ export function useRatingsController(filters: RatingsFilter = {}) {
     [key],
   );
 
-  return { summary, ratings, isLoading, error, isSaving, rate };
+  /**
+   * Edita una resena del autor y refresca el listado.
+   *
+   * @param {number} id - Identificador de la calificacion.
+   * @param {Object} data - Autor, estrellas y comentario.
+   * @returns {Promise<void>}
+   */
+  const edit = useCallback(
+    async (
+      id: number,
+      data: { ID_Usuario: number | null; Estrellas: number; Comentario?: string },
+    ): Promise<void> => {
+      setIsSaving(true);
+      try {
+        await ratingService.update(id, data);
+        const [list, sum] = await Promise.all([
+          ratingService.list(filters),
+          filters.producto ? ratingService.summary(filters.producto) : Promise.resolve(summary),
+        ]);
+        setRatings(list);
+        setSummary(sum);
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [key],
+  );
+
+  return { summary, ratings, isLoading, error, isSaving, rate, edit };
 }

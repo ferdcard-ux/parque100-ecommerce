@@ -10,12 +10,14 @@ interface StarRatingProps {
   editable?: boolean;
   /** Llamado al elegir un valor (solo editable). */
   onChange?: (value: number) => void;
+  /** Llamado al pasar el cursor sobre una estrella (solo editable, null al salir). */
+  onHover?: (value: number | null) => void;
   /** Tamano del icono. */
   size?: number;
 }
 
 /** Estrellas de calificacion, editables o de solo lectura. */
-export function StarRating({ value, editable = false, onChange, size = 18 }: StarRatingProps) {
+export function StarRating({ value, editable = false, onChange, onHover, size = 18 }: StarRatingProps) {
   return (
     <div className="flex items-center gap-1" role={editable ? 'radiogroup' : 'img'} aria-label={`Calificacion ${value} de 5`}>
       {[1, 2, 3, 4, 5].map((star) => {
@@ -28,6 +30,10 @@ export function StarRating({ value, editable = false, onChange, size = 18 }: Sta
             aria-checked={Math.round(value) === star}
             aria-label={`${star} estrellas`}
             onClick={() => onChange?.(star)}
+            onMouseEnter={() => onHover?.(star)}
+            onMouseLeave={() => onHover?.(null)}
+            onFocus={() => onHover?.(star)}
+            onBlur={() => onHover?.(null)}
             className="p-0.5 hover:scale-110 transition-transform"
           >
             <Star size={size} className={filled ? 'fill-[#FBC02D] text-[#FBC02D]' : 'text-gray-300'} />

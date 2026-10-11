@@ -81,4 +81,32 @@ export const ratingService = {
       throw new Error('No fue posible conectar con el servidor.');
     }
   },
+  /**
+   * Edita las estrellas y el comentario de una resena (solo el autor).
+   *
+   * @param {number} id - Identificador de la calificacion.
+   * @param {Object} data - Autor, estrellas y comentario.
+   * @returns {Promise<void>}
+   * @throws {Error} Si el servidor rechaza los datos.
+   */
+  async update(
+    id: number,
+    data: { ID_Usuario: number | null; Estrellas: number; Comentario?: string },
+  ): Promise<void> {
+    try {
+      const response = await fetch(`${API}/ratings/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        throw new Error(payload?.error || 'No fue posible actualizar la resena.');
+      }
+    } catch (err) {
+      if (err instanceof TypeError) throw new Error('No fue posible conectar con el servidor.');
+      if (err instanceof Error) throw err;
+      throw new Error('No fue posible conectar con el servidor.');
+    }
+  },
 };

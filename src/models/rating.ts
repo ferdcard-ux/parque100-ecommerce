@@ -24,6 +24,10 @@ export interface Rating {
   Comentario: string | null;
   /** Fecha de la calificacion. */
   Fecha: string;
+  /** Nombre del autor (join con usuario). */
+  Usuario_Nombre?: string | null;
+  /** Foto del autor (join con usuario). */
+  Usuario_Foto?: string | null;
 }
 
 /** Payload para crear una calificacion. */

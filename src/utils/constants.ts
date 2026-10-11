@@ -60,6 +60,34 @@ export const ADMIN_CANCEL_REASONS = [
 /** Aviso de reembolso mostrado al cancelar un pedido. */
 export const CANCEL_REFUND_NOTICE = 'Tras la cancelación, debes acordar con el propietario de la tienda el reembolso del pago.';
 
+/** Etiquetas de calificacion por estrellas (texto dinamico del formulario de resena). */
+export const RATING_LABELS: Record<number, string> = {
+  1: 'Deficiente',
+  2: 'Regular',
+  3: 'Promedio',
+  4: 'Bueno',
+  5: 'Excelente',
+};
+
+/** Devuelve la etiqueta de una calificacion de 1 a 5 (cadena vacia si no hay seleccion). */
+export function ratingLabel(stars: number): string {
+  return RATING_LABELS[stars] ?? '';
+}
+
+/** Estados de pedido que habilitan calificar productos (compra verificada). */
+export const REVIEWABLE_ORDER_ESTADOS = ['enviando', 'entregado'] as const;
+
+/** Indica si un pedido permite dejar resenas de sus productos. */
+export function canReviewOrder(estado: string): boolean {
+  return (REVIEWABLE_ORDER_ESTADOS as readonly string[]).includes(estado);
+}
+
+/** Maximo de caracteres del comentario de una resena. */
+export const REVIEW_COMMENT_MAX = 255;
+
+/** Minimo de caracteres del comentario cuando se escribe uno (opcional). */
+export const REVIEW_COMMENT_MIN = 10;
+
 /** Devuelve metadatos del estado o valores por defecto para estados desconocidos. */
 export function orderStatusMeta(estado: string): { label: string; badgeClass: string; step: number } {
   return ORDER_STATUS_META[estado] ?? { label: estado, badgeClass: 'bg-gray-100 text-gray-600 border-gray-200', step: 0 };
