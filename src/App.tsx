@@ -65,6 +65,10 @@ interface AppContextValue {
     Descripcion: string;
     Imagen?: string;
     Precio_Venta: number;
+    Precio_Anterior?: number | null;
+    Marca?: string | null;
+    Contenido_Cantidad?: number | null;
+    Contenido_Unidad?: string | null;
     Stock_Minimo: number;
     ID_Categoria: number;
   }) => Promise<void>;
@@ -73,9 +77,14 @@ interface AppContextValue {
     Descripcion: string;
     Imagen?: string;
     Precio_Venta: number;
+    Precio_Anterior?: number | null;
+    Marca?: string | null;
+    Contenido_Cantidad?: number | null;
+    Contenido_Unidad?: string | null;
     Stock_Minimo: number;
     ID_Categoria: number;
   }) => Promise<void>;
+  reloadProducts: () => Promise<void>;
   paymentMethod: PaymentMethodType | null;
   selectPaymentMethod: (m: PaymentMethodType) => void;
   saveAddress: (addr: DeliveryAddress) => void;
@@ -186,7 +195,7 @@ function AccountAddressWrapper() {
 }
 function PaymentMethodWrapper() { const ctx = useApp(); return <Protected><PaymentMethodPage selectedMethod={ctx.paymentMethod} onSelectMethod={ctx.selectPaymentMethod} itemCount={ctx.cartCount} total={ctx.cartTotal} /></Protected>; }
 function CardPaymentWrapper() { const ctx = useApp(); return <Protected><CardPaymentPage total={ctx.cartTotal} itemCount={ctx.cartCount} isProcessing={ctx.isPaymentProcessing} onPay={ctx.payWithCard} onPayNequi={ctx.payWithNequi} onPayCash={ctx.payWithCash} /></Protected>; }
-function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} />; }
+function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} onImported={ctx.reloadProducts} />; }
 function AccountWrapper() { return <Protected><AccountPage /></Protected>; }
 function ProfileWrapper() { return <Protected><ProfilePage /></Protected>; }
 function OrdersWrapper() { return <Protected><OrdersPage /></Protected>; }
@@ -254,6 +263,7 @@ export default function App() {
     deleteAdminProduct: productCtrl.deleteProduct,
     createAdminProduct: productCtrl.createProduct,
     updateAdminProduct: productCtrl.updateProduct,
+    reloadProducts: productCtrl.reload,
     paymentMethod: payment.method,
     selectPaymentMethod: payment.selectMethod,
     saveAddress: payment.saveAddress,

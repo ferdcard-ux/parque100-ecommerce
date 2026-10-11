@@ -33,10 +33,10 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
   const items = role === 'domiciliario' ? SIDEBAR_ITEMS.filter((item) => DOMICILIARIO_KEYS.includes(item.key)) : SIDEBAR_ITEMS;
 
   return (
-    <aside className={`${sidebarOpen ? 'w-56' : 'w-16'} bg-[#212121] min-h-screen flex flex-col transition-all duration-300 shrink-0`}>
+    <aside className={`${sidebarOpen ? 'w-56 max-md:w-16' : 'w-16'} bg-[#212121] h-screen sticky top-0 flex flex-col transition-all duration-300 shrink-0 overflow-hidden`}>
       <div className="px-4 py-5 border-b border-white/10 flex items-center justify-between">
         {sidebarOpen && (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-md:hidden">
             <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #FBC02D, #C62828)' }}>
               <Store size={14} className="text-white" />
             </div>
@@ -61,7 +61,7 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
             }`}
           >
             <span className="shrink-0">{item.icon}</span>
-            {sidebarOpen && <span style={{ fontSize: '0.875rem' }}>{item.label}</span>}
+            {sidebarOpen && <span className="max-md:hidden" style={{ fontSize: '0.875rem' }}>{item.label}</span>}
             {item.key === 'pendientes' && pendingCount > 0 && (
               <span
                 className="ml-auto min-w-6 h-6 px-1.5 rounded-full bg-[#C62828] text-white flex items-center justify-center font-bold"
@@ -77,7 +77,7 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
 
       <div className="border-t border-white/10 p-3">
         {sidebarOpen && (
-          <div className="flex items-center gap-2 mb-3 px-1">
+          <div className="flex items-center gap-2 mb-3 px-1 max-md:hidden">
             <div className="w-7 h-7 rounded-full bg-[#C62828] flex items-center justify-center shrink-0">
               <span className="text-white font-bold" style={{ fontSize: '0.7rem' }}>AD</span>
             </div>
@@ -90,7 +90,7 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
         <Link to="/login">
           <button className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full">
             <LogOut size={16} className="shrink-0" />
-            {sidebarOpen && <span style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>}
+            {sidebarOpen && <span className="max-md:hidden" style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>}
           </button>
         </Link>
       </div>
