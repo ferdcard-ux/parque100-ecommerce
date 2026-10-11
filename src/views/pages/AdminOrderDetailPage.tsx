@@ -7,12 +7,13 @@ import { TriangleAlert } from 'lucide-react';
 import type { ApiOrder, OrderEstado } from '../../models';
 import { orderService, userService } from '../../services';
 import { useApp } from '../../App';
-import { useRatingsController } from '../../controllers';
+import { useProductController, useRatingsController } from '../../controllers';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { SectionTitle } from '../components/shared/section-title';
 import { StarRating } from '../components/shared/star-rating';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
 import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice, ratingLabel } from '../../utils';
 
@@ -39,6 +40,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
   const { ratings: orderRatings } = useRatingsController({
     pedido: Number.isInteger(orderNumericId) ? orderNumericId : undefined,
   });
+  const { products } = useProductController();
   const envioReviews = orderRatings.filter((r) => r.Tipo === 'envio');
 
   useEffect(() => {
@@ -186,12 +188,26 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
           <div className="bg-white rounded-2xl border border-gray-100 p-5 lg:col-span-2">
             <SectionTitle>Productos</SectionTitle>
             <ul className="flex flex-col divide-y divide-gray-50 mb-3">
-              {(order.detalles ?? []).map((item, idx) => (
-                <li key={idx} className="py-3 flex items-center justify-between">
-                  <span className="text-[#212121]" style={{ fontSize: '0.9rem' }}>{item.Producto_Nombre ?? item.ID_Producto} x{item.Cantidad}</span>
-                  <span className="font-semibold">{formatPrice(Number(item.Subtotal))}</span>
-                </li>
-              ))}
+              {(order.detalles ?? []).map((item, idx) => {
+                const catalog = products.find((p) => String(p.id) === String(item.ID_Producto));
+                const name = item.Producto_Nombre ?? catalog?.name ?? String(item.ID_Producto);
+                const qty = Number(item.Cantidad);
+                const unit = qty > 0 ? Number(item.Subtotal) / qty : Number(item.Subtotal);
+                return (
+                  <li key={idx} className="py-3 flex items-center gap-3">
+                    <ImageWithFallback
+                      src={catalog?.image ?? ''}
+                      alt={name}
+                      className="w-12 h-12 object-cover rounded-xl shrink-0"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[#212121] font-medium truncate" style={{ fontSize: '0.9rem' }}>{name}</p>
+                      <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>x{qty} - {formatPrice(unit)} c/u</p>
+                    </div>
+                    <span className="font-semibold shrink-0">{formatPrice(Number(item.Subtotal))}</span>
+                  </li>
+                );
+              })}
             </ul>
             <dl className="border-t border-gray-100 pt-3" style={{ fontSize: '0.85rem' }}>
               <div className="flex justify-between text-gray-500"><dt>Subtotal</dt><dd>{formatPrice(subtotal)}</dd></div>
