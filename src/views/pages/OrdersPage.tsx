@@ -1,7 +1,7 @@
 /**
  * @fileoverview Historial de compras del usuario.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ShoppingBag } from 'lucide-react';
 import { useApp } from '../../App';
@@ -15,6 +15,7 @@ import { EmptyState } from '../components/shared/empty-state';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
 import { ReviewProductModal } from '../components/ratings/review-product-modal';
 import { ReviewFormModal } from '../components/ratings/review-form-modal';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { CANCEL_REFUND_NOTICE, canReviewOrder, formatPrice } from '../../utils';
 
 /** Formatea la fecha ISO a estilo legible (ej. 10 de diciembre de 2024). */
@@ -42,6 +43,33 @@ export function OrdersPage() {
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewOk, setReviewOk] = useState(false);
+  /** Detalles por pedido para las miniaturas de la tarjeta. */
+  const [orderItems, setOrderItems] = useState<Record<number, ApiOrderItem[]>>({});
+
+  useEffect(() => {
+    let cancelled = false;
+    const missing = orders.filter((o) => orderItems[o.ID_Pedido] === undefined);
+    if (missing.length === 0) return;
+    Promise.all(
+      missing.map(async (o): Promise<readonly [number, ApiOrderItem[]]> => {
+        try {
+          const detail = await orderService.getById(o.ID_Pedido);
+          return [o.ID_Pedido, detail?.detalles ?? []];
+        } catch {
+          return [o.ID_Pedido, []];
+        }
+      }),
+    ).then((entries) => {
+      if (cancelled) return;
+      setOrderItems((prev) => {
+        const next = { ...prev };
+        for (const [id, items] of entries) next[id] = items;
+        return next;
+      });
+    });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders]);
 
   const handleCancel = async (motivo: string) => {
     if (cancelId === null) return;
@@ -158,6 +186,13 @@ export function OrdersPage() {
             {orders.map((order) => {
               const cancellable = order.Estado === 'pendiente' || order.Estado === 'preparando';
               const locked = order.Estado === 'enviando';
+              const items = orderItems[order.ID_Pedido] ?? [];
+              const totalQty = items.reduce((sum, it) => sum + Number(it.Cantidad), 0);
+              const firstName = items.length > 0
+                ? (items[0].Producto_Nombre ?? String(items[0].ID_Producto))
+                : '';
+              const shownItems = items.slice(0, 4);
+              const extraItems = items.length - shownItems.length;
               return (
               <div
                 key={order.ID_Pedido}
@@ -168,10 +203,35 @@ export function OrdersPage() {
                   <span className="text-[#212121] font-bold">Pedido #{order.ID_Pedido}</span>
                   <StatusBadge estado={order.Estado} />
                 </div>
-                <div className="flex items-center justify-between text-gray-400 mb-4" style={{ fontSize: '0.8rem' }}>
+                <div className="flex items-center justify-between text-gray-400 mb-3" style={{ fontSize: '0.8rem' }}>
                   <span>{formatDate(order.Fecha)}</span>
                   <span className="text-[#C62828] font-bold" style={{ fontSize: '1rem' }}>{formatPrice(order.Total)}</span>
                 </div>
+                {items.length > 0 && (
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="flex items-center shrink-0 pl-2">
+                      {shownItems.map((item) => {
+                        const catalog = products.find((p) => String(p.id) === String(item.ID_Producto));
+                        return (
+                          <ImageWithFallback
+                            key={String(item.ID_Producto)}
+                            src={catalog?.image ?? ''}
+                            alt={item.Producto_Nombre ?? String(item.ID_Producto)}
+                            className="w-9 h-9 rounded-full object-cover ring-2 ring-white shadow -ml-2"
+                          />
+                        );
+                      })}
+                      {extraItems > 0 && (
+                        <span className="w-9 h-9 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center ring-2 ring-white shadow -ml-2" style={{ fontSize: '0.7rem', fontWeight: 700 }}>
+                          +{extraItems}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-500 truncate" style={{ fontSize: '0.8rem' }}>
+                      {totalQty} {totalQty === 1 ? 'producto' : 'productos'} - {firstName}...
+                    </p>
+                  </div>
+                )}
                 {order.Estado === 'cancelado' ? (
                   <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-1">
                     <p className="text-red-700" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Motivo: {order.Motivo_Cancelacion ?? '—'}</p>
