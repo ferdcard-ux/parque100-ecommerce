@@ -225,6 +225,15 @@ CREATE TABLE `productos` (
   `Stock_Minimo` int DEFAULT NULL,
   `ID_Categoria` int DEFAULT NULL,
   `Imagen` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
+  `Precio_Anterior` int DEFAULT NULL,
+  `Marca` varchar(50) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Contenido_Cantidad` decimal(12,2) DEFAULT NULL,
+  `Contenido_Unidad` varchar(10) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Embalaje` varchar(60) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Ingredientes` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Conservacion` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Promo_Desde` date DEFAULT NULL,
+  `Promo_Hasta` date DEFAULT NULL,
   PRIMARY KEY (`ID_Producto`),
   KEY `ID_Categoria` (`ID_Categoria`),
   CONSTRAINT `productos_ibfk_1` FOREIGN KEY (`ID_Categoria`) REFERENCES `categorias` (`ID_Categoria`)
@@ -237,7 +246,7 @@ CREATE TABLE `productos` (
 
 LOCK TABLES `productos` WRITE;
 /*!40000 ALTER TABLE `productos` DISABLE KEYS */;
-INSERT INTO `productos` VALUES ('P001','Tomates Cherry 500g','Tomates cherry frescos y jugosos',3500,44,1,NULL),('P002','Bananos x6 und','Bananos maduros de la mejor calidad',2800,32,2,NULL),('P003','Fresas Frescas 500g','Fresas frescas de temporada',4200,7,2,NULL),('P004','Canasta de Frutas','Canasta con variedad de frutas',12000,9,2,NULL),('P005','Verduras Mixtas 1kg','Seleccion de verduras del dia',6500,5,1,NULL),('P006','Manzanas Rojas x5','Manzanas rojas importadas',4800,25,2,NULL),('P007','Surtido Verduras','Verduras variadas conservadas',7200,15,1,NULL),('P008','Mix Frutas Tropicales','Frutas tropicales frescas',5500,20,2,NULL),('P009','Leche Entera 1L','Leche entera pasteurizada',3200,3,5,NULL),('P010','Pan Tajado 500g','Pan de molde blanco',4500,16,6,NULL);
+INSERT INTO `productos` VALUES ('P001','Tomates Cherry 500g','Tomates cherry frescos y jugosos',3500,44,1,NULL,4200,'Parque100',500.00,'g',NULL,NULL,NULL,NULL,NULL),('P002','Bananos x6 und','Bananos maduros de la mejor calidad',2800,32,2,NULL,NULL,'Parque100',6.00,'un',NULL,NULL,NULL,NULL,NULL),('P003','Fresas Frescas 500g','Fresas frescas de temporada',4200,7,2,NULL,5000,'Parque100',500.00,'g',NULL,NULL,NULL,NULL,NULL),('P004','Canasta de Frutas','Canasta con variedad de frutas',12000,9,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),('P005','Verduras Mixtas 1kg','Seleccion de verduras del dia',6500,5,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),('P006','Manzanas Rojas x5','Manzanas rojas importadas',4800,25,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),('P007','Surtido Verduras','Verduras variadas conservadas',7200,15,1,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),('P008','Mix Frutas Tropicales','Frutas tropicales frescas',5500,20,2,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL),('P009','Leche Entera 1L','Leche entera pasteurizada',3200,3,5,NULL,NULL,'Colanta',1000.00,'ml',NULL,NULL,NULL,NULL,NULL),('P010','Pan Tajado 500g','Pan de molde blanco',4500,16,6,NULL,NULL,'Comapan',500.00,'g',NULL,NULL,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `productos` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -289,4 +298,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-11  1:27:01
+-- Dump completed on 2026-10-11  4:06:08
