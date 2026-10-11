@@ -7,12 +7,14 @@ import { TriangleAlert } from 'lucide-react';
 import type { ApiOrder, OrderEstado } from '../../models';
 import { orderService, userService } from '../../services';
 import { useApp } from '../../App';
+import { useRatingsController } from '../../controllers';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { SectionTitle } from '../components/shared/section-title';
+import { StarRating } from '../components/shared/star-rating';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
-import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice } from '../../utils';
+import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice, ratingLabel } from '../../utils';
 
 /** Detalle admin de un pedido con cambio de estado y cancelacion con motivo. */
 export function AdminOrderDetailPage() {
@@ -25,6 +27,11 @@ export function AdminOrderDetailPage() {
   const [saving, setSaving] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [canCancel, setCanCancel] = useState(isAdmin);
+  const orderNumericId = Number(id);
+  const { ratings: orderRatings } = useRatingsController({
+    pedido: Number.isInteger(orderNumericId) ? orderNumericId : undefined,
+  });
+  const envioReviews = orderRatings.filter((r) => r.Tipo === 'envio');
 
   useEffect(() => {
     if (isAdmin || !user) {
@@ -174,6 +181,30 @@ export function AdminOrderDetailPage() {
               <div className="flex justify-between text-[#C62828] font-bold mt-1" style={{ fontSize: '1rem' }}><dt>Total</dt><dd>{formatPrice(order.Total)}</dd></div>
             </dl>
           </div>
+
+          {envioReviews.length > 0 && (
+            <div className="bg-white rounded-2xl border border-gray-100 p-5 lg:col-span-2">
+              <SectionTitle>Resena del servicio de envio</SectionTitle>
+              <ul className="flex flex-col divide-y divide-gray-50">
+                {envioReviews.map((r) => (
+                  <li key={r.ID_Calificacion} className="py-3">
+                    <p className="text-[#212121]" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                      {r.Usuario_Nombre?.trim() || 'Usuario'}
+                    </p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <StarRating value={r.Estrellas} size={14} />
+                      {ratingLabel(r.Estrellas) && (
+                        <span className="text-[#f57f17]" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                          {ratingLabel(r.Estrellas)}
+                        </span>
+                      )}
+                    </div>
+                    {r.Comentario && <p className="text-gray-600 mt-1" style={{ fontSize: '0.85rem' }}>{r.Comentario}</p>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       )}
       {cancelOpen && order && canCancel && (
