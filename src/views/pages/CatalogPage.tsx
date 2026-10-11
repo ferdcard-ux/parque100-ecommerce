@@ -183,7 +183,7 @@ export function CatalogPage() {
             </div>
 
             {isLoading ? (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4" aria-label="Cargando productos">
+              <div className="grid grid-cols-2 max-[380px]:grid-cols-1 sm:grid-cols-3 gap-4" aria-label="Cargando productos">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100">
                     <div className="h-40 bg-gray-100 animate-pulse" />
@@ -212,7 +212,7 @@ export function CatalogPage() {
               />
             ) : (
               <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 max-[380px]:grid-cols-1 sm:grid-cols-3 gap-4">
                   {visible.map((product) => (
                     <ProductCard
                       key={product.id}

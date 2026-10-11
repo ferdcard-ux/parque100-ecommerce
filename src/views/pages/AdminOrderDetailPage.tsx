@@ -155,7 +155,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <SectionTitle>Cliente y entrega</SectionTitle>
-            <dl className="grid grid-cols-2 gap-3 text-gray-600" style={{ fontSize: '0.85rem' }}>
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-gray-600" style={{ fontSize: '0.85rem' }}>
               <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Cliente</dt><dd>{order.Destinatario ?? order.Usuario_Nombre ?? '—'}</dd></div>
               <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Telefono</dt><dd>{order.Telefono ?? '—'}</dd></div>
               <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Direccion</dt><dd>Torre {order.Torre ?? '—'}, Piso {order.Piso ?? '—'}, Apto {order.Apartamento ?? '—'}</dd></div>
