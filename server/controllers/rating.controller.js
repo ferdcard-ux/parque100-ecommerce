@@ -70,6 +70,29 @@ export const ratingController = {
   },
 
   /**
+   * PUT /api/ratings/:id
+   * Edita las estrellas y el comentario (solo el autor).
+   *
+   * @async
+   * @param {import('express').Request} req - Peticion con `req.params.id` y cuerpo.
+   * @param {import('express').Response} res - Respuesta HTTP.
+   * @returns {Promise<void>} 404 si no existe.
+   */
+  async update(req, res) {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ error: 'ID de calificacion invalido.' });
+      }
+      const updated = await ratingModel.updateById(id, req.body || {});
+      if (updated === null) return res.status(404).json({ error: 'Calificacion no encontrada' });
+      res.json({ message: 'Resena actualizada' });
+    } catch (err) {
+      res.status(err.statusCode || 500).json({ error: err.message });
+    }
+  },
+
+  /**
    * DELETE /api/ratings/:id
    * Elimina una calificacion (moderacion del panel admin).
    *

@@ -6,9 +6,12 @@ import { Link, useParams } from 'react-router';
 import { Star, Minus, Plus, Truck, ShieldCheck, Leaf } from 'lucide-react';
 import { useApp } from '../../App';
 import { useFavoritesController, useProductController, useRatingsController } from '../../controllers';
+import type { Rating } from '../../models';
 import { PageHeader } from '../components/shared/page-header';
 import { ProductCard } from '../components/shop/product-card';
 import { StarRating } from '../components/shared/star-rating';
+import { ReviewCard } from '../components/ratings/review-card';
+import { ReviewFormModal } from '../components/ratings/review-form-modal';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { formatPrice } from '../../utils';
 
@@ -20,11 +23,9 @@ export function ProductDetailPage() {
   const { toggleFavorite, isFavorite } = useFavoritesController();
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
-  const { summary, ratings, isSaving, rate } = useRatingsController({ producto: id });
-  const [myStars, setMyStars] = useState(5);
-  const [myComment, setMyComment] = useState('');
-  const [rateError, setRateError] = useState<string | null>(null);
-  const [rateOk, setRateOk] = useState(false);
+  const { summary, ratings, isSaving, edit } = useRatingsController({ producto: id });
+  const [editing, setEditing] = useState<Rating | null>(null);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const product = products.find((p) => String(p.id) === id);
   const related = product
@@ -38,22 +39,18 @@ export function ProductDetailPage() {
     setTimeout(() => setAdded(false), 1500);
   };
 
-  const handleRate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRateError(null);
-    setRateOk(false);
+  const handleEdit = async (stars: number, comment: string) => {
+    if (!editing || !user) return;
+    setEditError(null);
     try {
-      await rate({
-        ID_Usuario: user?.id ?? null,
-        ID_Producto: String(product?.id ?? id ?? ''),
-        Tipo: 'producto',
-        Estrellas: myStars,
-        Comentario: myComment.trim(),
+      await edit(editing.ID_Calificacion, {
+        ID_Usuario: user.id,
+        Estrellas: stars,
+        Comentario: comment,
       });
-      setMyComment('');
-      setRateOk(true);
+      setEditing(null);
     } catch (err) {
-      setRateError(err instanceof Error ? err.message : 'No fue posible guardar.');
+      setEditError(err instanceof Error ? err.message : 'No fue posible guardar.');
     }
   };
 
@@ -169,43 +166,46 @@ export function ProductDetailPage() {
             </span>
           </div>
           {isLoggedIn ? (
-            <form onSubmit={handleRate} className="flex flex-col gap-3 max-w-md">
-              <StarRating value={myStars} editable onChange={setMyStars} />
-              <input
-                value={myComment}
-                onChange={(e) => setMyComment(e.target.value)}
-                maxLength={255}
-                placeholder="Comentario opcional"
-                className="border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#C62828]"
-                style={{ fontSize: '0.85rem' }}
-              />
-              {rateError && <p className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{rateError}</p>}
-              {rateOk && <p className="text-green-600" style={{ fontSize: '0.8rem' }}>Calificacion guardada.</p>}
-              <button
-                type="submit"
-                disabled={isSaving}
-                className="w-fit bg-[#212121] hover:bg-black disabled:opacity-60 text-white rounded-full px-6 py-2 transition-colors"
-                style={{ fontSize: '0.85rem', fontWeight: 600 }}
-              >
-                {isSaving ? 'Guardando...' : 'Calificar producto'}
-              </button>
-            </form>
+            <p className="bg-[#FBC02D]/10 border border-[#FBC02D]/40 rounded-xl px-4 py-3 mb-2" style={{ fontSize: '0.82rem' }}>
+              Solo puedes reseñar productos que compraste en un pedido <strong>enviado o entregado</strong>. Ve a{' '}
+              <Link to="/compras" className="text-[#C62828] font-medium hover:underline">Mis compras</Link>{' '}
+              y usa el botón “Dejar una reseña”.
+            </p>
           ) : (
             <p className="text-gray-400" style={{ fontSize: '0.85rem' }}>
-              <Link to="/login" className="text-[#C62828] hover:underline">Inicia sesion</Link> para calificar este producto.
+              <Link to="/login" className="text-[#C62828] hover:underline">Inicia sesion</Link> para dejar una reseña de este producto.
             </p>
           )}
-          {ratings.length > 0 && (
-            <ul className="mt-6 flex flex-col divide-y divide-gray-50">
-              {ratings.slice(0, 5).map((r) => (
-                <li key={r.ID_Calificacion} className="py-3">
-                  <StarRating value={r.Estrellas} size={14} />
-                  {r.Comentario && <p className="text-gray-600 mt-1" style={{ fontSize: '0.85rem' }}>{r.Comentario}</p>}
-                </li>
+          {ratings.length > 0 ? (
+            <ul className="mt-4 flex flex-col divide-y divide-gray-50">
+              {ratings.slice(0, 10).map((r) => (
+                <ReviewCard
+                  key={r.ID_Calificacion}
+                  rating={r}
+                  isOwn={user?.id != null && r.ID_Usuario === user.id}
+                  onEdit={(review) => { setEditError(null); setEditing(review); }}
+                />
               ))}
             </ul>
+          ) : (
+            <p className="text-gray-400 mt-4" style={{ fontSize: '0.85rem' }}>Aun no hay reseñas para este producto.</p>
           )}
         </section>
+        {editing && product && (
+          <ReviewFormModal
+            title="Editar mi reseña"
+            productImage={product.image}
+            productName={product.name}
+            productDetails={product.description}
+            initialStars={editing.Estrellas}
+            initialComment={editing.Comentario ?? ''}
+            submitLabel="Guardar cambios"
+            saving={isSaving}
+            error={editError}
+            onClose={() => { setEditing(null); setEditError(null); }}
+            onSubmit={(stars, comment) => { void handleEdit(stars, comment); }}
+          />
+        )}
       </div>
     </main>
   );

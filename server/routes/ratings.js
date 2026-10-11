@@ -16,6 +16,9 @@ router.get('/ratings', ratingController.list);
 /** POST /api/ratings - Crea una calificacion de 1 a 5 estrellas. */
 router.post('/ratings', ratingController.create);
 
+/** PUT /api/ratings/:id - Edita una resena (solo el autor). */
+router.put('/ratings/:id', ratingController.update);
+
 /** DELETE /api/ratings/:id - Elimina una calificacion (moderacion). */
 router.delete('/ratings/:id', ratingController.remove);
 

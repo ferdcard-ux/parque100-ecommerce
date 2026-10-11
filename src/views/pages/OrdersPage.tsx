@@ -5,14 +5,17 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ShoppingBag } from 'lucide-react';
 import { useApp } from '../../App';
-import { useOrdersController } from '../../controllers';
-import { orderService } from '../../services';
+import { useOrdersController, useProductController } from '../../controllers';
+import { orderService, ratingService } from '../../services';
+import type { ApiOrder, ApiOrderItem } from '../../models';
 import { PageHeader } from '../components/shared/page-header';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { EmptyState } from '../components/shared/empty-state';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
-import { CANCEL_REFUND_NOTICE, formatPrice } from '../../utils';
+import { ReviewProductModal } from '../components/ratings/review-product-modal';
+import { ReviewFormModal } from '../components/ratings/review-form-modal';
+import { CANCEL_REFUND_NOTICE, canReviewOrder, formatPrice } from '../../utils';
 
 /** Formatea la fecha ISO a estilo legible (ej. 10 de diciembre de 2024). */
 function formatDate(value: string): string {
@@ -28,9 +31,17 @@ export function OrdersPage() {
   const { user, isLoggedIn } = useApp();
   const navigate = useNavigate();
   const { orders, isLoading, error, reload } = useOrdersController(user?.id ?? null);
+  const { products } = useProductController();
   const [cancelId, setCancelId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
+  const [reviewOrder, setReviewOrder] = useState<ApiOrder | null>(null);
+  const [reviewItems, setReviewItems] = useState<ApiOrderItem[]>([]);
+  const [reviewedIds, setReviewedIds] = useState<string[]>([]);
+  const [selectedItem, setSelectedItem] = useState<ApiOrderItem | null>(null);
+  const [reviewSaving, setReviewSaving] = useState(false);
+  const [reviewError, setReviewError] = useState<string | null>(null);
+  const [reviewOk, setReviewOk] = useState(false);
 
   const handleCancel = async (motivo: string) => {
     if (cancelId === null) return;
@@ -46,6 +57,55 @@ export function OrdersPage() {
       setSaving(false);
     }
   };
+
+  /** Abre el Modal 1 con los articulos del pedido listos para resenar. */
+  const openReview = async (order: ApiOrder) => {
+    setReviewOk(false);
+    setReviewError(null);
+    try {
+      const detail = await orderService.getById(order.ID_Pedido);
+      setReviewItems(detail?.detalles ?? []);
+      if (user) {
+        const mine = await ratingService.list({ usuario: user.id });
+        setReviewedIds(
+          mine
+            .filter((r) => r.Tipo === 'producto' && r.ID_Pedido === order.ID_Pedido && r.ID_Producto)
+            .map((r) => String(r.ID_Producto)),
+        );
+      }
+      setReviewOrder(order);
+    } catch (err) {
+      setCancelError(err instanceof Error ? err.message : 'No fue posible cargar el pedido.');
+    }
+  };
+
+  /** Publica la resena del producto elegido (Modal 2). */
+  const submitReview = async (stars: number, comment: string) => {
+    if (!reviewOrder || !selectedItem || !user) return;
+    setReviewError(null);
+    setReviewSaving(true);
+    try {
+      await ratingService.create({
+        ID_Usuario: user.id,
+        ID_Producto: String(selectedItem.ID_Producto),
+        ID_Pedido: reviewOrder.ID_Pedido,
+        Tipo: 'producto',
+        Estrellas: stars,
+        Comentario: comment,
+      });
+      setSelectedItem(null);
+      setReviewOrder(null);
+      setReviewOk(true);
+    } catch (err) {
+      setReviewError(err instanceof Error ? err.message : 'No fue posible guardar la resena.');
+    } finally {
+      setReviewSaving(false);
+    }
+  };
+
+  const selectedCatalog = selectedItem
+    ? products.find((p) => String(p.id) === String(selectedItem.ID_Producto))
+    : undefined;
 
   if (!isLoggedIn || !user) {
     return (
@@ -120,7 +180,7 @@ export function OrdersPage() {
                 ) : (
                   <OrderTracker estado={order.Estado} />
                 )}
-                <div className="flex items-center justify-start mt-4">
+                <div className="flex items-center justify-start gap-2 mt-4">
                   {cancellable ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); setCancelError(null); setCancelId(order.ID_Pedido); }}
@@ -134,6 +194,15 @@ export function OrdersPage() {
                       Cancelar pedido
                     </span>
                   ) : <span />}
+                  {canReviewOrder(order.Estado) && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); void openReview(order); }}
+                      className="border border-[#FBC02D] text-[#f57f17] hover:bg-[#FBC02D]/10 rounded-full px-5 py-1.5 transition-colors"
+                      style={{ fontSize: '0.8rem', fontWeight: 600 }}
+                    >
+                      Dejar una reseña
+                    </button>
+                  )}
                 </div>
               </div>
               );
@@ -147,6 +216,34 @@ export function OrdersPage() {
             error={cancelError}
             onClose={() => setCancelId(null)}
             onConfirm={handleCancel}
+          />
+        )}
+        {reviewOk && (
+          <p className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>
+            Reseña publicada. Gracias por tu opinión.
+          </p>
+        )}
+        {reviewOrder && !selectedItem && (
+          <ReviewProductModal
+            orderId={reviewOrder.ID_Pedido}
+            items={reviewItems}
+            products={products}
+            reviewedProductIds={reviewedIds}
+            onClose={() => { setReviewOrder(null); setReviewItems([]); }}
+            onSelect={(item) => { setReviewError(null); setSelectedItem(item); }}
+          />
+        )}
+        {reviewOrder && selectedItem && (
+          <ReviewFormModal
+            title="Dejar una reseña"
+            productImage={selectedCatalog?.image ?? ''}
+            productName={selectedItem.Producto_Nombre ?? selectedCatalog?.name ?? String(selectedItem.ID_Producto)}
+            productDetails={`Cantidad x${selectedItem.Cantidad}`}
+            submitLabel="Publicar Reseña"
+            saving={reviewSaving}
+            error={reviewError}
+            onClose={() => { setSelectedItem(null); setReviewError(null); }}
+            onSubmit={(stars, comment) => { void submitReview(stars, comment); }}
           />
         )}
       </div>
