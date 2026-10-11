@@ -191,13 +191,32 @@ await test('PUT /users/1/profile rechaza foto invalida', async () => {
 
 /* --- Calificaciones (lote 2 + resenas con compra verificada) --- */
 let summaryBefore = { total: 0, promedio: null };
-// Pedido 2 (entregado) del usuario 1 incluye P004: compra verificada de semilla.
+// Pedido propio de la prueba (entregado) con P010: compra verificada autocontenida.
 const REVIEW_USER = 1;
-const REVIEW_ORDER = 2;
-const REVIEW_PRODUCT = 'P004';
+const REVIEW_PRODUCT = 'P010';
+let reviewOrderId = null;
 
-await test('GET /ratings/resumen base de P004', async () => {
-  const { status, data } = await call('GET', '/ratings/resumen?producto=P004');
+await test('POST /orders crea pedido entregable para la resena', async () => {
+  const { status, data } = await call('POST', '/orders', {
+    Total: 4500,
+    Tipo_Entrega: 'domicilio',
+    ID_Usuario: REVIEW_USER,
+    Destinatario: 'Prueba Resena',
+    Telefono: '300123456',
+    Torre: '1',
+    Piso: '1',
+    Apartamento: '101',
+    Metodo_Pago: 'Efectivo',
+    productos: [{ ID_Producto: REVIEW_PRODUCT, Cantidad: 1, Subtotal: 4500 }],
+  });
+  assert(status === 201, `status ${status} ${JSON.stringify(data)}`);
+  reviewOrderId = data.id;
+  const st = await call('PUT', `/orders/${reviewOrderId}/status`, { Estado: 'entregado' });
+  assert(st.status === 200, `a entregado status ${st.status}`);
+});
+
+await test('GET /ratings/resumen base de P010', async () => {
+  const { status, data } = await call('GET', '/ratings/resumen?producto=P010');
   assert(status === 200, `status ${status}`);
   summaryBefore = data;
 });
@@ -206,7 +225,7 @@ await test('POST /ratings producto 5 estrellas con compra verificada', async () 
   const { status, data } = await call('POST', '/ratings', {
     ID_Usuario: REVIEW_USER,
     ID_Producto: REVIEW_PRODUCT,
-    ID_Pedido: REVIEW_ORDER,
+    ID_Pedido: reviewOrderId,
     Tipo: 'producto',
     Estrellas: 5,
     Comentario: 'Prueba automatizada',
@@ -219,7 +238,7 @@ await test('POST /ratings duplicada en el mismo pedido es 409', async () => {
   const { status } = await call('POST', '/ratings', {
     ID_Usuario: REVIEW_USER,
     ID_Producto: REVIEW_PRODUCT,
-    ID_Pedido: REVIEW_ORDER,
+    ID_Pedido: reviewOrderId,
     Tipo: 'producto',
     Estrellas: 4,
     Comentario: 'Duplicada',
@@ -227,12 +246,12 @@ await test('POST /ratings duplicada en el mismo pedido es 409', async () => {
   assert(status === 409, `status ${status}`);
 });
 
-await test('POST /ratings sin compra verificada es 403', async () => {
-  // Pedido 7 esta en preparando: no habilita resenas.
+await test('POST /ratings en pedido enviando (no entregado) es 403', async () => {
+  // Pedido 4 esta en enviando con P002: aun no habilita resenas.
   const { status } = await call('POST', '/ratings', {
     ID_Usuario: REVIEW_USER,
-    ID_Producto: 'P001',
-    ID_Pedido: 7,
+    ID_Producto: 'P002',
+    ID_Pedido: 4,
     Tipo: 'producto',
     Estrellas: 5,
   });
@@ -271,7 +290,7 @@ await test('PUT /ratings/:id de otro usuario es 403', async () => {
 });
 
 await test('GET /ratings/resumen suma la nueva calificacion', async () => {
-  const { status, data } = await call('GET', '/ratings/resumen?producto=P004');
+  const { status, data } = await call('GET', '/ratings/resumen?producto=P010');
   assert(status === 200, `status ${status}`);
   assert(data.total === summaryBefore.total + 1, `total ${data.total} vs base ${summaryBefore.total}`);
   const expected = (Number(summaryBefore.promedio || 0) * summaryBefore.total + 4) / data.total;
@@ -288,8 +307,8 @@ await test('POST /ratings pedido sin ID_Pedido es 400', async () => {
   assert(status === 400, `status ${status}`);
 });
 
-await test('GET /ratings?producto=P004 lista la prueba editada', async () => {
-  const { status, data } = await call('GET', '/ratings?producto=P004');
+await test('GET /ratings?producto=P010 lista la prueba editada', async () => {
+  const { status, data } = await call('GET', '/ratings?producto=P010');
   assert(
     status === 200 &&
       data.some((r) => r.Comentario === 'Prueba automatizada editada' && r.Usuario_Nombre === 'Usuario Demo'),
@@ -325,6 +344,22 @@ await test('Limpieza del pedido de prueba en BD', async () => {
   assert(candidates.length > 0, 'sin cliente mysql');
   execSync(
     `"${candidates[0]}" -u root -e "DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${cancelOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${cancelOrderId};"`,
+  );
+});
+
+await test('Limpieza del pedido de la resena en BD (restaura stock)', async () => {
+  assert(reviewOrderId, 'sin pedido de resena');
+  const { execSync } = await import('node:child_process');
+  const { existsSync } = await import('node:fs');
+  const candidates = [
+    process.env.MYSQL_BIN ? `${process.env.MYSQL_BIN}\\mysql.exe` : '',
+    'C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin\\mysql.exe',
+    `${process.env.LOCALAPPDATA}\\MySQL-8.4\\mysql-8.4.9-winx64\\bin\\mysql.exe`,
+    'C:\\xampp\\mysql\\bin\\mysql.exe',
+  ].filter((c) => c && existsSync(c));
+  assert(candidates.length > 0, 'sin cliente mysql');
+  execSync(
+    `"${candidates[0]}" -u root -e "UPDATE parque100.productos SET Stock_Minimo = Stock_Minimo + 1 WHERE ID_Producto='${REVIEW_PRODUCT}'; DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${reviewOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${reviewOrderId};"`,
   );
 });
 

@@ -167,7 +167,7 @@ export function ProductDetailPage() {
           </div>
           {isLoggedIn ? (
             <p className="bg-[#FBC02D]/10 border border-[#FBC02D]/40 rounded-xl px-4 py-3 mb-2" style={{ fontSize: '0.82rem' }}>
-              Solo puedes reseñar productos que compraste en un pedido <strong>enviado o entregado</strong>. Ve a{' '}
+              Solo puedes reseñar productos que compraste en un pedido <strong>entregado</strong>. Ve a{' '}
               <Link to="/compras" className="text-[#C62828] font-medium hover:underline">Mis compras</Link>{' '}
               y usa el botón “Dejar una reseña”.
             </p>
