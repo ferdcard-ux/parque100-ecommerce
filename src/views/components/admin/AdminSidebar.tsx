@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import {
   Package, ShoppingCart, Users, BarChart2, Settings, ClipboardList,
-  Store, ChevronLeft, ChevronRight as ChevRight, LogOut, LayoutDashboard,
+  Store, ChevronLeft, ChevronRight as ChevRight, LogOut, LayoutDashboard, Menu, X,
 } from 'lucide-react';
 import type { UserRole } from '../../../models';
 
@@ -30,70 +30,119 @@ interface AdminSidebarProps {
 
 export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'admin' }: AdminSidebarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const items = role === 'domiciliario' ? SIDEBAR_ITEMS.filter((item) => DOMICILIARIO_KEYS.includes(item.key)) : SIDEBAR_ITEMS;
 
-  return (
-    <aside className={`${sidebarOpen ? 'w-56 max-md:w-16' : 'w-16'} bg-[#212121] h-screen sticky top-0 flex flex-col transition-all duration-300 shrink-0 overflow-hidden`}>
-      <div className="px-4 py-5 border-b border-white/10 flex items-center justify-between">
-        {sidebarOpen && (
-          <div className="flex items-center gap-2 max-md:hidden">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #FBC02D, #C62828)' }}>
-              <Store size={14} className="text-white" />
-            </div>
-            <div>
-              <span className="text-white font-bold block" style={{ fontSize: '0.8rem' }}>Parque 100</span>
-              <span className="text-white/40" style={{ fontSize: '0.65rem' }}>Admin Panel</span>
-            </div>
-          </div>
-        )}
-        <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white/40 hover:text-white transition-colors ml-auto">
-          {sidebarOpen ? <ChevronLeft size={18} /> : <ChevRight size={18} />}
-        </button>
-      </div>
-
-      <nav className="flex-1 py-4 flex flex-col gap-1 px-2">
-        {items.map((item) => (
-          <Link
-            key={item.label}
-            to={item.path}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all ${
-              item.key === active ? 'bg-[#C62828] text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'
-            }`}
-          >
-            <span className="shrink-0">{item.icon}</span>
-            {sidebarOpen && <span className="max-md:hidden" style={{ fontSize: '0.875rem' }}>{item.label}</span>}
-            {item.key === 'pendientes' && pendingCount > 0 && (
-              <span
-                className="ml-auto min-w-6 h-6 px-1.5 rounded-full bg-[#C62828] text-white flex items-center justify-center font-bold"
-                style={{ fontSize: '0.7rem' }}
-                aria-label={`${pendingCount} pedidos pendientes`}
-              >
-                {pendingCount > 99 ? '99+' : pendingCount}
-              </span>
-            )}
-          </Link>
-        ))}
-      </nav>
-
-      <div className="border-t border-white/10 p-3">
-        {sidebarOpen && (
-          <div className="flex items-center gap-2 mb-3 px-1 max-md:hidden">
-            <div className="w-7 h-7 rounded-full bg-[#C62828] flex items-center justify-center shrink-0">
-              <span className="text-white font-bold" style={{ fontSize: '0.7rem' }}>AD</span>
-            </div>
-            <div className="min-w-0">
-              <p className="text-white font-medium truncate" style={{ fontSize: '0.78rem' }}>Administrador</p>
-              <p className="text-white/40 truncate" style={{ fontSize: '0.68rem' }}>admin@parque100.com</p>
-            </div>
-          </div>
-        )}
-        <Link to="/login">
-          <button className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full">
-            <LogOut size={16} className="shrink-0" />
-            {sidebarOpen && <span className="max-md:hidden" style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>}
-          </button>
+  const nav = (onNavigate?: () => void) => (
+    <nav className="flex-1 py-4 flex flex-col gap-1 px-2 overflow-y-auto">
+      {items.map((item) => (
+        <Link
+          key={item.label}
+          to={item.path}
+          onClick={onNavigate}
+          className={`flex items-center gap-3 px-3 py-3 md:py-2.5 rounded-xl transition-all min-h-11 ${
+            item.key === active ? 'bg-[#C62828] text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'
+          }`}
+        >
+          <span className="shrink-0">{item.icon}</span>
+          {(sidebarOpen || onNavigate) && <span style={{ fontSize: '0.875rem' }}>{item.label}</span>}
+          {item.key === 'pendientes' && pendingCount > 0 && (
+            <span
+              className="ml-auto min-w-6 h-6 px-1.5 rounded-full bg-[#C62828] text-white flex items-center justify-center font-bold"
+              style={{ fontSize: '0.7rem' }}
+              aria-label={`${pendingCount} pedidos pendientes`}
+            >
+              {pendingCount > 99 ? '99+' : pendingCount}
+            </span>
+          )}
         </Link>
-      </div>
-    </aside>
+      ))}
+    </nav>
+  );
+
+  return (
+    <>
+      <aside className={`${sidebarOpen ? 'w-56' : 'w-16'} hidden md:flex bg-[#212121] h-screen sticky top-0 flex-col transition-all duration-300 shrink-0 overflow-hidden`}>
+        <div className="px-4 py-5 border-b border-white/10 flex items-center justify-between">
+          {sidebarOpen && (
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #FBC02D, #C62828)' }}>
+                <Store size={14} className="text-white" />
+              </div>
+              <div>
+                <span className="text-white font-bold block" style={{ fontSize: '0.8rem' }}>Parque 100</span>
+                <span className="text-white/40" style={{ fontSize: '0.65rem' }}>Admin Panel</span>
+              </div>
+            </div>
+          )}
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white/40 hover:text-white transition-colors ml-auto min-w-11 min-h-11 flex items-center justify-center" aria-label={sidebarOpen ? 'Colapsar menú' : 'Expandir menú'}>
+            {sidebarOpen ? <ChevronLeft size={18} /> : <ChevRight size={18} />}
+          </button>
+        </div>
+
+        {nav()}
+
+        <div className="border-t border-white/10 p-3">
+          {sidebarOpen && (
+            <div className="flex items-center gap-2 mb-3 px-1">
+              <div className="w-7 h-7 rounded-full bg-[#C62828] flex items-center justify-center shrink-0">
+                <span className="text-white font-bold" style={{ fontSize: '0.7rem' }}>AD</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-white font-medium truncate" style={{ fontSize: '0.78rem' }}>Administrador</p>
+                <p className="text-white/40 truncate" style={{ fontSize: '0.68rem' }}>admin@parque100.com</p>
+              </div>
+            </div>
+          )}
+          <Link to="/login">
+            <button className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full min-h-11">
+              <LogOut size={16} className="shrink-0" />
+              {sidebarOpen && <span style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>}
+            </button>
+          </Link>
+        </div>
+      </aside>
+
+      <button
+        onClick={() => setMobileOpen(true)}
+        aria-label="Abrir menú de administración"
+        className="md:hidden fixed bottom-4 left-4 z-40 w-12 h-12 rounded-full bg-[#212121] text-white shadow-xl flex items-center justify-center"
+      >
+        <Menu size={20} />
+      </button>
+
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Menú de administración">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
+          <aside className="absolute inset-y-0 left-0 w-64 max-w-[80vw] bg-[#212121] flex flex-col overflow-hidden">
+            <div className="px-4 py-5 border-b border-white/10 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #FBC02D, #C62828)' }}>
+                  <Store size={14} className="text-white" />
+                </div>
+                <div>
+                  <span className="text-white font-bold block" style={{ fontSize: '0.8rem' }}>Parque 100</span>
+                  <span className="text-white/40" style={{ fontSize: '0.65rem' }}>Admin Panel</span>
+                </div>
+              </div>
+              <button onClick={() => setMobileOpen(false)} className="text-white/40 hover:text-white min-w-11 min-h-11 flex items-center justify-center" aria-label="Cerrar menú">
+                <X size={18} />
+              </button>
+            </div>
+
+            {nav(() => setMobileOpen(false))}
+
+            <div className="border-t border-white/10 p-3">
+              <Link to="/login" onClick={() => setMobileOpen(false)}>
+                <button className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full min-h-11">
+                  <LogOut size={16} className="shrink-0" />
+                  <span style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>
+                </button>
+              </Link>
+            </div>
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

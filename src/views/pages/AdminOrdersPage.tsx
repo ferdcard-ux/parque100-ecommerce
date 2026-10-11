@@ -119,7 +119,7 @@ export function AdminOrdersPage() {
   return (
     <AdminPageShell active="pedidos" title="Administrar Pedidos" subtitle="Gestiona el estado de cada pedido">
       <div className="sticky top-[60px] z-10 bg-[#F5F5F5] -mt-3 pt-1 pb-2">
-        <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 sm:gap-2">
           {summary.map((s) => {
             const isActive = estadoFilter === s.estado;
             return (

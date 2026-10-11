@@ -289,7 +289,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
               </Link>
             )}
 
-            <button className="md:hidden p-2" onClick={() => setMenuOpen(!menuOpen)}>
+            <button className="md:hidden min-w-11 min-h-11 flex items-center justify-center" onClick={() => setMenuOpen(!menuOpen)} aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}>
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>

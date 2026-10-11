@@ -233,7 +233,8 @@ export function AdminClientsPage() {
       ) : error ? (
         <p className="text-center text-[#C62828] py-16">{error}</p>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-x-auto">
+        <>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-x-auto hidden sm:block">
           <table className="w-full min-w-[720px] text-left" style={{ fontSize: '0.85rem' }}>
             <thead>
               <tr className="text-gray-400 border-b border-gray-100">
@@ -288,6 +289,47 @@ export function AdminClientsPage() {
           </table>
           {filtered.length === 0 && <p className="text-center text-gray-400 py-10">Sin resultados.</p>}
         </div>
+        <div className="flex flex-col gap-3 sm:hidden">
+          {filtered.map((u) => (
+            <article key={u.ID_Usuario} className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="flex items-center justify-between gap-2 mb-1">
+                <p className="text-[#212121] font-semibold truncate" style={{ fontSize: '0.9rem' }}>{u.Nombre}</p>
+                <span className={`shrink-0 px-2.5 py-1 rounded-full ${normalizeRole(u.Rol) === 'admin' ? 'bg-[#C62828]/10 text-[#C62828]' : normalizeRole(u.Rol) === 'domiciliario' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                  {normalizeRole(u.Rol)}
+                </span>
+              </div>
+              <p className="text-gray-500 truncate mb-3" style={{ fontSize: '0.8rem' }}>{u.Correo}</p>
+              <div className="flex items-center justify-between">
+                {u.Rol === 'admin' ? (
+                  <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>Cancela siempre</span>
+                ) : (
+                  <label className="flex items-center gap-2 text-gray-500" style={{ fontSize: '0.78rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={perms[u.ID_Usuario] ?? false}
+                      onChange={(e) => handleToggleCancel(u, e.target.checked)}
+                      className="w-5 h-5 accent-[#C62828]"
+                      aria-label={`Puede cancelar: ${u.Nombre}`}
+                    />
+                    Puede cancelar
+                  </label>
+                )}
+                <div className="flex gap-1">
+                  <button onClick={() => { setEditing(u); setModalError(null); setModal('edit'); }}
+                    className="relative p-2.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#C62828] transition-colors before:absolute before:-inset-1 before:content-['']" aria-label="Editar" title="Editar">
+                    <Pencil size={16} />
+                  </button>
+                  <button onClick={() => setDeleting(u)}
+                    className="relative p-2.5 rounded-lg hover:bg-red-50 text-gray-500 hover:text-[#C62828] transition-colors before:absolute before:-inset-1 before:content-['']" aria-label="Eliminar" title="Eliminar">
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              </div>
+            </article>
+          ))}
+          {filtered.length === 0 && <p className="text-center text-gray-400 py-10">Sin resultados.</p>}
+        </div>
+        </>
       )}
 
       {modal === 'create' && (

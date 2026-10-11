@@ -318,8 +318,8 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-gray-100">
-        <table className="w-full" style={{ fontSize: '0.875rem' }}>
+      <div className="overflow-x-auto rounded-xl border border-gray-100 hidden sm:block">
+        <table className="w-full min-w-[640px]" style={{ fontSize: '0.875rem' }}>
           <thead>
             <tr className="bg-[#F5F5F5]">
               <th className="text-left px-4 py-3 text-gray-500 font-semibold" style={{ fontSize: '0.78rem' }}>PRODUCTO</th>
@@ -359,13 +359,13 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-2">
-                    <button onClick={() => onEditClick(product)} className="p-1.5 rounded-lg hover:bg-blue-50 text-blue-500 hover:text-blue-600 transition-colors">
-                      <Edit2 size={14} />
+                    <button onClick={() => onEditClick(product)} aria-label={`Editar ${product.name}`} className="relative p-2.5 rounded-lg hover:bg-blue-50 text-blue-500 hover:text-blue-600 transition-colors before:absolute before:-inset-1 before:content-['']">
+                      <Edit2 size={15} />
                     </button>
-                    <button onClick={() => onDelete(product.id)}
-                      className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-[#C62828] transition-colors"
+                    <button onClick={() => onDelete(product.id)} aria-label={`Eliminar ${product.name}`}
+                      className="relative p-2.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-[#C62828] transition-colors before:absolute before:-inset-1 before:content-['']"
                     >
-                      <Trash2 size={14} />
+                      <Trash2 size={15} />
                     </button>
                   </div>
                 </td>
@@ -382,25 +382,60 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
         </table>
       </div>
 
-      <div className="flex items-center justify-between mt-4">
+      <div className="flex flex-col gap-3 sm:hidden">
+        {paginated.map((product) => (
+          <article key={product.id} className="rounded-xl border border-gray-100 p-3.5">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                <Package size={15} className="text-gray-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[#212121] font-medium truncate" style={{ fontSize: '0.88rem' }}>{product.name}</p>
+                <p className="text-gray-400" style={{ fontSize: '0.72rem' }}>{product.category}</p>
+              </div>
+              <span className={`shrink-0 px-2.5 py-1 rounded-full border text-xs font-semibold ${STATUS_LABELS[product.status].class}`}>
+                {STATUS_LABELS[product.status].label}
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <p className="text-[#212121] font-bold" style={{ fontSize: '0.95rem' }}>
+                {formatPrice(product.price)} <span className="text-gray-400 font-normal" style={{ fontSize: '0.75rem' }}>· {product.quantity} disp.</span>
+              </p>
+              <div className="flex gap-1">
+                <button onClick={() => onEditClick(product)} aria-label={`Editar ${product.name}`} className="relative p-2.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors before:absolute before:-inset-1 before:content-['']">
+                  <Edit2 size={15} />
+                </button>
+                <button onClick={() => onDelete(product.id)} aria-label={`Eliminar ${product.name}`} className="relative p-2.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-[#C62828] transition-colors before:absolute before:-inset-1 before:content-['']">
+                  <Trash2 size={15} />
+                </button>
+              </div>
+            </div>
+          </article>
+        ))}
+        {paginated.length === 0 && (
+          <p className="px-4 py-10 text-center text-gray-400">No se encontraron productos</p>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
         <p className="text-gray-400" style={{ fontSize: '0.8rem' }}>
           Mostrando {filtered.length === 0 ? 0 : ((safePage - 1) * perPage) + 1}–{Math.min(safePage * perPage, filtered.length)} de {filtered.length} productos
         </p>
         <div className="flex items-center gap-2">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}
-            className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1} aria-label="Página anterior"
+            className="relative p-2.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors before:absolute before:-inset-1 before:content-['']"
           >
             <ChevronLeft size={16} />
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <button key={p} onClick={() => setPage(p)}
-              className={`w-7 h-7 rounded-lg text-sm font-medium transition-colors ${p === safePage ? 'bg-[#C62828] text-white' : 'border border-gray-200 text-[#212121] hover:bg-gray-50'}`}
+            <button key={p} onClick={() => setPage(p)} aria-label={`Página ${p}`}
+              className={`relative min-w-11 min-h-11 rounded-lg text-sm font-medium transition-colors ${p === safePage ? 'bg-[#C62828] text-white' : 'border border-gray-200 text-[#212121] hover:bg-gray-50'}`}
             >
               {p}
             </button>
           ))}
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
-            className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
+          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} aria-label="Página siguiente"
+            className="relative p-2.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors before:absolute before:-inset-1 before:content-['']"
           >
             <ChevRight size={16} />
           </button>
