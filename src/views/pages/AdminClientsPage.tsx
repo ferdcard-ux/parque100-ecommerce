@@ -46,10 +46,10 @@ function UserModal({ title, initial, showPassword, error, saving, onClose, onSub
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 overflow-y-auto" style={{ background: 'rgba(0,0,0,0.45)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 my-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>{title}</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500" aria-label="Cerrar">
@@ -212,7 +212,7 @@ export function AdminClientsPage() {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar por nombre o correo..."
-          className="flex-1 min-w-52 px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:border-[#C62828]"
+          className="flex-1 min-w-0 basis-48 px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:border-[#C62828]"
           style={{ fontSize: '0.9rem' }}
         />
         <select value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}
@@ -233,30 +233,30 @@ export function AdminClientsPage() {
       ) : error ? (
         <p className="text-center text-[#C62828] py-16">{error}</p>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
-          <table className="w-full text-left" style={{ fontSize: '0.85rem' }}>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-x-auto">
+          <table className="w-full min-w-[720px] text-left" style={{ fontSize: '0.85rem' }}>
             <thead>
               <tr className="text-gray-400 border-b border-gray-100">
                 <th className="px-5 py-3 font-medium">Nombre</th>
                 <th className="px-5 py-3 font-medium">Correo</th>
-                <th className="px-5 py-3 font-medium">Telefono</th>
+                <th className="px-5 py-3 font-medium hidden lg:table-cell">Telefono</th>
                 <th className="px-5 py-3 font-medium">Rol</th>
-                <th className="px-5 py-3 font-medium">Puede cancelar</th>
+                <th className="px-5 py-3 font-medium hidden sm:table-cell">Puede cancelar</th>
                 <th className="px-5 py-3 font-medium text-right">Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((u) => (
                 <tr key={u.ID_Usuario} className="border-b border-gray-50 last:border-0 text-[#212121]">
-                  <td className="px-5 py-3">{u.Nombre}</td>
-                  <td className="px-5 py-3 text-gray-500">{u.Correo}</td>
-                  <td className="px-5 py-3 text-gray-500">{u.Telefono ?? '—'}</td>
+                  <td className="px-5 py-3 max-w-[160px] truncate">{u.Nombre}</td>
+                  <td className="px-5 py-3 text-gray-500 max-w-[200px] truncate">{u.Correo}</td>
+                  <td className="px-5 py-3 text-gray-500 hidden lg:table-cell">{u.Telefono ?? '—'}</td>
                   <td className="px-5 py-3">
                     <span className={`px-2.5 py-1 rounded-full ${normalizeRole(u.Rol) === 'admin' ? 'bg-[#C62828]/10 text-[#C62828]' : normalizeRole(u.Rol) === 'domiciliario' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
                       {normalizeRole(u.Rol)}
                     </span>
                   </td>
-                  <td className="px-5 py-3">
+                  <td className="px-5 py-3 hidden sm:table-cell">
                     {u.Rol === 'admin' ? (
                       <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>Siempre</span>
                     ) : (

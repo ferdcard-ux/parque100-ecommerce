@@ -95,19 +95,19 @@ export function AdminReportsPage() {
         <p className="text-center text-gray-400 py-16">Cargando...</p>
       ) : (
         <>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-6">
             {kpis.map(({ icon: Icon, label, value, tile }) => (
-              <div key={label} className="bg-white rounded-2xl border border-gray-100 p-5">
-                <span className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${tile}`}><Icon size={18} /></span>
-                <p className="text-[#212121]" style={{ fontSize: '1.3rem', fontWeight: 700 }}>{value}</p>
-                <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>{label}</p>
+              <div key={label} className="bg-white rounded-2xl border border-gray-100 p-4">
+                <span className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${tile}`}><Icon size={17} /></span>
+                <p className="text-[#212121] truncate" style={{ fontSize: '1.15rem', fontWeight: 700 }}>{value}</p>
+                <p className="text-gray-400 truncate" style={{ fontSize: '0.72rem' }}>{label}</p>
               </div>
             ))}
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 overflow-x-auto">
             <h2 className="text-[#212121] mb-6" style={{ fontSize: '1rem', fontWeight: 700 }}>Pedidos por estado</h2>
-            <div className="flex items-end gap-6 h-48">
+            <div className="flex items-end gap-6 h-48 min-w-[420px]">
               {byStatus.map(({ estado, count }) => (
                 <div key={estado} className="flex-1 flex flex-col items-center justify-end gap-2">
                   <span className="text-gray-500" style={{ fontSize: '0.75rem', fontWeight: 600 }}>{count}</span>
