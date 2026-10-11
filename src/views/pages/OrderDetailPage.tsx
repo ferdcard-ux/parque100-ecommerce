@@ -4,16 +4,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useParams } from 'react-router';
 import { TriangleAlert } from 'lucide-react';
-import type { ApiOrder, RatingType } from '../../models';
+import type { ApiOrder } from '../../models';
 import { orderService } from '../../services';
 import { useApp } from '../../App';
-import { useRatingsController } from '../../controllers';
+import { useProductController, useRatingsController } from '../../controllers';
 import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { StarRating } from '../components/shared/star-rating';
-import { DISPATCH_DELAY_WARNING, CANCEL_REFUND_NOTICE, formatPrice } from '../../utils';
+import { ImageWithFallback } from '../components/figma/ImageWithFallback';
+import { DISPATCH_DELAY_WARNING, CANCEL_REFUND_NOTICE, formatPrice, ratingLabel } from '../../utils';
 
 /** Formatea fecha y hora legibles. */
 function formatDateTime(value: string): string {
@@ -33,8 +34,8 @@ export function OrderDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const orderId = Number(id);
   const { ratings, isSaving, rate } = useRatingsController({ pedido: Number.isInteger(orderId) ? orderId : undefined });
+  const { products } = useProductController();
   const [stars, setStars] = useState(5);
-  const [kind, setKind] = useState<RatingType>('pedido');
   const [comment, setComment] = useState('');
   const [rateError, setRateError] = useState<string | null>(null);
   const [rateOk, setRateOk] = useState(false);
@@ -47,7 +48,7 @@ export function OrderDetailPage() {
       await rate({
         ID_Usuario: user?.id ?? null,
         ID_Pedido: orderId,
-        Tipo: kind,
+        Tipo: 'envio',
         Estrellas: stars,
         Comentario: comment.trim(),
       });
@@ -153,20 +154,9 @@ export function OrderDetailPage() {
 
             {order.Estado === 'entregado' && (
               <div className="bg-white rounded-2xl border border-gray-100 p-5">
-                <SectionTitle>Califica tu pedido y el envio</SectionTitle>
+                <SectionTitle>Califica el servicio de envío</SectionTitle>
                 <form onSubmit={handleRate} className="flex flex-col gap-3 mt-3">
-                  <div className="flex items-center gap-3">
-                    <select
-                      value={kind}
-                      onChange={(e) => setKind(e.target.value as RatingType)}
-                      className="border border-gray-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:border-[#C62828]"
-                      style={{ fontSize: '0.85rem' }}
-                    >
-                      <option value="pedido">El pedido</option>
-                      <option value="envio">El repartidor / envio</option>
-                    </select>
-                    <StarRating value={stars} editable onChange={setStars} />
-                  </div>
+                  <StarRating value={stars} editable onChange={setStars} />
                   <input
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
@@ -186,16 +176,56 @@ export function OrderDetailPage() {
                     {isSaving ? 'Guardando...' : 'Enviar calificacion'}
                   </button>
                 </form>
-                {ratings.length > 0 && (
+                {ratings.filter((r) => r.Tipo === 'envio').length > 0 && (
                   <ul className="mt-4 flex flex-col divide-y divide-gray-50">
-                    {ratings.slice(0, 5).map((r) => (
-                      <li key={r.ID_Calificacion} className="py-2 flex items-center gap-3">
-                        <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>{r.Tipo}</span>
-                        <StarRating value={r.Estrellas} size={14} />
+                    {ratings.filter((r) => r.Tipo === 'envio').slice(0, 5).map((r) => (
+                      <li key={r.ID_Calificacion} className="py-2">
+                        <div className="flex items-center gap-2">
+                          <StarRating value={r.Estrellas} size={14} />
+                          {ratingLabel(r.Estrellas) && (
+                            <span className="text-[#f57f17]" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                              {ratingLabel(r.Estrellas)}
+                            </span>
+                          )}
+                        </div>
+                        {r.Comentario && <p className="text-gray-600 mt-1" style={{ fontSize: '0.85rem' }}>{r.Comentario}</p>}
                       </li>
                     ))}
                   </ul>
                 )}
+              </div>
+            )}
+
+            {ratings.filter((r) => r.Tipo === 'producto').length > 0 && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-5">
+                <SectionTitle>Reseñas de productos</SectionTitle>
+                <ul className="flex flex-col divide-y divide-gray-50">
+                  {ratings.filter((r) => r.Tipo === 'producto').map((r) => {
+                    const catalog = products.find((p) => String(p.id) === String(r.ID_Producto));
+                    const name = catalog?.name ?? String(r.ID_Producto ?? '');
+                    return (
+                      <li key={r.ID_Calificacion} className="py-3 flex gap-3">
+                        <ImageWithFallback
+                          src={catalog?.image ?? ''}
+                          alt={name}
+                          className="w-12 h-12 object-cover rounded-xl shrink-0"
+                        />
+                        <div className="min-w-0">
+                          <p className="text-[#212121] truncate" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{name}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <StarRating value={r.Estrellas} size={14} />
+                            {ratingLabel(r.Estrellas) && (
+                              <span className="text-[#f57f17]" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                                {ratingLabel(r.Estrellas)}
+                              </span>
+                            )}
+                          </div>
+                          {r.Comentario && <p className="text-gray-600 mt-1" style={{ fontSize: '0.85rem' }}>{r.Comentario}</p>}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
             )}
           </div>
