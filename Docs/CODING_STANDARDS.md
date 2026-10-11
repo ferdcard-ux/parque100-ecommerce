@@ -67,3 +67,23 @@ Nunca se ejecuta SQL fuera de `models/`, ni se importa un modelo desde una ruta.
 
 - Un módulo por commit; mensajes imperativos en español.
 - Nunca commitear credenciales reales ni `node_modules`.
+
+## 7. Diseño responsive (mobile-first)
+
+Matriz de prueba obligatoria: **360×740** (móvil), **768×1024** (tableta),
+**1024×768** (portátil), **1440×900** (escritorio). A 360px ninguna ruta debe producir scroll
+horizontal de página (`document.documentElement.scrollWidth <= innerWidth`).
+
+- Grillas con `grid-cols-1` base y escalado `sm:`/`lg:`; 1 columna bajo 380px
+  (`max-[380px]:grid-cols-1`) en tarjetas de producto.
+- Tablas admin: reflow a tarjetas en `<sm` (`sm:hidden`); tabla con scroll
+  interno desde `sm:`.
+- Touch: área mínima 44px en botones de acción (área extendida con
+  `before:-inset` si el visual es menor); favoritos siempre visibles en táctil
+  (sin depender de `hover`).
+- Tipografía en `rem` con raíz fluida (`tailwind.css`); respetar
+  `prefers-reduced-motion` (ya global en CSS).
+- Imágenes de Unsplash y Pexels con `srcSet` de anchos responsivos y `sizes`
+  según el layout; reservar la proporción del contenedor para evitar saltos.
+- Carruseles con arrastre táctil (Embla) y flechas de 44px con estado
+  `disabled`.
