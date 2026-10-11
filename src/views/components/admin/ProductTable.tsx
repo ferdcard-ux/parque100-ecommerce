@@ -1,20 +1,77 @@
-import { useState } from 'react';
-import { Search, ChevronDown, Upload, Download, Plus, Edit2, Trash2, Package, ChevronLeft, ChevronRight as ChevRight } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
+import { Search, ChevronDown, Upload, Download, Plus, Edit2, Trash2, Package, ChevronLeft, ChevronRight as ChevRight, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
 import type { AdminProduct, InventoryStatus } from '../../../models';
 import { formatPrice, STATUS_LABELS } from '../../../utils';
+import { productService } from '../../../services';
 
 interface ProductTableProps {
   products: AdminProduct[];
   onDelete: (id: number) => void;
   onAddClick: () => void;
   onEditClick: (product: AdminProduct) => void;
+  /** Filtro controlado desde las tarjetas de AdminStats. */
+  statusFilter?: 'all' | InventoryStatus;
+  onStatusFilterChange?: (s: 'all' | InventoryStatus) => void;
+  /** Recarga tras importar. */
+  onImported?: () => Promise<void>;
 }
 
-export function ProductTable({ products, onDelete, onAddClick, onEditClick }: ProductTableProps) {
+/** Columnas exactas de la tabla `productos` (plantilla de importación). */
+const TEMPLATE_HEADERS = [
+  'ID_Producto', 'Nombre', 'Descripcion', 'Precio_Venta', 'Precio_Anterior', 'Marca',
+  'Contenido_Cantidad', 'Contenido_Unidad', 'Embalaje', 'Ingredientes', 'Conservacion',
+  'Promo_Desde', 'Promo_Hasta', 'Stock_Minimo', 'ID_Categoria',
+] as const;
+
+type TemplateRow = Record<(typeof TEMPLATE_HEADERS)[number], unknown>;
+
+function toTemplateRow(r: any): TemplateRow {
+  return {
+    ID_Producto: r.ID_Producto ?? '',
+    Nombre: r.Nombre ?? '',
+    Descripcion: r.Descripcion ?? '',
+    Precio_Venta: r.Precio_Venta ?? '',
+    Precio_Anterior: r.Precio_Anterior ?? '',
+    Marca: r.Marca ?? '',
+    Contenido_Cantidad: r.Contenido_Cantidad ?? '',
+    Contenido_Unidad: r.Contenido_Unidad ?? '',
+    Embalaje: r.Embalaje ?? '',
+    Ingredientes: r.Ingredientes ?? '',
+    Conservacion: r.Conservacion ?? '',
+    Promo_Desde: r.Promo_Desde ? String(r.Promo_Desde).slice(0, 10) : '',
+    Promo_Hasta: r.Promo_Hasta ? String(r.Promo_Hasta).slice(0, 10) : '',
+    Stock_Minimo: r.Stock_Minimo ?? '',
+    ID_Categoria: r.ID_Categoria ?? '',
+  };
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export function ProductTable({ products, onDelete, onAddClick, onEditClick, statusFilter, onStatusFilterChange, onImported }: ProductTableProps) {
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | InventoryStatus>('all');
+  const [innerFilter, setInnerFilter] = useState<'all' | InventoryStatus>('all');
   const [page, setPage] = useState(1);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [busy, setBusy] = useState<'excel' | 'pdf' | 'template' | 'import' | null>(null);
+  const [notice, setNotice] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
   const perPage = 8;
+
+  const filter = statusFilter ?? innerFilter;
+  const setFilter = (v: 'all' | InventoryStatus) => {
+    onStatusFilterChange?.(v);
+    setInnerFilter(v);
+    setPage(1);
+  };
 
   const filtered = products.filter((p) => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase());
@@ -22,8 +79,166 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick }: Pr
     return matchSearch && matchFilter;
   });
 
-  const totalPages = Math.ceil(filtered.length / perPage);
-  const paginated = filtered.slice((page - 1) * perPage, page * perPage);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const paginated = useMemo(() => filtered.slice((safePage - 1) * perPage, safePage * perPage), [filtered, safePage]);
+
+  const fetchRawRows = async (): Promise<any[]> => {
+    const res = await fetch('http://localhost:3001/api/products');
+    if (!res.ok) throw new Error('No se pudo leer el inventario del servidor.');
+    return res.json();
+  };
+
+  const handleExportExcel = async () => {
+    setBusy('excel');
+    setNotice(null);
+    try {
+      const XLSX = await import('xlsx');
+      const rows = await fetchRawRows();
+      const ws = XLSX.utils.json_to_sheet(rows.map(toTemplateRow), { header: [...TEMPLATE_HEADERS] });
+      ws['!cols'] = TEMPLATE_HEADERS.map(() => ({ wch: 18 }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
+      const buf: ArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      downloadBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'inventario-parque100.xlsx');
+      setNotice({ kind: 'ok', text: `Excel exportado (${rows.length} productos) con formato de la BD.` });
+    } catch (e) {
+      setNotice({ kind: 'err', text: e instanceof Error ? e.message : 'No fue posible exportar.' });
+    } finally {
+      setBusy(null);
+      setExportOpen(false);
+    }
+  };
+
+  const handleExportTemplate = async () => {
+    setBusy('template');
+    setNotice(null);
+    try {
+      const XLSX = await import('xlsx');
+      const example = {
+        ID_Producto: 'P011', Nombre: 'Ejemplo Café 500g', Descripcion: 'Descripción corta',
+        Precio_Venta: 8500, Precio_Anterior: '', Marca: 'Parque100',
+        Contenido_Cantidad: 500, Contenido_Unidad: 'g', Embalaje: '', Ingredientes: '', Conservacion: '',
+        Promo_Desde: '', Promo_Hasta: '', Stock_Minimo: 20, ID_Categoria: 4,
+      };
+      const ws = XLSX.utils.json_to_sheet([example], { header: [...TEMPLATE_HEADERS] });
+      ws['!cols'] = TEMPLATE_HEADERS.map(() => ({ wch: 18 }));
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
+      const buf: ArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      downloadBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'plantilla-inventario-parque100.xlsx');
+      setNotice({ kind: 'ok', text: 'Plantilla descargada. Úsala para importar sin errores.' });
+    } catch (e) {
+      setNotice({ kind: 'err', text: e instanceof Error ? e.message : 'No fue posible generar la plantilla.' });
+    } finally {
+      setBusy(null);
+      setExportOpen(false);
+    }
+  };
+
+  const handleExportPdf = async () => {
+    setBusy('pdf');
+    setNotice(null);
+    try {
+      const { default: jsPDF } = await import('jspdf');
+      const { default: autoTable } = await import('jspdf-autotable');
+      const doc = new jsPDF({ orientation: 'landscape' });
+      doc.setFontSize(14);
+      doc.text('Inventario — Tienda Parque 100', 14, 14);
+      doc.setFontSize(9);
+      doc.text(`Generado: ${new Date().toLocaleString('es-CO')} · ${filtered.length} productos${filter !== 'all' ? ` (filtro: ${STATUS_LABELS[filter].label})` : ''}`, 14, 20);
+      autoTable(doc, {
+        startY: 24,
+        head: [['PRODUCTO', 'CATEGORÍA', 'CANTIDAD', 'PRECIO', 'ESTADO']],
+        body: filtered.map((p) => [p.name, p.category, String(p.quantity), formatPrice(p.price), STATUS_LABELS[p.status].label]),
+        styles: { fontSize: 9 },
+        headStyles: { fillColor: [198, 40, 40] },
+      });
+      doc.save('inventario-parque100.pdf');
+      setNotice({ kind: 'ok', text: `PDF exportado (${filtered.length} productos) con el formato de la tabla.` });
+    } catch (e) {
+      setNotice({ kind: 'err', text: e instanceof Error ? e.message : 'No fue posible exportar el PDF.' });
+    } finally {
+      setBusy(null);
+      setExportOpen(false);
+    }
+  };
+
+  const handleImportFile = async (file: File) => {
+    setBusy('import');
+    setNotice(null);
+    try {
+      const XLSX = await import('xlsx');
+      const buf = await file.arrayBuffer();
+      const wb = XLSX.read(buf, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' });
+      if (json.length === 0) throw new Error('El archivo no tiene filas para importar.');
+      const headers = Object.keys(json[0]);
+      const missing = TEMPLATE_HEADERS.filter((h) => !headers.includes(h));
+      const extra = headers.filter((h) => !(TEMPLATE_HEADERS as readonly string[]).includes(h));
+      if (missing.length > 0 || extra.length > 0) {
+        throw new Error(`La plantilla no coincide. Faltan: ${missing.join(', ') || '—'}. Sobran: ${extra.join(', ') || '—'}. Descarga la plantilla oficial.`);
+      }
+      const existingRes = await fetch('http://localhost:3001/api/products');
+      const existing: any[] = existingRes.ok ? await existingRes.json() : [];
+      const existingIds = new Set(existing.map((r) => String(r.ID_Producto)));
+      let created = 0;
+      let updated = 0;
+      const errors: string[] = [];
+      for (let i = 0; i < json.length; i++) {
+        const row = json[i] as TemplateRow;
+        const line = i + 2;
+        try {
+          const id = String(row.ID_Producto ?? '').trim();
+          const nombre = String(row.Nombre ?? '').trim();
+          const precio = Number(row.Precio_Venta);
+          const stock = Number(row.Stock_Minimo);
+          const cat = Number(row.ID_Categoria);
+          if (!id || !nombre) throw new Error(`fila ${line}: ID_Producto y Nombre son obligatorios`);
+          if (!Number.isFinite(precio) || !Number.isFinite(stock) || !Number.isFinite(cat)) throw new Error(`fila ${line}: Precio_Venta, Stock_Minimo e ID_Categoria deben ser numéricos`);
+          const numOrNull = (v: unknown) => (v === '' || v == null ? null : Number(v));
+          const strOrNull = (v: unknown) => {
+            const s = String(v ?? '').trim();
+            return s ? s : null;
+          };
+          const payload: any = {
+            Nombre: nombre,
+            Descripcion: String(row.Descripcion ?? '').trim() || nombre,
+            Precio_Venta: precio,
+            Precio_Anterior: numOrNull(row.Precio_Anterior),
+            Marca: strOrNull(row.Marca),
+            Contenido_Cantidad: numOrNull(row.Contenido_Cantidad),
+            Contenido_Unidad: strOrNull(row.Contenido_Unidad),
+            Embalaje: strOrNull(row.Embalaje),
+            Ingredientes: strOrNull(row.Ingredientes),
+            Conservacion: strOrNull(row.Conservacion),
+            Stock_Minimo: stock,
+            ID_Categoria: cat,
+          };
+          if (existingIds.has(id)) {
+            await productService.updateProduct(id, payload);
+            updated += 1;
+          } else {
+            await productService.createProduct({ ID_Producto: id, ...payload });
+            created += 1;
+          }
+        } catch (e) {
+          errors.push(e instanceof Error ? e.message : `fila ${line}: error`);
+        }
+      }
+      await onImported?.();
+      setNotice({
+        kind: errors.length > 0 ? 'err' : 'ok',
+        text: `Importación: ${created} creados, ${updated} actualizados.${errors.length > 0 ? ` Errores (${errors.length}): ${errors.slice(0, 3).join(' | ')}${errors.length > 3 ? '…' : ''}` : ''}`,
+      });
+    } catch (e) {
+      setNotice({ kind: 'err', text: e instanceof Error ? e.message : 'No fue posible importar.' });
+    } finally {
+      setBusy(null);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
@@ -42,7 +257,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick }: Pr
           <div className="relative">
             <select
               value={filter}
-              onChange={(e) => { setFilter(e.target.value as typeof filter); setPage(1); }}
+              onChange={(e) => setFilter(e.target.value as typeof filter)}
               className="appearance-none pr-8 pl-4 py-2 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121] cursor-pointer"
               style={{ fontSize: '0.875rem' }}
             >
@@ -56,12 +271,38 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick }: Pr
         </div>
 
         <div className="flex gap-2">
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-[#212121] hover:bg-gray-50 transition-colors font-medium" style={{ fontSize: '0.875rem' }}>
-            <Upload size={15} /> Importar
+          <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImportFile(f); }} />
+          <button onClick={() => fileRef.current?.click()} disabled={busy === 'import'}
+            title="Importar Excel con la plantilla oficial"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-[#212121] hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
+            {busy === 'import' ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Importar
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-[#212121] hover:bg-gray-50 transition-colors font-medium" style={{ fontSize: '0.875rem' }}>
-            <Download size={15} /> Exportar
-          </button>
+          <div className="relative">
+            <button onClick={() => setExportOpen((v) => !v)} disabled={busy !== null}
+              title="Exportar inventario en PDF o Excel"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-[#212121] hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
+              {busy === 'excel' || busy === 'pdf' || busy === 'template' ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Exportar
+            </button>
+            {exportOpen && (
+              <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-30">
+                <button onClick={handleExportExcel} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors">
+                  <FileSpreadsheet size={16} className="text-green-600 shrink-0" />
+                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>Excel (.xlsx)</span>
+                  <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Columnas exactas de la BD</span></span>
+                </button>
+                <button onClick={handleExportTemplate} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors border-t border-gray-50">
+                  <FileSpreadsheet size={16} className="text-blue-500 shrink-0" />
+                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>Plantilla Excel</span>
+                  <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Formato oficial para importar</span></span>
+                </button>
+                <button onClick={handleExportPdf} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors border-t border-gray-50">
+                  <FileText size={16} className="text-[#C62828] shrink-0" />
+                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>PDF</span>
+                  <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Igual que la tabla en pantalla</span></span>
+                </button>
+              </div>
+            )}
+          </div>
           <button onClick={onAddClick}
             className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C62828] text-white font-medium hover:bg-[#b71c1c] transition-colors shadow-sm"
             style={{ fontSize: '0.875rem' }}
@@ -70,6 +311,12 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick }: Pr
           </button>
         </div>
       </div>
+
+      {notice && (
+        <p role={notice.kind === 'err' ? 'alert' : 'status'} className={`mb-3 px-4 py-2.5 rounded-xl border ${notice.kind === 'err' ? 'bg-red-50 border-red-200 text-red-600' : 'bg-green-50 border-green-200 text-green-700'}`} style={{ fontSize: '0.82rem' }}>
+          {notice.text}
+        </p>
+      )}
 
       <div className="overflow-x-auto rounded-xl border border-gray-100">
         <table className="w-full" style={{ fontSize: '0.875rem' }}>
@@ -84,7 +331,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick }: Pr
             </tr>
           </thead>
           <tbody>
-            {paginated.map((product, i) => (
+            {paginated.map((product) => (
               <tr key={product.id} className={`border-t border-gray-100 hover:bg-[#F5F5F5]/50 transition-colors`}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
@@ -137,22 +384,22 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick }: Pr
 
       <div className="flex items-center justify-between mt-4">
         <p className="text-gray-400" style={{ fontSize: '0.8rem' }}>
-          Mostrando {((page - 1) * perPage) + 1}–{Math.min(page * perPage, filtered.length)} de {filtered.length} productos
+          Mostrando {filtered.length === 0 ? 0 : ((safePage - 1) * perPage) + 1}–{Math.min(safePage * perPage, filtered.length)} de {filtered.length} productos
         </p>
         <div className="flex items-center gap-2">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
+          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={safePage === 1}
             className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
           >
             <ChevronLeft size={16} />
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <button key={p} onClick={() => setPage(p)}
-              className={`w-7 h-7 rounded-lg text-sm font-medium transition-colors ${p === page ? 'bg-[#C62828] text-white' : 'border border-gray-200 text-[#212121] hover:bg-gray-50'}`}
+              className={`w-7 h-7 rounded-lg text-sm font-medium transition-colors ${p === safePage ? 'bg-[#C62828] text-white' : 'border border-gray-200 text-[#212121] hover:bg-gray-50'}`}
             >
               {p}
             </button>
           ))}
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
+          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={safePage === totalPages}
             className="p-1.5 rounded-lg border border-gray-200 disabled:opacity-40 hover:bg-gray-50 transition-colors"
           >
             <ChevRight size={16} />

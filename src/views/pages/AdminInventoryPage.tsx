@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { AdminProduct } from '../../models';
+import type { AdminProduct, InventoryStatus } from '../../models';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { AdminStats } from '../components/admin/AdminStats';
 import { ProductTable } from '../components/admin/ProductTable';
@@ -26,11 +26,14 @@ interface AdminInventoryPageProps {
     Stock_Minimo: number;
     ID_Categoria: number;
   }) => Promise<void>;
+  /** Recarga el catalogo tras una importación masiva. */
+  onImported?: () => Promise<void>;
 }
 
-export function AdminInventoryPage({ products, onDelete, onCreate, onUpdate }: AdminInventoryPageProps) {
+export function AdminInventoryPage({ products, onDelete, onCreate, onUpdate, onImported }: AdminInventoryPageProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
+  const [stockFilter, setStockFilter] = useState<'all' | InventoryStatus>('all');
 
   const stats = {
     total: products.length,
@@ -42,13 +45,17 @@ export function AdminInventoryPage({ products, onDelete, onCreate, onUpdate }: A
   return (
     <>
       <AdminPageShell active="inventario" title="Gestión de Inventario" subtitle="Administra tus productos y existencias">
-        <AdminStats
-          total={stats.total}
-          inStock={stats.inStock}
-          lowStock={stats.lowStock}
-          outOfStock={stats.outOfStock}
-        />
-        <ProductTable products={products} onDelete={onDelete} onAddClick={() => setShowAddModal(true)} onEditClick={(p) => setEditingProduct(p)} />
+        <div className="sticky top-[60px] z-10 bg-[#F5F5F5]/95 backdrop-blur -mt-3 pt-1 pb-2">
+          <AdminStats
+            total={stats.total}
+            inStock={stats.inStock}
+            lowStock={stats.lowStock}
+            outOfStock={stats.outOfStock}
+            value={stockFilter}
+            onSelect={(s) => setStockFilter((prev) => (prev === s ? 'all' : s))}
+          />
+        </div>
+        <ProductTable products={products} onDelete={onDelete} onAddClick={() => setShowAddModal(true)} onEditClick={(p) => setEditingProduct(p)} statusFilter={stockFilter} onStatusFilterChange={setStockFilter} onImported={onImported} />
       </AdminPageShell>
 
       <AddProductModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onCreate={onCreate} />
