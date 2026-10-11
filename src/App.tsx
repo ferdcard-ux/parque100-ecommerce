@@ -163,6 +163,26 @@ function AddressWrapper() {
     /></Protected>
   );
 }
+function AccountAddressWrapper() {
+  const { user, cartCount, cartTotal } = useApp();
+  const delivery = useUserDeliveryController(user?.id ?? null);
+  return (
+    <Protected><AddressPage
+      mode="account"
+      user={user}
+      deliveryDetails={delivery.details}
+      isLoadingProfile={user !== null && delivery.isLoading}
+      isSaving={delivery.isSaving}
+      loadError={delivery.loadError}
+      saveError={delivery.saveError}
+      onRetryLoad={delivery.loadDetails}
+      onSaveDetails={delivery.saveDetails}
+      onAddressSubmit={() => {}}
+      itemCount={cartCount}
+      total={cartTotal}
+    /></Protected>
+  );
+}
 function PaymentMethodWrapper() { const ctx = useApp(); return <Protected><PaymentMethodPage selectedMethod={ctx.paymentMethod} onSelectMethod={ctx.selectPaymentMethod} itemCount={ctx.cartCount} total={ctx.cartTotal} /></Protected>; }
 function CardPaymentWrapper() { const ctx = useApp(); return <Protected><CardPaymentPage total={ctx.cartTotal} itemCount={ctx.cartCount} isProcessing={ctx.isPaymentProcessing} onPay={ctx.payWithCard} onPayNequi={ctx.payWithNequi} onPayCash={ctx.payWithCash} /></Protected>; }
 function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} />; }
@@ -256,6 +276,7 @@ export default function App() {
         { index: true, Component: HomeWrapper },
         { path: 'cart', Component: CartWrapper },
         { path: 'address', Component: AddressWrapper },
+        { path: 'direccion', Component: AccountAddressWrapper },
         { path: 'payment-method', Component: PaymentMethodWrapper },
         { path: 'payment-card', Component: CardPaymentWrapper },
         { path: 'catalogo', Component: CatalogPage },

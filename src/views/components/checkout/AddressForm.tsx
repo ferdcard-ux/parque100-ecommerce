@@ -7,9 +7,11 @@ interface AddressFormProps {
   lockRecipient: boolean;
   isSaving: boolean;
   onSubmit: (address: DeliveryAddress) => Promise<void>;
+  /** Texto del boton de envio. */
+  submitLabel?: string;
 }
 
-export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit }: AddressFormProps) {
+export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit, submitLabel = 'Guardar dirección y continuar' }: AddressFormProps) {
   const [form, setForm] = useState<DeliveryAddress>(initialAddress);
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
@@ -137,7 +139,7 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit 
           className="w-full py-3.5 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
           style={{ fontSize: '1rem' }}
         >
-          Guardar dirección y continuar
+          {submitLabel}
         </button>
       </div>
     </form>
