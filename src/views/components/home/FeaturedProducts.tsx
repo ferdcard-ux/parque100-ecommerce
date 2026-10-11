@@ -53,17 +53,18 @@ export function FeaturedProducts({ products, onAddToCart, eyebrow = 'DESTACADOS'
           </Link>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 max-[380px]:grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">
           {products.map((product) => (
             <div
               key={product.id}
               className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 group"
             >
-              <div className="relative h-40 overflow-hidden bg-[#F5F5F5]">
+              <div className="relative aspect-[4/3] overflow-hidden bg-[#F5F5F5]">
                 <Link to={`/producto/${product.id}`}>
                   <ImageWithFallback
                     src={product.image}
                     alt={product.name}
+                    sizes="(max-width: 380px) 100vw, (max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   />
                 </Link>
@@ -77,7 +78,7 @@ export function FeaturedProducts({ products, onAddToCart, eyebrow = 'DESTACADOS'
                     %
                   </span>
                 )}
-                <button onClick={() => toggleFavorite(product.id)} aria-label="Favorito" className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => toggleFavorite(product.id)} aria-label="Favorito" className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 transition-opacity before:absolute before:-inset-2.5 before:content-['']">
                   <Heart size={12} className={isFavorite(product.id) ? 'fill-[#C62828] text-[#C62828]' : 'text-gray-400'} />
                 </button>
               </div>

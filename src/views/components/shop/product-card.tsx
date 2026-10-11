@@ -24,11 +24,12 @@ export function ProductCard({ product, isFavorite = false, onToggleFavorite, onA
   const unit = formatUnitPrice(product.price, product.contentQty, product.contentUnit);
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 group flex flex-col">
-      <div className="relative h-40 overflow-hidden bg-[#F5F5F5]">
+      <div className="relative aspect-[4/3] overflow-hidden bg-[#F5F5F5]">
         <Link to={`/producto/${product.id}`}>
           <ImageWithFallback
             src={product.image}
             alt={product.name}
+            sizes="(max-width: 380px) 100vw, (max-width: 639px) 50vw, (max-width: 1023px) 33vw, 25vw"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </Link>
@@ -40,7 +41,7 @@ export function ProductCard({ product, isFavorite = false, onToggleFavorite, onA
         <button
           onClick={() => onToggleFavorite?.(product.id)}
           aria-label="Favorito"
-          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center"
+          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center before:absolute before:-inset-2.5 before:content-['']"
         >
           <Heart size={13} className={isFavorite ? 'fill-[#C62828] text-[#C62828]' : 'text-gray-400'} />
         </button>

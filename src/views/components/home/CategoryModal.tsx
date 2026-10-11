@@ -65,14 +65,15 @@ export function CategoryModal({ category, products, onClose, onAddToCart }: Cate
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 max-[380px]:grid-cols-1 sm:grid-cols-3 gap-4">
               {filtered.map((product) => (
                 <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
-                  <div className="relative h-32 overflow-hidden bg-[#F5F5F5]">
+                  <div className="relative aspect-[4/3] overflow-hidden bg-[#F5F5F5]">
                     <Link to={`/producto/${product.id}`} onClick={onClose}>
                       <ImageWithFallback
                         src={product.image}
                         alt={product.name}
+                        sizes="(max-width: 380px) 100vw, (max-width: 639px) 50vw, 33vw"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     </Link>
