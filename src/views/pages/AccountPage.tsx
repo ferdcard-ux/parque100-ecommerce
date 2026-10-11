@@ -7,7 +7,7 @@ import { useApp } from '../../App';
 
 const SHORTCUTS = [
   { icon: User, title: 'Informacion de tu perfil', description: 'Consulta y edita tus datos personales', to: '/perfil', tile: 'bg-[#C62828]/10 text-[#C62828]' },
-  { icon: MapPin, title: 'Direcciones', description: 'Administra tus direcciones de entrega', to: '/address', tile: 'bg-[#FBC02D]/20 text-[#f57f17]' },
+  { icon: MapPin, title: 'Direcciones', description: 'Administra tus direcciones de entrega', to: '/direccion', tile: 'bg-[#FBC02D]/20 text-[#f57f17]' },
   { icon: ShoppingBag, title: 'Tus compras', description: 'Revisa el estado de tus pedidos', to: '/compras', tile: 'bg-green-100 text-green-700' },
 ];
 
