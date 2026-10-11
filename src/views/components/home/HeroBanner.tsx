@@ -45,6 +45,8 @@ export function HeroBanner() {
               <ImageWithFallback
                 src="https://images.unsplash.com/photo-1550989460-0adf9ea622e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=600"
                 alt="Productos frescos en el mercado"
+                sizes="(max-width: 767px) 80vw, 40vw"
+                eager
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />

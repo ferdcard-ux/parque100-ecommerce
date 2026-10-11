@@ -13,11 +13,16 @@ export function RecommendedList({ products }: RecommendedListProps) {
   return (
     <div className="mt-2">
       <h3 className="text-[#212121] font-semibold mb-3" style={{ fontSize: '1rem' }}>También te puede interesar</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 max-[380px]:grid-cols-1 sm:grid-cols-4 gap-3">
         {products.map((p) => (
           <Link to={`/producto/${p.id}`} key={p.id} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 block hover:shadow-md transition-shadow">
-            <div className="h-20 rounded-lg overflow-hidden mb-2 bg-[#F5F5F5]">
-              <ImageWithFallback src={p.image} alt={p.name} className="w-full h-full object-cover" />
+            <div className="aspect-[16/9] rounded-lg overflow-hidden mb-2 bg-[#F5F5F5]">
+              <ImageWithFallback
+                src={p.image}
+                alt={p.name}
+                sizes="(max-width: 380px) 100vw, (max-width: 639px) 50vw, 25vw"
+                className="w-full h-full object-cover"
+              />
             </div>
             <p className="text-[#212121] font-medium leading-tight mb-1" style={{ fontSize: '0.75rem' }}>{p.name}</p>
             <p className="text-[#C62828] font-bold" style={{ fontSize: '0.8rem' }}>{formatPrice(p.price)}</p>

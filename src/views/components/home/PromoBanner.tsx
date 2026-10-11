@@ -13,6 +13,7 @@ export function PromoBanner() {
             <ImageWithFallback
               src="https://images.unsplash.com/photo-1628102491629-778571d893a3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=1000"
               alt="Supermercado"
+              sizes="100vw"
               className="w-full h-full object-cover"
             />
           </div>

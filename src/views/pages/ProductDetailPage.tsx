@@ -1,8 +1,9 @@
 /**
  * @fileoverview Pagina de detalle de un producto.
  */
-import { useState, useRef } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Link, useParams } from 'react-router';
+import useEmbla from 'embla-carousel-react';
 import { Heart, Minus, Plus, Truck, ShieldCheck, Leaf, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useApp } from '../../App';
 import { useFavoritesController, useProductController, useRatingsController } from '../../controllers';
@@ -31,7 +32,20 @@ export function ProductDetailPage() {
   const related = product
     ? products.filter((p) => p.category === product.category && p.id !== product.id).slice(0, 8)
     : [];
-  const relatedRef = useRef<HTMLDivElement>(null);
+  const [emblaRef, emblaApi] = useEmbla({ align: 'start', containScroll: 'trimSnaps' });
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+  const updateArrows = useCallback(() => {
+    if (!emblaApi) return;
+    setCanPrev(emblaApi.canScrollPrev());
+    setCanNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
+  useEffect(() => {
+    if (!emblaApi) return;
+    updateArrows();
+    emblaApi.on('select', updateArrows);
+    emblaApi.on('reInit', updateArrows);
+  }, [emblaApi, updateArrows]);
   const promo = product ? hasPromo(product.price, product.previousPrice) : false;
   const unit = product ? formatUnitPrice(product.price, product.contentQty, product.contentUnit) : null;
 
@@ -106,11 +120,16 @@ export function ProductDetailPage() {
             <button
               onClick={() => toggleFavorite(product.id)}
               aria-label="Favorito"
-              className="absolute top-6 right-6 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center z-10"
+              className="absolute top-6 right-6 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center z-10 before:absolute before:-inset-2 before:content-['']"
             >
               <Heart size={16} className={isFavorite(product.id) ? 'fill-[#C62828] text-[#C62828]' : 'text-gray-400'} />
             </button>
-            <ImageWithFallback src={product.image} alt={product.name} className="w-full h-72 object-cover rounded-xl" />
+            <ImageWithFallback
+              src={product.image}
+              alt={product.name}
+              sizes="(max-width: 1023px) 100vw, 33vw"
+              className="w-full aspect-[4/3] object-cover rounded-xl"
+            />
             <p className="text-gray-400 mt-2" style={{ fontSize: '0.7rem' }}>*Las imágenes del producto son de referencia.</p>
           </div>
 
@@ -171,20 +190,22 @@ export function ProductDetailPage() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-[#212121]" style={{ fontSize: '1.2rem', fontWeight: 700 }}>También puede interesarte</h2>
               <div className="flex gap-2">
-                <button onClick={() => relatedRef.current?.scrollBy({ left: -320, behavior: 'smooth' })} className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#C62828] hover:text-[#C62828]" aria-label="Anterior">
+                <button onClick={() => emblaApi?.scrollPrev()} disabled={!canPrev} className="w-11 h-11 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#C62828] hover:text-[#C62828] disabled:opacity-40 transition-colors" aria-label="Anterior">
                   <ChevronLeft size={16} />
                 </button>
-                <button onClick={() => relatedRef.current?.scrollBy({ left: 320, behavior: 'smooth' })} className="w-9 h-9 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#C62828] hover:text-[#C62828]" aria-label="Siguiente">
+                <button onClick={() => emblaApi?.scrollNext()} disabled={!canNext} className="w-11 h-11 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#C62828] hover:text-[#C62828] disabled:opacity-40 transition-colors" aria-label="Siguiente">
                   <ChevronRight size={16} />
                 </button>
               </div>
             </div>
-            <div ref={relatedRef} className="flex gap-4 overflow-x-auto pb-2 snap-x">
+            <div ref={emblaRef} className="overflow-hidden pb-2">
+              <div className="flex gap-4">
               {related.map((p) => (
-                <div key={p.id} className="min-w-[220px] max-w-[220px] snap-start">
+                <div key={p.id} className="min-w-[220px] max-w-[220px] shrink-0">
                   <ProductCard key={p.id} product={p} isFavorite={isFavorite(p.id)} onToggleFavorite={toggleFavorite} />
                 </div>
               ))}
+              </div>
             </div>
           </section>
         )}
