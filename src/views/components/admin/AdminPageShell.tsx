@@ -56,7 +56,7 @@ export function AdminPageShell({ active, title, subtitle, children }: AdminPageS
     <div className="min-h-screen bg-[#F5F5F5] flex h-screen overflow-hidden">
       <AdminSidebar active={active} pendingCount={pending.length} role={userRole} />
       <main className="flex-1 min-w-0 overflow-y-auto h-screen">
-        <div className="bg-white/95 backdrop-blur border-b border-gray-200 px-5 py-3 flex items-center justify-between sticky top-0 z-20">
+        <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center justify-between sticky top-0 z-20">
           <div className="min-w-0">
             <h1 className="text-[#212121] truncate" style={{ fontSize: '1.05rem', fontWeight: 700 }}>{title}</h1>
             {subtitle && <p className="text-gray-400 truncate" style={{ fontSize: '0.75rem' }}>{subtitle}</p>}

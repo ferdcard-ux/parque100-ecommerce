@@ -45,7 +45,7 @@ export function AdminInventoryPage({ products, onDelete, onCreate, onUpdate, onI
   return (
     <>
       <AdminPageShell active="inventario" title="Gestión de Inventario" subtitle="Administra tus productos y existencias">
-        <div className="sticky top-[60px] z-10 bg-[#F5F5F5]/95 backdrop-blur -mt-3 pt-1 pb-2">
+        <div className="sticky top-[60px] z-10 bg-[#F5F5F5] -mt-3 pt-1 pb-2">
           <AdminStats
             total={stats.total}
             inStock={stats.inStock}
