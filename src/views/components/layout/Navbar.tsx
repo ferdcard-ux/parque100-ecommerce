@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import type { User as UserType, UserRole } from '../../../models';
 import { useFavoritesController } from '../../../controllers';
+import { userService } from '../../../services';
+import { UserAvatar } from '../shared/user-avatar';
 import { UserNotifications } from './UserNotifications';
 
 interface NavbarProps {
@@ -50,9 +52,21 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
     navigate('/');
   };
 
-  const userInitials = user
-    ? `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase()
-    : '';
+  /** Fotos frescas del backend (la sesion local puede traer foto desactualizada). */
+  const [photoMap, setPhotoMap] = useState<Record<number, string>>({});
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    userService.getAllUsers().then((rows) => {
+      const map: Record<number, string> = {};
+      for (const row of rows) {
+        if (row.Foto) map[row.ID_Usuario] = row.Foto;
+      }
+      setPhotoMap(map);
+    }).catch(() => {});
+  }, [isLoggedIn]);
+
+  /** Foto de una sesion: la guardada o la fresca del backend. */
+  const sessionPhoto = (s: UserType): string | null => s.photo ?? photoMap[s.id] ?? null;
 
   const { favorites: favoriteIds } = useFavoritesController();
   const favoriteCount = favoriteIds.length;
@@ -130,24 +144,39 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                   className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C62828] text-white font-medium hover:bg-[#b71c1c] transition-colors"
                   style={{ fontSize: '0.875rem' }}
                 >
-                  <div className="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center">
-                    <span className="text-white font-bold" style={{ fontSize: '0.65rem' }}>{userInitials}</span>
-                  </div>
+                  <UserAvatar
+                    photo={sessionPhoto(user)}
+                    firstName={user.firstName}
+                    lastName={user.lastName}
+                    className="w-6 h-6 rounded-full bg-white/20"
+                    textClassName="text-white font-bold"
+                    textStyle={{ fontSize: '0.65rem' }}
+                  />
                   <span className="max-w-[100px] truncate">{userRole === 'admin' ? 'Admin' : userRole === 'domiciliario' ? 'Domiciliario' : user.firstName}</span>
                 </button>
                 {userMenuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                    <div className="px-5 py-4 border-b border-gray-100">
-                      <p className="text-[#212121] font-semibold" style={{ fontSize: '0.9rem' }}>
-                        {user.firstName} {user.lastName}
-                      </p>
-                      <p className="text-gray-400 truncate" style={{ fontSize: '0.8rem' }}>{user.email}</p>
-                      {isAdmin && (
-                        <div className="flex items-center gap-1 mt-1.5">
-                          <ShieldCheck size={12} className="text-[#C62828]" />
-                          <span className="text-[#C62828] font-medium" style={{ fontSize: '0.75rem' }}>{userRole === 'domiciliario' ? 'Domiciliario' : 'Administrador'}</span>
-                        </div>
-                      )}
+                    <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                      <UserAvatar
+                        photo={sessionPhoto(user)}
+                        firstName={user.firstName}
+                        lastName={user.lastName}
+                        className="w-10 h-10 rounded-full bg-[#C62828]/10 text-[#C62828]"
+                        textClassName="font-bold"
+                        textStyle={{ fontSize: '0.85rem' }}
+                      />
+                      <div className="min-w-0">
+                        <p className="text-[#212121] font-semibold truncate" style={{ fontSize: '0.9rem' }}>
+                          {user.firstName} {user.lastName}
+                        </p>
+                        <p className="text-gray-400 truncate" style={{ fontSize: '0.8rem' }}>{user.email}</p>
+                        {isAdmin && (
+                          <span className="flex items-center gap-1 mt-1.5">
+                            <ShieldCheck size={12} className="text-[#C62828]" />
+                            <span className="text-[#C62828] font-medium" style={{ fontSize: '0.75rem' }}>{userRole === 'domiciliario' ? 'Domiciliario' : 'Administrador'}</span>
+                          </span>
+                        )}
+                      </div>
                     </div>
                     <div className="py-1">
                       <button onClick={() => { setUserMenuOpen(false); navigate('/cuenta'); }}
@@ -179,9 +208,14 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                               className="w-full flex items-center gap-3 px-5 py-2 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
                               style={{ fontSize: '0.8rem' }}
                             >
-                              <span className="w-6 h-6 rounded-full bg-[#FBC02D]/30 flex items-center justify-center shrink-0">
-                                <span className="font-bold" style={{ fontSize: '0.6rem' }}>{`${s.firstName.charAt(0)}${s.lastName.charAt(0)}`.toUpperCase()}</span>
-                              </span>
+                              <UserAvatar
+                                photo={sessionPhoto(s)}
+                                firstName={s.firstName}
+                                lastName={s.lastName}
+                                className="w-6 h-6 rounded-full bg-[#FBC02D]/30"
+                                textClassName="font-bold"
+                                textStyle={{ fontSize: '0.6rem' }}
+                              />
                               <span className="truncate">{s.firstName} {s.lastName}</span>
                             </button>
                           ))}
@@ -246,9 +280,14 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
           {isLoggedIn && user ? (
             <>
               <div className="flex items-center gap-2 py-2 border-b border-gray-100">
-                <div className="w-8 h-8 rounded-full bg-[#C62828] flex items-center justify-center">
-                  <span className="text-white font-bold" style={{ fontSize: '0.7rem' }}>{userInitials}</span>
-                </div>
+                <UserAvatar
+                  photo={sessionPhoto(user)}
+                  firstName={user.firstName}
+                  lastName={user.lastName}
+                  className="w-8 h-8 rounded-full bg-[#C62828] text-white"
+                  textClassName="font-bold"
+                  textStyle={{ fontSize: '0.7rem' }}
+                />
                 <div className="min-w-0 flex-1">
                   <p className="text-[#212121] font-medium truncate" style={{ fontSize: '0.85rem' }}>{user.firstName} {user.lastName}</p>
                   <p className="text-gray-400 truncate" style={{ fontSize: '0.75rem' }}>{user.email}</p>
