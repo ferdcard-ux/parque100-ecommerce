@@ -1,4 +1,4 @@
-import { createContext, useContext, useMemo, useCallback } from 'react';
+import { createContext, useContext, useEffect, useMemo, useCallback } from 'react';
 import { RouterProvider, createBrowserRouter, Navigate, useLocation } from 'react-router';
 import { useCartController } from './controllers/use-cart-controller';
 import { usePaymentController } from './controllers/use-payment-controller';
@@ -149,6 +149,11 @@ function Protected({ children }: { children: React.JSX.Element }) {
 
 function LayoutWrapper() {
   const { cartCount, isAdmin, isDomiciliario, isLoggedIn, user, sessions, switchSession, logout } = useApp();
+  const { pathname } = useLocation();
+  /** Cada navegacion arranca arriba: evita heredar el scroll de la pagina anterior. */
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
   return <RootLayout cartCount={cartCount} isAdmin={isAdmin || isDomiciliario} isLoggedIn={isLoggedIn} user={user} userRole={user?.role ?? null} sessions={sessions} onSwitchSession={switchSession} onLogout={logout} />;
 }
 

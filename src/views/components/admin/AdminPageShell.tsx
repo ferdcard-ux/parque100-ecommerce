@@ -2,7 +2,7 @@
  * @fileoverview Estructura comun de las paginas del panel admin.
  */
 import { Link, useNavigate } from 'react-router';
-import { Bell, Home } from 'lucide-react';
+import { ArrowLeft, Bell, Home } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { ApiOrder } from '../../../models';
@@ -19,10 +19,12 @@ interface AdminPageShellProps {
   subtitle?: string;
   /** Contenido de la pagina. */
   children: ReactNode;
+  /** Ruta del boton de regreso (opcional). */
+  backTo?: string;
 }
 
 /** Layout estandar del panel: sidebar oscuro + topbar + contenido. */
-export function AdminPageShell({ active, title, subtitle, children }: AdminPageShellProps) {
+export function AdminPageShell({ active, title, subtitle, children, backTo }: AdminPageShellProps) {
   const [bellOpen, setBellOpen] = useState(false);
   const [pending, setPending] = useState<ApiOrder[]>([]);
   const bellRef = useRef<HTMLDivElement>(null);
@@ -57,9 +59,16 @@ export function AdminPageShell({ active, title, subtitle, children }: AdminPageS
       <AdminSidebar active={active} pendingCount={pending.length} role={userRole} />
       <main className="flex-1 min-w-0 overflow-y-auto h-screen">
         <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center justify-between sticky top-0 z-20">
-          <div className="min-w-0">
-            <h1 className="text-[#212121] truncate" style={{ fontSize: '1.05rem', fontWeight: 700 }}>{title}</h1>
-            {subtitle && <p className="text-gray-400 truncate" style={{ fontSize: '0.75rem' }}>{subtitle}</p>}
+          <div className="min-w-0 flex items-center gap-3">
+            {backTo && (
+              <Link to={backTo} aria-label="Volver" className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0">
+                <ArrowLeft size={17} className="text-[#212121]" />
+              </Link>
+            )}
+            <div className="min-w-0">
+              <h1 className="text-[#212121] truncate" style={{ fontSize: '1.05rem', fontWeight: 700 }}>{title}</h1>
+              {subtitle && <p className="text-gray-400 truncate" style={{ fontSize: '0.75rem' }}>{subtitle}</p>}
+            </div>
           </div>
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-[#212121] hover:bg-gray-50 transition-colors font-medium" style={{ fontSize: '0.8rem' }}>
