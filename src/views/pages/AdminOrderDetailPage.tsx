@@ -107,7 +107,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
   const subtotal = (order?.detalles ?? []).reduce((sum, d) => sum + Number(d.Subtotal), 0);
 
   return (
-    <AdminPageShell active="pedidos" title={`Pedido #${id ?? ''}`} subtitle="Detalle y gestion del pedido">
+    <AdminPageShell active="pedidos" title={`Pedido #${id ?? ''}`} subtitle="Detalle y gestion del pedido" backTo="/admin/pedidos">
       {isLoading ? (
         <p className="text-center text-gray-400 py-16">Cargando...</p>
       ) : error || !order ? (
@@ -167,6 +167,12 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
                 </>
               )}
             </dl>
+            {order.Notas && order.Notas.trim() && (
+              <div className="mt-4 bg-[#F5F5F5] rounded-xl px-4 py-3">
+                <p className="text-gray-400 mb-1" style={{ fontSize: '0.7rem' }}>Notas para el domiciliario</p>
+                <p className="text-[#212121]" style={{ fontSize: '0.85rem' }}>{order.Notas}</p>
+              </div>
+            )}
             {order.Comprobante && (
               <div className="mt-4">
                 <div className="flex items-center justify-between mb-2">
