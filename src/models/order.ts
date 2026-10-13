@@ -108,6 +108,8 @@ export interface ApiOrder {
   Comprobante?: string | null;
   /** Motivo de cancelacion (solo pedidos cancelados). */
   Motivo_Cancelacion?: string | null;
+  /** Notas adicionales para el domiciliario (solo si el cliente las dejo). */
+  Notas?: string | null;
   /** Lineas de detalle (solo en el detalle). */
   detalles?: ApiOrderItem[];
 }

@@ -187,13 +187,14 @@ export const orderModel = {
    * @param {number} data.ID_Usuario - Usuario que realiza el pedido.
    * @param {Array<Object>} [data.productos] - Lineas de detalle:
    *   `{ ID_Producto, Cantidad, Subtotal }`.
+   * @param {string} [data.Notas] - Notas adicionales para el domiciliario.
    * @returns {Promise<number>} El `insertId` del pedido creado.
   * @throws {Error} Si falta stock o falla una operacion; revierte todo.
    */
   async createWithDetails({
     Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, productos,
     Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago,
-    Monto_Recibido, Cambio, Comprobante,
+    Monto_Recibido, Cambio, Comprobante, Notas,
   }) {
     const connection = await pool.getConnection();
     try {
@@ -233,8 +234,8 @@ export const orderModel = {
 
       const [result] = await connection.query(
         `INSERT INTO pedidos
-          (Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago, Monto_Recibido, Cambio, Comprobante)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago, Monto_Recibido, Cambio, Comprobante, Notas)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           Fecha || localDate(),
           Estado || 'pendiente',
@@ -250,6 +251,7 @@ export const orderModel = {
           Monto_Recibido ?? null,
           Cambio ?? null,
           Comprobante ?? null,
+          Notas ?? null,
         ],
       );
       const pedidoId = result.insertId;

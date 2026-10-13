@@ -77,6 +77,7 @@ export const orderService = {
           Monto_Recibido: extras.tendered ?? null,
           Cambio: extras.change ?? null,
           Comprobante: extras.receipt ?? null,
+          Notas: address.notes?.trim() ? address.notes.trim() : null,
           productos: items.map((item) => ({
             ID_Producto: item.id,
             Cantidad: item.quantity,
