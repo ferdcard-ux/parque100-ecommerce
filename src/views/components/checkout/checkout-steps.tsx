@@ -19,7 +19,7 @@ interface CheckoutStepsProps {
 /** Progreso Carrito → Dirección → Método → Confirmación. Los pasos completados enlazan atrás. */
 export function CheckoutSteps({ current }: CheckoutStepsProps) {
   return (
-    <ol className="flex items-start w-full mb-6" aria-label="Progreso de la compra">
+    <ol className="flex items-start w-full max-w-xl mx-auto mb-6" aria-label="Progreso de la compra">
       {STEPS.map(({ label, short, to, icon: Icon }, index) => {
         const step = index + 1;
         const done = step < current;
