@@ -5,9 +5,7 @@
  * modelo `User` del cliente (arquitectura MVC - Service/DAO).
  */
 import type { User, UserRole, LoginCredentials, RegisterData } from '../models';
-
-/** URL base de la API REST del backend. */
-const API = 'http://localhost:3001/api';
+import { API_BASE as API, setAuthToken } from './api';
 
 /**
  * Normaliza el rol crudo del backend a `UserRole`.
@@ -39,6 +37,7 @@ function mapUser(row: any): User {
     isAdmin: role === 'admin',
     role,
     photo: row.Foto || row.foto || null,
+    token: row.token ?? null,
   };
 }
 
@@ -62,7 +61,9 @@ export const authService = {
     });
     if (!res.ok) throw new Error('Credenciales inválidas');
     const data = await res.json();
-    return mapUser(data);
+    const user = mapUser(data);
+    setAuthToken(user.token ?? null);
+    return user;
   },
 
   /**
@@ -86,6 +87,7 @@ export const authService = {
     });
     const body = await res.json().catch(() => null);
     if (!res.ok) throw new Error(body?.error || 'Error al registrar');
+    setAuthToken(body?.token ?? null);
     return {
       id: body?.id,
       firstName: data.firstName,
@@ -94,6 +96,7 @@ export const authService = {
       isAdmin: false,
       role: 'cliente',
       photo: null,
+      token: body?.token ?? null,
     };
   },
 
@@ -103,14 +106,16 @@ export const authService = {
    * @returns {Promise<void>}
    */
   async logout(): Promise<void> {
-    return;
+    setAuthToken(null);
   },
 
   /**
    * Solicita una clave temporal para el correo indicado.
+   * El servidor responde de forma neutra (no revela si el correo
+   * existe ni devuelve la clave por HTTP).
    *
    * @param {string} email - Correo de la cuenta.
-   * @returns {Promise<string>} La clave temporal generada.
+   * @returns {Promise<string>} Mensaje de confirmacion.
    * @throws {Error} Si el backend rechaza la solicitud.
    */
   async recoverPassword(email: string): Promise<string> {
@@ -121,7 +126,7 @@ export const authService = {
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error(data?.error || 'No fue posible recuperar la clave.');
-    return data.tempPassword;
+    return data?.message || 'Si el correo existe, se generó una clave temporal.';
   },
 
   /**

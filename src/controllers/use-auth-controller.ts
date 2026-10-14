@@ -6,6 +6,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { User, LoginCredentials, RegisterData } from '../models';
 import { authService, userService } from '../services';
+import { setAuthToken } from '../services/api';
 
 const SESSION_KEY = 'p100-session';
 const SESSIONS_KEY = 'p100-sessions';
@@ -72,6 +73,11 @@ export function useAuthController() {
   }, [sessions, activeId]);
 
   const user = sessions.find((s) => s.id === activeId) || null;
+
+  /** Mantiene el token activo sincronizado con la sesion en uso. */
+  useEffect(() => {
+    setAuthToken(user?.token ?? null);
+  }, [user?.token]);
 
   /** Agrega o reactiva una sesion sin cerrar las demas. */
   const activateSession = useCallback((nextUser: User, remember?: boolean) => {
@@ -155,10 +161,11 @@ export function useAuthController() {
       isAdmin: role === 'admin',
       role,
       photo: row.Foto || null,
+      token: sessions.find((s) => s.id === activeId)?.token ?? null,
     };
     setSessions((prev) => prev.map((s) => (s.id === activeId ? updated : s)));
     return updated;
-  }, [activeId]);
+  }, [activeId, sessions]);
 
   /** Cierra una sesion concreta (por defecto la activa). */
   const closeSession = useCallback((id?: number) => {

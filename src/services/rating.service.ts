@@ -3,9 +3,7 @@
  * Acceso a calificaciones de 1 a 5 estrellas contra el backend.
  */
 import type { Rating, RatingCreate, RatingSummary } from '../models';
-
-/** URL base de la API REST del backend. */
-const API = 'http://localhost:3001/api';
+import { API_BASE as API, authHeaders } from './api';
 
 /**
  * Servicio de calificaciones.
@@ -66,7 +64,7 @@ export const ratingService = {
     try {
       const response = await fetch(`${API}/ratings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
@@ -96,7 +94,7 @@ export const ratingService = {
     try {
       const response = await fetch(`${API}/ratings/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(data),
       });
       if (!response.ok) {

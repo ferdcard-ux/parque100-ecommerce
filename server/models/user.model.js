@@ -25,23 +25,17 @@ export const userModel = {
   },
 
   /**
-   * Busca un usuario por correo y contrasena (credenciales de login).
-   *
-   * NOTA: en un entorno de produccion real deberia usarse un hash
-   * (bcrypt) comparado en aplicacion, nunca texto plano en el WHERE.
+   * Busca un usuario por su correo. El hash de la contrasena se
+   * compara con bcrypt en el controlador (nunca en SQL).
    *
    * @async
    * @param {string} correo - Correo electronico del usuario.
-   * @param {string} contrasena - Contrasena en texto plano.
-   * @returns {Promise<Object|null>} Fila del usuario o `null` si las
-   *   credenciales no coinciden.
+   * @returns {Promise<Object|null>} Fila del usuario (incluye el hash)
+   *   o `null` si no existe.
    * @throws {Error} Si falla la consulta a la base de datos.
    */
-  async findByCredentials(correo, contrasena) {
-    const [rows] = await pool.query('SELECT * FROM usuario WHERE Correo = ? AND Contrasena = ?', [
-      correo,
-      contrasena,
-    ]);
+  async findByEmail(correo) {
+    const [rows] = await pool.query('SELECT * FROM usuario WHERE Correo = ?', [correo]);
     return rows[0] || null;
   },
 
@@ -81,11 +75,11 @@ export const userModel = {
    * Actualiza la contrasena de un usuario por correo.
    *
    * @param {string} correo - Correo del usuario.
-   * @param {string} nueva - Nueva contrasena en texto plano.
+   * @param {string} hash - Contrasena ya hasheada (bcrypt).
    * @returns {Promise<boolean>} true si actualizo una fila.
    */
-  async updatePasswordByEmail(correo, nueva) {
-    const [result] = await pool.query('UPDATE usuario SET Contrasena = ? WHERE Correo = ?', [nueva, correo]);
+  async updatePasswordByEmail(correo, hash) {
+    const [result] = await pool.query('UPDATE usuario SET Contrasena = ? WHERE Correo = ?', [hash, correo]);
     return result.affectedRows === 1;
   },
 

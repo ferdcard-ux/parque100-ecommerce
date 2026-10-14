@@ -2,8 +2,20 @@
  * @fileoverview Controlador de pedidos.
  * Gestiona el listado, detalle y creacion de pedidos, delegando la
  * persistencia en `orderModel` (patron MVC - Controller).
+ *
+ * La identidad del solicitante se toma del token JWT (`req.user`), no
+ * del cuerpo: un cliente solo ve y opera sus propios pedidos, mientras
+ * que el staff (admin/domiciliario) accede a todos.
  */
 import orderModel from '../models/order.model.js';
+import { isAdminRole, isStaffRole } from '../middleware/auth.js';
+
+/** Traduce el rol almacenado al actor usado por las reglas de cancelacion. */
+function roleToActor(rol) {
+  if (rol === 'admin') return 'admin';
+  if (rol === 'domiciliario' || rol === 'empleado') return 'domiciliario';
+  return 'cliente';
+}
 
 /**
  * Controlador de pedidos.
@@ -12,17 +24,20 @@ import orderModel from '../models/order.model.js';
 export const orderController = {
   /**
    * GET /api/orders
-   * Responde con todos los pedidos (incluye nombre del usuario).
+   * Devuelve todos los pedidos para el staff y solo los propios para
+   * un cliente autenticado.
    *
    * @async
-   * @param {import('express').Request} _req - Peticion (sin parametros).
+   * @param {import('express').Request} req - Peticion con `req.user`.
    * @param {import('express').Response} res - Respuesta HTTP.
    * @returns {Promise<void>}
    */
-  async list(_req, res) {
+  async list(req, res) {
     try {
       const orders = await orderModel.findAll();
-      res.json(orders);
+      if (isStaffRole(req.user?.rol)) return res.json(orders);
+      const own = orders.filter((order) => Number(order.ID_Usuario) === Number(req.user?.id));
+      res.json(own);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -30,7 +45,8 @@ export const orderController = {
 
   /**
    * GET /api/orders/:id
-   * Responde con un pedido y sus lineas de detalle, o 404 si no existe.
+   * Responde con un pedido y sus lineas de detalle. Un cliente solo
+   * puede consultar sus propios pedidos (403 en caso contrario).
    *
    * @async
    * @param {import('express').Request} req - Peticion con `req.params.id`.
@@ -41,6 +57,9 @@ export const orderController = {
     try {
       const order = await orderModel.findByIdWithDetails(req.params.id);
       if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
+      if (!isStaffRole(req.user?.rol) && Number(order.ID_Usuario) !== Number(req.user?.id)) {
+        return res.status(403).json({ error: 'No autorizado' });
+      }
       res.json(order);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -49,7 +68,7 @@ export const orderController = {
 
   /**
    * PUT /api/orders/:id/status
-   * Actualiza el estado de un pedido; 404 si no existe.
+   * Actualiza el estado de un pedido (solo staff); 404 si no existe.
    *
    * @async
    * @param {import('express').Request} req - Peticion con `Estado` en el cuerpo.
@@ -76,12 +95,14 @@ export const orderController = {
 
   /**
    * PUT /api/orders/:id/cancel
-   * Cancela con motivo obligatorio. Reglas por actor (`Actor` en el cuerpo):
-   * cliente (por defecto) solo antes del envio; domiciliario requiere
-   * permiso delegado; admin tiene acceso total.
+   * Cancela con motivo obligatorio. El actor se deriva del token: un
+   * cliente solo puede cancelar sus propios pedidos antes del envio;
+   * un domiciliario requiere permiso delegado; el admin tiene acceso
+   * total y puede actuar en nombre de otro (Actor/ActorId en el cuerpo).
    *
    * @async
-   * @param {import('express').Request} req - Peticion con `{ Motivo, Actor, ActorId }`.
+   * @param {import('express').Request} req - Peticion con `{ Motivo }` y,
+   *   opcionalmente para admin, `{ Actor, ActorId }`.
    * @param {import('express').Response} res - Respuesta HTTP.
    * @returns {Promise<void>} 400 sin motivo/actor invalido, 403 sin permiso, 409 si el estado no lo admite.
    */
@@ -94,17 +115,27 @@ export const orderController = {
       if (motivo.length > 255) {
         return res.status(400).json({ error: 'El motivo no puede superar 255 caracteres.' });
       }
-      const actor = req.body?.Actor ?? 'cliente';
+
+      const admin = isAdminRole(req.user?.rol);
+      // El admin puede impersonar un actor; el resto siempre actua como su propio rol.
+      const actor = admin && req.body?.Actor ? req.body.Actor : roleToActor(req.user?.rol);
       if (!['cliente', 'domiciliario', 'admin'].includes(actor)) {
         return res.status(400).json({ error: 'Actor invalido. Usa: cliente, domiciliario, admin.' });
       }
-      const actorUserId = Number(req.body?.ActorId);
-      const cancelled = await orderModel.cancelById(
-        req.params.id,
-        motivo,
-        actor,
-        Number.isInteger(actorUserId) ? actorUserId : null,
-      );
+      const actorUserId = admin
+        ? (Number.isInteger(Number(req.body?.ActorId)) ? Number(req.body.ActorId) : Number(req.user?.id))
+        : Number(req.user?.id);
+
+      // Un cliente solo puede cancelar sus propios pedidos.
+      if (actor === 'cliente') {
+        const order = await orderModel.findByIdWithDetails(req.params.id);
+        if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
+        if (Number(order.ID_Usuario) !== Number(req.user?.id)) {
+          return res.status(403).json({ error: 'No autorizado' });
+        }
+      }
+
+      const cancelled = await orderModel.cancelById(req.params.id, motivo, actor, actorUserId);
       if (!cancelled) return res.status(404).json({ error: 'Pedido no encontrado' });
       res.json({ message: 'Pedido cancelado' });
     } catch (err) {
@@ -115,6 +146,7 @@ export const orderController = {
   /**
    * POST /api/orders
    * Crea un pedido con sus detalles de forma atomica (transaccion).
+   * El `ID_Usuario` se toma del token, nunca del cuerpo.
    *
    * @async
    * @param {import('express').Request} req - Cuerpo con datos del pedido
@@ -124,7 +156,10 @@ export const orderController = {
    */
   async create(req, res) {
     try {
-      const id = await orderModel.createWithDetails(req.body);
+      const id = await orderModel.createWithDetails({
+        ...req.body,
+        ID_Usuario: Number(req.user?.id),
+      });
       res.status(201).json({ id, message: 'Pedido creado' });
     } catch (err) {
       res.status(err.statusCode || 500).json({ error: err.message });

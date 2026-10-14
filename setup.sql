@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS usuario (
   ID_Usuario int(11) NOT NULL AUTO_INCREMENT,
   Nombre varchar(30) NOT NULL,
   Correo varchar(50) NOT NULL,
-  Contrasena varchar(30) NOT NULL,
+  Contrasena varchar(255) NOT NULL,
   Rol varchar(20) DEFAULT NULL,
   Telefono varchar(20) DEFAULT NULL,
   Direccion varchar(20) NOT NULL,
@@ -185,8 +185,8 @@ INSERT INTO productos (ID_Producto, Nombre, Descripcion, Precio_Venta, Precio_An
 ('P010', 'Pan Tajado 500g', 'Pan de molde blanco', 4500, NULL, 'Comapan', 500, 'g', 18, 6);
 
 INSERT INTO usuario (ID_Usuario, Nombre, Correo, Contrasena, Rol, Telefono, Direccion) VALUES
-(1, 'Usuario Demo', 'usuario@ejemplo.com', '12345678', 'usuario', 300123456, 'Calle 123 #45-67'),
-(2, 'Admin Parque100', 'admin@parque100.com', 'admin123', 'admin', 300987654, 'Cra 98 #76-54');
+(1, 'Usuario Demo', 'usuario@ejemplo.com', '$2b$10$Vif0JY2IZ3OYWZqnyg0VEuQOLdiYw63p8ePbr94agM4dlzQKrQTSa', 'usuario', 300123456, 'Calle 123 #45-67'),
+(2, 'Admin Parque100', 'admin@parque100.com', '$2b$10$YSanoq00sJ8PdrWGdQAskOQczeI8TDHmhofoc7hI5iesr/cUigNyW', 'admin', 300987654, 'Cra 98 #76-54');
 
 INSERT INTO negocio (ID_Negocio, Nombre, NIT, Direccion, Telefono, Email, Horario, Descripcion) VALUES
 (1, 'Tienda Parque 100', '900000000-1', 'Cra 98 #76-54, Bogota', '300987654', 'admin@parque100.com', 'Lun-Sab 8:00-18:00', 'Productos frescos y de canasta familiar')
