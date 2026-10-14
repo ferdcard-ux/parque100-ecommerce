@@ -1,0 +1,6 @@
+/**
+ * Tipografía del proyecto.
+ * Inter (Google Fonts) con respaldo al stack de sistema si falla la red.
+ * Para cambiar de familia: edita el @import de abajo y --font-sans en theme.css.
+ */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
