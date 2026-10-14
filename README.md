@@ -6,7 +6,7 @@ Plataforma web de comercio electrónico (full-stack) para la compra de productos
 
 | Capa | Tecnología |
 |------|------------|
-| Frontend | React 18 + TypeScript, Vite 6, Tailwind CSS 4, shadcn/ui, React Router 7 |
+| Frontend | React 18 + TypeScript, Vite 6, Tailwind CSS 4, React Router 7 |
 | Backend | Node.js + Express 5 |
 | Base de datos | MySQL 8 / MariaDB 10.4+ (driver `mysql2/promise`) |
 
@@ -44,7 +44,7 @@ Convenciones completas en [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md)
 # 1. Instalar dependencias
 npm install
 
-# 2. Restaurar la BD (esquema + datos de prueba). Reemplaza las 5 tablas.
+# 2. Restaurar la BD (esquema + datos de prueba). Reemplaza las 8 tablas.
 npm run db:restore
 
 # 3. Terminal 1 — Backend API en http://localhost:3001
@@ -54,7 +54,7 @@ npm run server
 npm run dev
 ```
 
-> Si tu usuario root de MySQL tiene contraseña, edítala en `server/config/db.js` (o define `MYSQL_PWD`).
+> Si tu MySQL tiene otras credenciales o base, cópialas en un archivo `.env` (ver `.env.example`: `DB_USER`, `DB_PASSWORD`, `DB_NAME`, además de `PORT`, `JWT_SECRET` y `CORS_ORIGIN`).
 > Windows: si el cliente no está en `C:\Program Files\MySQL\MySQL Server 8.4\bin`, define `MYSQL_BIN` con su directorio `bin`.
 > Linux/macOS: instala el cliente (`sudo apt install mysql-client`, o `mariadb-client`) y usa los mismos comandos; si el binario no está en el PATH, define `MYSQL_BIN` (p. ej. `MYSQL_BIN=/usr/local/mysql/bin npm run db:dump`). El script también acepta clientes MariaDB (`mariadb`/`mariadb-dump`).
 
@@ -81,6 +81,7 @@ npm run db:restore
 |-----|--------|------------|
 | Usuario | `usuario@ejemplo.com` | `12345678` |
 | Administrador | `admin@parque100.com` | `admin123` |
+| Domiciliario | `domiciliario@parque100.com` | `domiciliario123` |
 
 ## Comandos
 
@@ -89,6 +90,8 @@ npm run db:restore
 | `npm run dev` | Servidor de desarrollo frontend (Vite) |
 | `npm run server` | Servidor backend Express (:3001) |
 | `npm run build` | Compila para producción (`dist/`) |
+| `npm test` | Batería de pruebas API + BD (57 checks, requiere backend y MySQL) |
+| `npm run typecheck` | Verificación de tipos (`tsc --noEmit`) |
 
 ## API REST
 
@@ -99,10 +102,14 @@ Base URL: `http://localhost:3001/api`
 | Productos | `GET/POST /products`, `GET/PUT/DELETE /products/:id` |
 | Categorías | `GET /categories` |
 | Autenticación | `POST /auth/login`, `POST /auth/register` (correo y teléfono únicos, 409 si existen), `POST /auth/recover`, `PUT /auth/password` |
-| Usuarios | `GET /users`, `POST /users`, `PUT /users/:id/admin`, `PUT /users/:id/profile` (perfil propio), `DELETE /users/:id` |
+| Usuarios | `GET /users`, `POST /users`, `PUT /users/:id/admin`, `PUT /users/:id/profile` (perfil propio), `DELETE /users/:id`, `GET/PUT /users/:id/permissions` (delegar `puede_cancelar`) |
 | Datos de entrega de usuario | `GET /users/:id`, `PUT /users/:id` |
-| Pedidos | `GET /orders`, `GET /orders/:id`, `POST /orders`, `PUT /orders/:id/status`, `PUT /orders/:id/cancel` |
+| Negocio | `GET /business`, `PUT /business` |
+| Pedidos | `GET /orders` (`?items=1` incluye detalles), `GET /orders/:id`, `POST /orders` (total recalculado, estado `pendiente`), `PUT /orders/:id/status` (máquina de estados), `PUT /orders/:id/cancel` (con motivo) |
+| Calificaciones | `GET /ratings`, `GET /ratings/resumen?producto=ID`, `POST /ratings`, `PUT /ratings/:id` (autor), `DELETE /ratings/:id` |
 | Pagos | `POST /payments/process` |
+
+> Los endpoints de escritura y los datos ajenos requieren `Authorization: Bearer <JWT>` (se obtiene en `POST /auth/login`); el rol `admin` gestiona usuarios, productos, negocio y moderación.
 
 ## Documentación
 
