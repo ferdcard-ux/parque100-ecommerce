@@ -5,9 +5,8 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router';
 import { TriangleAlert } from 'lucide-react';
 import type { ApiOrder, OrderEstado } from '../../models';
-import { orderService, userService } from '../../services';
 import { useApp } from '../../App';
-import { useProductController, useRatingsController } from '../../controllers';
+import { useProductController, useRatingsController, useAdminOrdersController, useUsersController } from '../../controllers';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
@@ -37,6 +36,8 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [canCancel, setCanCancel] = useState(isAdmin);
   const orderNumericId = Number(id);
+  const { fetchDetail, changeStatus: saveStatus, cancelOrder: cancelViaController } = useAdminOrdersController();
+  const { getPermissions } = useUsersController({ autoLoad: false });
   const { ratings: orderRatings } = useRatingsController({
     pedido: Number.isInteger(orderNumericId) ? orderNumericId : undefined,
   });
@@ -48,14 +49,13 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
       setCanCancel(isAdmin);
       return;
     }
-    userService.getPermissions(user.id).then((p) => setCanCancel(p.puede_cancelar)).catch(() => setCanCancel(false));
-  }, [isAdmin, user?.id]);
+    getPermissions(user.id).then((p) => setCanCancel(p.puede_cancelar)).catch(() => setCanCancel(false));
+  }, [isAdmin, user?.id, getPermissions]);
 
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
-    orderService
-      .getById(id ?? '')
+    fetchDetail(id ?? '')
       .then((data) => {
         if (cancelled) return;
         if (data === null) setError('Pedido no encontrado.');
@@ -64,7 +64,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
       .catch((err) => !cancelled && setError(err instanceof Error ? err.message : 'Error al cargar.'))
       .finally(() => !cancelled && setIsLoading(false));
     return () => { cancelled = true; };
-  }, [id]);
+  }, [id, fetchDetail]);
 
   const changeStatus = async (estado: OrderEstado) => {
     if (!order) return;
@@ -82,7 +82,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
       return;
     }
     try {
-      await orderService.updateStatus(order.ID_Pedido, estado);
+      await saveStatus(order.ID_Pedido, estado);
       setOrder({ ...order, Estado: estado });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No fue posible actualizar el estado.');
@@ -94,7 +94,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
     setCancelError(null);
     setSaving(true);
     try {
-      await orderService.cancel(order.ID_Pedido, motivo, isAdmin ? 'admin' : 'domiciliario', user?.id ?? null);
+      await cancelViaController(order.ID_Pedido, motivo);
       setOrder({ ...order, Estado: 'cancelado', Motivo_Cancelacion: motivo });
       setCancelOpen(false);
     } catch (err) {

@@ -5,8 +5,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router';
 import { Bell } from 'lucide-react';
-import type { ApiOrder } from '../../../models';
-import { orderService } from '../../../services';
+import { useOrdersController } from '../../../controllers';
 import { orderStatusMeta } from '../../../utils/constants';
 import { formatPrice } from '../../../utils';
 
@@ -18,27 +17,8 @@ interface UserNotificationsProps {
 /** Campana con el estado de los pedidos del usuario. */
 export function UserNotifications({ userId }: UserNotificationsProps) {
   const [open, setOpen] = useState(false);
-  const [orders, setOrders] = useState<ApiOrder[]>([]);
+  const { orders } = useOrdersController(userId);
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (userId === null) {
-      setOrders([]);
-      return;
-    }
-    let cancelled = false;
-    orderService
-      .getAll()
-      .then((all) => {
-        if (!cancelled) setOrders(all.filter((o) => o.ID_Usuario === userId));
-      })
-      .catch(() => {
-        /* sin notificaciones si el backend no responde */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {

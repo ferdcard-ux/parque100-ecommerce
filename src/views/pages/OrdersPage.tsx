@@ -1,12 +1,11 @@
 /**
  * @fileoverview Historial de compras del usuario.
  */
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { ShoppingBag } from 'lucide-react';
 import { useApp } from '../../App';
-import { useOrdersController, useProductController } from '../../controllers';
-import { orderService, ratingService } from '../../services';
+import { useOrdersController, useProductController, useRatingsController } from '../../controllers';
 import type { ApiOrder, ApiOrderItem } from '../../models';
 import { PageHeader } from '../components/shared/page-header';
 import { StatusBadge } from '../components/shared/status-badge';
@@ -31,7 +30,8 @@ function formatDate(value: string): string {
 export function OrdersPage() {
   const { user, isLoggedIn } = useApp();
   const navigate = useNavigate();
-  const { orders, isLoading, error, reload } = useOrdersController(user?.id ?? null);
+  const { orders, isLoading, error, fetchDetail, cancelOwn } = useOrdersController(user?.id ?? null, { items: true });
+  const { ratings: myReviews, rate } = useRatingsController({ usuario: user?.id ?? undefined });
   const { products } = useProductController();
   const [cancelId, setCancelId] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
@@ -43,42 +43,14 @@ export function OrdersPage() {
   const [reviewSaving, setReviewSaving] = useState(false);
   const [reviewError, setReviewError] = useState<string | null>(null);
   const [reviewOk, setReviewOk] = useState(false);
-  /** Detalles por pedido para las miniaturas de la tarjeta. */
-  const [orderItems, setOrderItems] = useState<Record<number, ApiOrderItem[]>>({});
-
-  useEffect(() => {
-    let cancelled = false;
-    const missing = orders.filter((o) => orderItems[o.ID_Pedido] === undefined);
-    if (missing.length === 0) return;
-    Promise.all(
-      missing.map(async (o): Promise<readonly [number, ApiOrderItem[]]> => {
-        try {
-          const detail = await orderService.getById(o.ID_Pedido);
-          return [o.ID_Pedido, detail?.detalles ?? []];
-        } catch {
-          return [o.ID_Pedido, []];
-        }
-      }),
-    ).then((entries) => {
-      if (cancelled) return;
-      setOrderItems((prev) => {
-        const next = { ...prev };
-        for (const [id, items] of entries) next[id] = items;
-        return next;
-      });
-    });
-    return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orders]);
 
   const handleCancel = async (motivo: string) => {
     if (cancelId === null) return;
     setCancelError(null);
     setSaving(true);
     try {
-      await orderService.cancel(cancelId, motivo, 'cliente', user?.id ?? null);
+      await cancelOwn(cancelId, motivo);
       setCancelId(null);
-      await reload();
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : 'No fue posible cancelar.');
     } finally {
@@ -91,16 +63,13 @@ export function OrdersPage() {
     setReviewOk(false);
     setReviewError(null);
     try {
-      const detail = await orderService.getById(order.ID_Pedido);
+      const detail = await fetchDetail(order.ID_Pedido);
       setReviewItems(detail?.detalles ?? []);
-      if (user) {
-        const mine = await ratingService.list({ usuario: user.id });
-        setReviewedIds(
-          mine
-            .filter((r) => r.Tipo === 'producto' && r.ID_Pedido === order.ID_Pedido && r.ID_Producto)
-            .map((r) => String(r.ID_Producto)),
-        );
-      }
+      setReviewedIds(
+        myReviews
+          .filter((r) => r.Tipo === 'producto' && r.ID_Pedido === order.ID_Pedido && r.ID_Producto)
+          .map((r) => String(r.ID_Producto)),
+      );
       setReviewOrder(order);
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : 'No fue posible cargar el pedido.');
@@ -113,7 +82,7 @@ export function OrdersPage() {
     setReviewError(null);
     setReviewSaving(true);
     try {
-      await ratingService.create({
+      await rate({
         ID_Usuario: user.id,
         ID_Producto: String(selectedItem.ID_Producto),
         ID_Pedido: reviewOrder.ID_Pedido,
@@ -186,7 +155,7 @@ export function OrdersPage() {
             {orders.map((order) => {
               const cancellable = order.Estado === 'pendiente' || order.Estado === 'preparando';
               const locked = order.Estado === 'enviando';
-              const items = orderItems[order.ID_Pedido] ?? [];
+              const items = order.detalles ?? [];
               const totalQty = items.reduce((sum, it) => sum + Number(it.Cantidad), 0);
               const firstName = items.length > 0
                 ? (items[0].Producto_Nombre ?? String(items[0].ID_Producto))

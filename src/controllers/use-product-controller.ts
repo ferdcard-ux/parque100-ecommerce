@@ -111,12 +111,33 @@ export function useProductController() {
     return products;
   }, [products]);
 
+  /**
+   * Sugiere productos por nombre para el buscador. Reusa el catalogo
+   * cargado y solo consulta la API si aun no hay datos.
+   *
+   * @param {string} query - Texto de busqueda (minimo 2 caracteres).
+   * @returns {Promise<Product[]>} Hasta 6 coincidencias.
+   */
+  const suggestProducts = useCallback(async (query: string): Promise<Product[]> => {
+    const q = query.trim().toLowerCase();
+    if (q.length < 2) return [];
+    const all = products.length > 0 ? products : await productService.getAll();
+    return all.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 6);
+  }, [products]);
+
+  /** Lee las filas crudas del inventario (exportacion/importacion). */
+  const getInventoryRows = useCallback((): Promise<any[]> => {
+    return productService.getRawRows();
+  }, []);
+
   return {
     products,
     categories,
     adminProducts,
     isLoading,
     error,
+    suggestProducts,
+    getInventoryRows,
     getFeaturedProducts,
     deleteProduct,
     createProduct,

@@ -5,9 +5,8 @@ import { Link, useNavigate } from 'react-router';
 import { ArrowLeft, Bell, Home } from 'lucide-react';
 import { useState, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
-import type { ApiOrder } from '../../../models';
-import { orderService } from '../../../services';
 import { useApp } from '../../../App';
+import { useAdminOrdersController } from '../../../controllers';
 import { AdminSidebar } from './AdminSidebar';
 
 interface AdminPageShellProps {
@@ -26,25 +25,16 @@ interface AdminPageShellProps {
 /** Layout estandar del panel: sidebar oscuro + topbar + contenido. */
 export function AdminPageShell({ active, title, subtitle, children, backTo }: AdminPageShellProps) {
   const [bellOpen, setBellOpen] = useState(false);
-  const [pending, setPending] = useState<ApiOrder[]>([]);
+  const { orders, reload } = useAdminOrdersController();
+  const pending = orders.filter((o) => o.Estado === 'pendiente');
   const bellRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { userRole } = useApp();
 
   useEffect(() => {
-    let cancelled = false;
-    const loadPending = () => {
-      orderService.getAll().then((all) => {
-        if (!cancelled) setPending(all.filter((o) => o.Estado === 'pendiente'));
-      }).catch(() => {});
-    };
-    loadPending();
-    const timer = setInterval(loadPending, 15000);
-    return () => {
-      cancelled = true;
-      clearInterval(timer);
-    };
-  }, []);
+    const timer = setInterval(reload, 15000);
+    return () => clearInterval(timer);
+  }, [reload]);
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {

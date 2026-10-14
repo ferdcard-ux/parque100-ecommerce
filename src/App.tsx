@@ -48,6 +48,8 @@ interface AppContextValue {
   register: (data: RegisterData) => Promise<User>;
   logout: () => void;
   updateProfile: (data: { firstName: string; lastName: string; email: string; phone: string; photo?: string | null }) => Promise<User>;  cartItems: CartItem[];
+  recoverPassword: (email: string) => Promise<string>;
+  changePassword: (email: string, currentPassword: string, newPassword: string) => Promise<void>;
   addToCart: (product: Product) => void;
   removeFromCart: (id: number) => void;
   updateQuantity: (id: number, qty: number) => void;
@@ -85,6 +87,7 @@ interface AppContextValue {
     ID_Categoria: number;
   }) => Promise<void>;
   reloadProducts: () => Promise<void>;
+  fetchInventoryRows: () => Promise<any[]>;
   paymentMethod: PaymentMethodType | null;
   selectPaymentMethod: (m: PaymentMethodType) => void;
   saveAddress: (addr: DeliveryAddress) => void;
@@ -200,7 +203,7 @@ function AccountAddressWrapper() {
 }
 function PaymentMethodWrapper() { const ctx = useApp(); return <Protected><PaymentMethodPage selectedMethod={ctx.paymentMethod} onSelectMethod={ctx.selectPaymentMethod} itemCount={ctx.cartCount} total={ctx.cartTotal} /></Protected>; }
 function CardPaymentWrapper() { const ctx = useApp(); return <Protected><CardPaymentPage total={ctx.cartTotal} itemCount={ctx.cartCount} isProcessing={ctx.isPaymentProcessing} onPay={ctx.payWithCard} onPayNequi={ctx.payWithNequi} onPayCash={ctx.payWithCash} /></Protected>; }
-function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} onImported={ctx.reloadProducts} />; }
+function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} onImported={ctx.reloadProducts} onFetchRows={ctx.fetchInventoryRows} />; }
 function AccountWrapper() { return <Protected><AccountPage /></Protected>; }
 function ProfileWrapper() { return <Protected><ProfilePage /></Protected>; }
 function OrdersWrapper() { return <Protected><OrdersPage /></Protected>; }
@@ -254,6 +257,8 @@ export default function App() {
     register: auth.register,
     logout: auth.logout,
     updateProfile: auth.updateProfile,
+    recoverPassword: auth.recoverPassword,
+    changePassword: auth.changePassword,
     cartItems: cart.items,
     addToCart: handleAddToCart,
     removeFromCart: cart.removeItem,
@@ -269,6 +274,7 @@ export default function App() {
     createAdminProduct: productCtrl.createProduct,
     updateAdminProduct: productCtrl.updateProduct,
     reloadProducts: productCtrl.reload,
+    fetchInventoryRows: productCtrl.getInventoryRows,
     paymentMethod: payment.method,
     selectPaymentMethod: payment.selectMethod,
     saveAddress: payment.saveAddress,
@@ -279,6 +285,7 @@ export default function App() {
     payWithCash: handlePayWithCash,
   }), [
     auth.user, auth.sessions, auth.switchSession, auth.isLoggedIn, auth.isAdmin, auth.updateProfile,
+    auth.recoverPassword, auth.changePassword,
     cart.items, cart.itemCount, cart.subtotal, cart.shipping, cart.total, handleAddToCart,
     productCtrl.products, productCtrl.adminProducts,
     payment.method, payment.isProcessing,

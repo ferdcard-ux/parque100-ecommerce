@@ -3,15 +3,14 @@
  * Resumen del negocio: KPIs, accesos directos, pedidos recientes,
  * pedidos por estado y productos con stock bajo.
  */
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link } from 'react-router';
 import {
   DollarSign, ShoppingCart, Package, Users, ClipboardList,
   BarChart2, Settings, TriangleAlert, ChevronRight,
 } from 'lucide-react';
+import { useAdminOrdersController, useProductController, useUsersController } from '../../controllers';
 import { useApp } from '../../App';
-import { useAdminOrdersController, useProductController } from '../../controllers';
-import { userService } from '../../services';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { ORDER_ESTADOS, formatPrice } from '../../utils';
@@ -21,16 +20,8 @@ export function AdminDashboardPage() {
   const { isAdmin } = useApp();
   const { orders, isLoading: loadingOrders } = useAdminOrdersController();
   const { adminProducts, isLoading: loadingProducts } = useProductController();
-  const [clientCount, setClientCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!isAdmin) return;
-    userService.getAllUsers().then((users) => {
-      if (!cancelled) setClientCount(users.length);
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [isAdmin]);
+  const { users, isLoading: loadingUsers } = useUsersController({ autoLoad: isAdmin });
+  const clientCount = loadingUsers ? null : users.length;
 
   const validOrders = useMemo(() => orders.filter((o) => o.Estado !== 'cancelado'), [orders]);
   const totalSales = validOrders.reduce((sum, o) => sum + Number(o.Total), 0);

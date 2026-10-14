@@ -109,14 +109,17 @@ export const orderService = {
   },
 
   /**
-   * Lista todos los pedidos persistidos en el backend, mas recientes primero.
+   * Lista los pedidos visibles para la sesion (staff: todos; cliente:
+   * solo los propios), mas recientes primero.
    *
+   * @param {Object} [options] - Opciones.
+   * @param {boolean} [options.items=false] - Incluye las lineas de detalle.
    * @returns {Promise<ApiOrder[]>} Pedidos con nombre de usuario.
    * @throws {Error} Si el servidor no responde correctamente.
    */
-  async getAll(): Promise<ApiOrder[]> {
+  async getAll(options: { items?: boolean } = {}): Promise<ApiOrder[]> {
     try {
-      const response = await fetch(`${API}/orders`, { headers: authHeaders() });
+      const response = await fetch(`${API}/orders${options.items ? '?items=1' : ''}`, { headers: authHeaders() });
       if (!response.ok) throw new Error('No fue posible cargar los pedidos.');
       return (await response.json()) as ApiOrder[];
     } catch (err) {

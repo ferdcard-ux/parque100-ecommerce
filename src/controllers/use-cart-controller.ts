@@ -5,7 +5,7 @@
  * subtotal, envio y total) usando las utilidades de formatters.
  */
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import type { Product, CartItem, DeliveryAddress } from '../models';
+import type { Product, CartItem } from '../models';
 import { calculateShipping, calculateTotal } from '../utils';
 
 /** Lee el carrito guardado validando su forma minima. */

@@ -27,8 +27,8 @@ router.put('/users/:id/profile', requireAuth, requireSelfOrAdmin('id'), usersCon
 /** GET /api/users/:id - Consulta los datos de entrega (autor o admin). */
 router.get('/users/:id', requireAuth, requireSelfOrAdmin('id'), usersController.getDeliveryDetails);
 
-/** GET /api/users/:id/permissions - Permisos delegables de un usuario (admin). */
-router.get('/users/:id/permissions', requireAuth, requireRole('admin'), usersController.getPermissions);
+/** GET /api/users/:id/permissions - Permisos delegables (autor o admin). */
+router.get('/users/:id/permissions', requireAuth, requireSelfOrAdmin('id'), usersController.getPermissions);
 
 /** PUT /api/users/:id/permissions - El admin delega permisos (admin). */
 router.put('/users/:id/permissions', requireAuth, requireRole('admin'), usersController.updatePermissions);

@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { Zap, Star, Tag, ArrowRight } from 'lucide-react';
+import { Zap, Star, Tag } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 export function HeroBanner() {

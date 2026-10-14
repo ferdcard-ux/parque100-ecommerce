@@ -64,6 +64,35 @@ export const orderModel = {
   },
 
   /**
+   * Obtiene todos los pedidos con sus lineas de detalle en dos
+   * consultas (evita el N+1 de pedir el detalle uno por uno).
+   *
+   * @async
+   * @returns {Promise<Array<Object>>} Pedidos con `detalles` y `Usuario_Nombre`.
+   * @throws {Error} Si falla la consulta a la base de datos.
+   */
+  async findAllWithItems() {
+    const orders = await this.findAll();
+    if (orders.length === 0) return [];
+    const ids = orders.map((order) => order.ID_Pedido);
+    const placeholders = ids.map(() => '?').join(',');
+    const [details] = await pool.query(
+      `SELECT d.*, p.Nombre AS Producto_Nombre
+       FROM detalle_pedido d
+       LEFT JOIN productos p ON d.ID_Producto = p.ID_Producto
+       WHERE d.ID_Pedido IN (${placeholders})`,
+      ids,
+    );
+    const byOrder = new Map();
+    for (const item of details) {
+      const list = byOrder.get(item.ID_Pedido) || [];
+      list.push(item);
+      byOrder.set(item.ID_Pedido, list);
+    }
+    return orders.map((order) => ({ ...order, detalles: byOrder.get(order.ID_Pedido) || [] }));
+  },
+
+  /**
    * Actualiza el estado de un pedido existente siguiendo la maquina
    * de estados (pendiente -> preparando -> enviando -> entregado).
    * El mismo estado se acepta (idempotente); retrocesos, saltos y
