@@ -2,7 +2,6 @@ import { useMemo, useRef, useState } from 'react';
 import { Search, ChevronDown, Upload, Download, Plus, Edit2, Trash2, Package, ChevronLeft, ChevronRight as ChevRight, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
 import type { AdminProduct, InventoryStatus } from '../../../models';
 import { formatPrice, STATUS_LABELS } from '../../../utils';
-import { productService } from '../../../services';
 
 interface ProductTableProps {
   products: AdminProduct[];
@@ -14,6 +13,27 @@ interface ProductTableProps {
   onStatusFilterChange?: (s: 'all' | InventoryStatus) => void;
   /** Recarga tras importar. */
   onImported?: () => Promise<void>;
+  /** Lee las filas crudas del inventario (exportar/importar). */
+  onFetchRows: () => Promise<any[]>;
+  /** Crea un producto (importación masiva). */
+  onCreateProduct: (data: {
+    ID_Producto: string;
+    Nombre: string;
+    Descripcion: string;
+    Imagen?: string;
+    Precio_Venta: number;
+    Stock_Minimo: number;
+    ID_Categoria: number;
+  }) => Promise<void>;
+  /** Actualiza un producto (importación masiva). */
+  onUpdateProduct: (id: string, data: {
+    Nombre: string;
+    Descripcion: string;
+    Imagen?: string;
+    Precio_Venta: number;
+    Stock_Minimo: number;
+    ID_Categoria: number;
+  }) => Promise<void>;
 }
 
 /** Columnas exactas de la tabla `productos` (plantilla de importación). */
@@ -56,7 +76,7 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export function ProductTable({ products, onDelete, onAddClick, onEditClick, statusFilter, onStatusFilterChange, onImported }: ProductTableProps) {
+export function ProductTable({ products, onDelete, onAddClick, onEditClick, statusFilter, onStatusFilterChange, onImported, onFetchRows, onCreateProduct, onUpdateProduct }: ProductTableProps) {
   const [search, setSearch] = useState('');
   const [innerFilter, setInnerFilter] = useState<'all' | InventoryStatus>('all');
   const [page, setPage] = useState(1);
@@ -84,9 +104,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
   const paginated = useMemo(() => filtered.slice((safePage - 1) * perPage, safePage * perPage), [filtered, safePage]);
 
   const fetchRawRows = async (): Promise<any[]> => {
-    const res = await fetch('http://localhost:3001/api/products');
-    if (!res.ok) throw new Error('No se pudo leer el inventario del servidor.');
-    return res.json();
+    return onFetchRows();
   };
 
   const handleExportExcel = async () => {
@@ -180,8 +198,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
       if (missing.length > 0 || extra.length > 0) {
         throw new Error(`La plantilla no coincide. Faltan: ${missing.join(', ') || '—'}. Sobran: ${extra.join(', ') || '—'}. Descarga la plantilla oficial.`);
       }
-      const existingRes = await fetch('http://localhost:3001/api/products');
-      const existing: any[] = existingRes.ok ? await existingRes.json() : [];
+      const existing: any[] = await onFetchRows();
       const existingIds = new Set(existing.map((r) => String(r.ID_Producto)));
       let created = 0;
       let updated = 0;
@@ -217,10 +234,10 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
             ID_Categoria: cat,
           };
           if (existingIds.has(id)) {
-            await productService.updateProduct(id, payload);
+            await onUpdateProduct(id, payload);
             updated += 1;
           } else {
-            await productService.createProduct({ ID_Producto: id, ...payload });
+            await onCreateProduct({ ID_Producto: id, ...payload });
             created += 1;
           }
         } catch (e) {

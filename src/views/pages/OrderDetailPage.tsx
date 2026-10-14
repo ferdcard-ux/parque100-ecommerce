@@ -1,13 +1,11 @@
 /**
  * @fileoverview Detalle de un pedido del usuario.
  */
-import { useState, useEffect } from 'react';
-import { Link, useParams } from 'react-router';
+import { useState } from 'react';
+import { useParams } from 'react-router';
 import { TriangleAlert } from 'lucide-react';
-import type { ApiOrder } from '../../models';
-import { orderService } from '../../services';
 import { useApp } from '../../App';
-import { useProductController, useRatingsController } from '../../controllers';
+import { useProductController, useRatingsController, useOrderDetailController } from '../../controllers';
 import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
 import { StatusBadge } from '../components/shared/status-badge';
@@ -29,9 +27,7 @@ function formatDateTime(value: string): string {
 export function OrderDetailPage() {
   const { id } = useParams();
   const { user } = useApp();
-  const [order, setOrder] = useState<ApiOrder | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { order, isLoading, error } = useOrderDetailController(id ?? null);
   const orderId = Number(id);
   const { ratings, isSaving, rate } = useRatingsController({ pedido: Number.isInteger(orderId) ? orderId : undefined });
   const { products } = useProductController();
@@ -40,8 +36,7 @@ export function OrderDetailPage() {
   const [rateError, setRateError] = useState<string | null>(null);
   const [rateOk, setRateOk] = useState(false);
 
-  const handleRate = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRate = async (e: React.FormEvent) => {    e.preventDefault();
     setRateError(null);
     setRateOk(false);
     try {
@@ -58,21 +53,6 @@ export function OrderDetailPage() {
       setRateError(err instanceof Error ? err.message : 'No fue posible guardar.');
     }
   };
-
-  useEffect(() => {
-    let cancelled = false;
-    setIsLoading(true);
-    orderService
-      .getById(id ?? '')
-      .then((data) => {
-        if (cancelled) return;
-        if (data === null) setError('Pedido no encontrado.');
-        setOrder(data);
-      })
-      .catch((err) => !cancelled && setError(err instanceof Error ? err.message : 'Error al cargar.'))
-      .finally(() => !cancelled && setIsLoading(false));
-    return () => { cancelled = true; };
-  }, [id]);
 
   const subtotal = (order?.detalles ?? []).reduce((sum, d) => sum + Number(d.Subtotal), 0);
 

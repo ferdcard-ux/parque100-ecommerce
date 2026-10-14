@@ -4,9 +4,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router';
 import { TriangleAlert, ChevronDown } from 'lucide-react';
-import { useAdminOrdersController } from '../../controllers';
+import { useAdminOrdersController, useUsersController } from '../../controllers';
 import { useApp } from '../../App';
-import { userService } from '../../services';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
@@ -23,14 +22,15 @@ export function AdminOrdersPage() {
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [statusError, setStatusError] = useState<string | null>(null);
   const [canCancel, setCanCancel] = useState(isAdmin);
+  const { getPermissions } = useUsersController({ autoLoad: false });
 
   useEffect(() => {
     if (isAdmin || !user) {
       setCanCancel(isAdmin);
       return;
     }
-    userService.getPermissions(user.id).then((p) => setCanCancel(p.puede_cancelar)).catch(() => setCanCancel(false));
-  }, [isAdmin, user?.id]);
+    getPermissions(user.id).then((p) => setCanCancel(p.puede_cancelar)).catch(() => setCanCancel(false));
+  }, [isAdmin, user?.id, getPermissions]);
 
   const summary = [
     { label: 'Pendientes', value: counts.pendiente, estado: 'pendiente' as OrderEstado },

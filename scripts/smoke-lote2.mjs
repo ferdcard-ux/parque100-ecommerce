@@ -431,6 +431,12 @@ await test('GET /orders responde lista para el badge', async () => {
   console.log(`  info: ${data.filter((o) => o.Estado === 'pendiente').length} pendientes de ${data.length}`);
 });
 
+await test('GET /orders?items=1 trae lineas de detalle', async () => {
+  const { status, data } = await call('GET', '/orders?items=1', undefined, clientToken);
+  assert(status === 200 && Array.isArray(data), `status ${status}`);
+  assert(data.every((o) => Array.isArray(o.detalles)), 'sin detalles');
+});
+
 await test('GET /orders del cliente solo trae los propios', async () => {
   const { status, data } = await call('GET', '/orders', undefined, clientToken);
   assert(status === 200 && Array.isArray(data), `status ${status}`);

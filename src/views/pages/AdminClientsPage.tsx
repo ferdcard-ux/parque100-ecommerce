@@ -2,10 +2,11 @@
  * @fileoverview Gestion de clientes (panel admin).
  * CRUD completo: crear, editar (incluido rol) y eliminar usuarios.
  */
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Pencil, Trash2, Plus, X } from 'lucide-react';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
-import { userService, type ApiUserRow, type AdminUserData } from '../../services/user.service';
+import type { ApiUserRow, AdminUserData } from '../../services/user.service';
+import { useUsersController } from '../../controllers/use-users-controller';
 import { useDialogBehavior } from '../../utils/useDialog';
 
 const ROLES = ['cliente', 'domiciliario', 'admin'] as const;
@@ -127,9 +128,18 @@ function DeleteConfirm({ nombre, onClose, onConfirm }: { nombre: string; onClose
 
 /** Tabla de clientes con alta, edicion de rol/datos y baja protegida. */
 export function AdminClientsPage() {
-  const [users, setUsers] = useState<ApiUserRow[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    users,
+    permissions: perms,
+    isLoading,
+    error: loadError,
+    createUser,
+    updateUser,
+    deleteUser,
+    updatePermissions,
+  } = useUsersController();
+  const [actionError, setActionError] = useState<string | null>(null);
+  const error = actionError ?? loadError;
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('todos');
   const [modal, setModal] = useState<'create' | 'edit' | null>(null);
@@ -138,35 +148,6 @@ export function AdminClientsPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<ApiUserRow | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [perms, setPerms] = useState<Record<number, boolean>>({});
-
-  const load = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const list = await userService.getAllUsers();
-      setUsers(list);
-      const entries = await Promise.all(
-        list.map(async (u) => {
-          try {
-            const p = await userService.getPermissions(u.ID_Usuario);
-            return [u.ID_Usuario, p.puede_cancelar] as const;
-          } catch {
-            return [u.ID_Usuario, false] as const;
-          }
-        }),
-      );
-      setPerms(Object.fromEntries(entries));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar.');
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
 
   const q = query.toLowerCase();
   const filtered = users.filter(
@@ -179,10 +160,9 @@ export function AdminClientsPage() {
     setModalError(null);
     setSaving(true);
     try {
-      await userService.createUser(data);
+      await createUser(data);
       setModal(null);
       setNotice('Usuario creado.');
-      await load();
     } catch (err) {
       setModalError(err instanceof Error ? err.message : 'No fue posible crear.');
     } finally {
@@ -195,11 +175,10 @@ export function AdminClientsPage() {
     setModalError(null);
     setSaving(true);
     try {
-      await userService.updateUser(editing.ID_Usuario, data);
+      await updateUser(editing.ID_Usuario, data);
       setModal(null);
       setEditing(null);
       setNotice('Usuario actualizado.');
-      await load();
     } catch (err) {
       setModalError(err instanceof Error ? err.message : 'No fue posible actualizar.');
     } finally {
@@ -210,24 +189,21 @@ export function AdminClientsPage() {
   const handleDelete = async () => {
     if (!deleting) return;
     try {
-      await userService.deleteUser(deleting.ID_Usuario);
+      await deleteUser(deleting.ID_Usuario);
       setDeleting(null);
       setNotice('Usuario eliminado.');
-      await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No fue posible eliminar.');
+      setActionError(err instanceof Error ? err.message : 'No fue posible eliminar.');
       setDeleting(null);
     }
   };
 
   const handleToggleCancel = async (u: ApiUserRow, value: boolean) => {
-    setPerms((prev) => ({ ...prev, [u.ID_Usuario]: value }));
     try {
-      await userService.updatePermissions(u.ID_Usuario, value);
+      await updatePermissions(u.ID_Usuario, value);
       setNotice(`Permiso de cancelacion ${value ? 'otorgado a' : 'revocado a'} ${u.Nombre}.`);
     } catch (err) {
-      setPerms((prev) => ({ ...prev, [u.ID_Usuario]: !value }));
-      setError(err instanceof Error ? err.message : 'No fue posible guardar el permiso.');
+      setActionError(err instanceof Error ? err.message : 'No fue posible guardar el permiso.');
     }
   };
 

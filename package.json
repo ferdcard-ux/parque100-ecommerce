@@ -8,6 +8,7 @@
     "dev": "vite",
     "server": "node server/index.js",
     "typecheck": "tsc --noEmit",
+    "test": "node scripts/smoke-lote2.mjs",
     "test:smoke": "node scripts/smoke-lote2.mjs",
     "migrate:passwords": "node scripts/migrate-passwords.mjs",
     "db:dump": "node scripts/db.mjs dump",

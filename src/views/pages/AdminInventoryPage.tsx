@@ -28,9 +28,11 @@ interface AdminInventoryPageProps {
   }) => Promise<void>;
   /** Recarga el catalogo tras una importación masiva. */
   onImported?: () => Promise<void>;
+  /** Lee las filas crudas del inventario (exportar/importar). */
+  onFetchRows: () => Promise<any[]>;
 }
 
-export function AdminInventoryPage({ products, onDelete, onCreate, onUpdate, onImported }: AdminInventoryPageProps) {
+export function AdminInventoryPage({ products, onDelete, onCreate, onUpdate, onImported, onFetchRows }: AdminInventoryPageProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [stockFilter, setStockFilter] = useState<'all' | InventoryStatus>('all');
@@ -55,7 +57,7 @@ export function AdminInventoryPage({ products, onDelete, onCreate, onUpdate, onI
             onSelect={(s) => setStockFilter((prev) => (prev === s ? 'all' : s))}
           />
         </div>
-        <ProductTable products={products} onDelete={onDelete} onAddClick={() => setShowAddModal(true)} onEditClick={(p) => setEditingProduct(p)} statusFilter={stockFilter} onStatusFilterChange={setStockFilter} onImported={onImported} />
+        <ProductTable products={products} onDelete={onDelete} onAddClick={() => setShowAddModal(true)} onEditClick={(p) => setEditingProduct(p)} statusFilter={stockFilter} onStatusFilterChange={setStockFilter} onImported={onImported} onFetchRows={onFetchRows} onCreateProduct={onCreate} onUpdateProduct={onUpdate} />
       </AdminPageShell>
 
       <AddProductModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onCreate={onCreate} />

@@ -139,6 +139,19 @@ export function useAuthController() {
     setActiveId(id);
   }, []);
 
+  /** Solicita una clave temporal (respuesta neutra del servidor). */
+  const recoverPassword = useCallback(async (email: string): Promise<string> => {
+    return authService.recoverPassword(email);
+  }, []);
+
+  /** Cambia la contrasena validando la actual. */
+  const changePassword = useCallback(
+    async (email: string, currentPassword: string, newPassword: string): Promise<void> => {
+      await authService.changePassword(email, currentPassword, newPassword);
+    },
+    [],
+  );
+
   /**
    * Actualiza el perfil propio en el backend y refleja los cambios
    * en la sesion activa (y en las demas sesiones de la misma cuenta).
@@ -198,6 +211,8 @@ export function useAuthController() {
     login,
     register,
     logout,
+    recoverPassword,
+    changePassword,
     switchSession,
     closeSession,
     updateProfile,

@@ -6,8 +6,8 @@ import { User, Mail, Phone, Lock } from 'lucide-react';
 import { useApp } from '../../App';
 import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
-import { authService, userService } from '../../services';
 import { useDialogBehavior } from '../../utils/useDialog';
+import { useUserDeliveryController } from '../../controllers/use-user-delivery-controller';
 
 interface FieldProps {
   label: string;
@@ -80,7 +80,8 @@ function ChangePasswordDialog({ pwdError, pwdSuccess, pwdLoading, pwdCurrent, pw
 
 /** Vista/edicion de los datos personales del usuario. */
 export function ProfilePage() {
-  const { user, isLoggedIn, updateProfile } = useApp();
+  const { user, isLoggedIn, updateProfile, changePassword } = useApp();
+  const { details: deliveryDetails } = useUserDeliveryController(user?.id ?? null);
   const [editing, setEditing] = useState(false);
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
@@ -104,19 +105,13 @@ export function ProfilePage() {
     setFirstName(user?.firstName ?? '');
     setLastName(user?.lastName ?? '');
     setEmail(user?.email ?? '');
-    setPhone('');
+    setPhone(deliveryDetails?.phone ?? '');
     setPhoto(user?.photo ?? null);
     setPhotoError(null);
     setEditing(false);
     setSaved(false);
     setSaveError(null);
-    if (user) {
-      userService
-        .getDeliveryDetails(user.id)
-        .then((details) => setPhone(details.phone))
-        .catch(() => { /* sin telefono guardado: se deja vacio */ });
-    }
-  }, [user?.id]);
+  }, [user?.id, deliveryDetails?.phone]);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,7 +127,7 @@ export function ProfilePage() {
     }
     setPwdLoading(true);
     try {
-      await authService.changePassword(user!.email, pwdCurrent, pwdNew);
+      await changePassword(user!.email, pwdCurrent, pwdNew);
       setPwdSuccess(true);
       setPwdCurrent('');
       setPwdNew('');

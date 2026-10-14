@@ -164,6 +164,25 @@ export const productService = {
     return data.map(mapAdminProduct);
   },
 
+  /**
+   * Lee las filas crudas del inventario (exportacion/importacion).
+   *
+   * @returns {Promise<any[]>} Filas tal como las entrega la API.
+   * @throws {Error} Si el servidor no responde correctamente.
+   */
+  async getRawRows(): Promise<any[]> {
+    let res: Response;
+    try {
+      res = await fetch(`${API}/products`, { headers: authHeaders() });
+    } catch {
+      throw new Error('No fue posible conectar con el servidor.');
+    }
+    if (!res.ok) throw new Error('No se pudo leer el inventario del servidor.');
+    const data = await res.json().catch(() => null);
+    if (!Array.isArray(data)) throw new Error('Respuesta inesperada del servidor.');
+    return data;
+  },
+
   async deleteAdminProduct(id: number): Promise<void> {
     let res: Response;
     try {

@@ -7,7 +7,7 @@ Plataforma web de comercio electrónico (full-stack) para la compra de productos
 | Capa | Tecnología |
 |------|------------|
 | Frontend | React 18 + TypeScript, Vite 6, Tailwind CSS 4, shadcn/ui, React Router 7 |
-| Backend | Node.js + Express 4 |
+| Backend | Node.js + Express 5 |
 | Base de datos | MySQL 8 / MariaDB 10.4+ (driver `mysql2/promise`) |
 
 ## Arquitectura MVC

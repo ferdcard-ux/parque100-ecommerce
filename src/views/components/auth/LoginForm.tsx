@@ -1,15 +1,15 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router';
-import { Mail, Lock, Eye, EyeOff, Store, UserCog, X, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, Store, UserCog, X } from 'lucide-react';
 import type { LoginCredentials } from '../../../models';
 import { isValidEmail } from '../../../utils';
 import { useScrollLock } from '../../../utils/useScrollLock';
 import { useDialogBehavior } from '../../../utils/useDialog';
-import { authService } from '../../../services';
 
 interface LoginFormProps {
   onLogin: (credentials: LoginCredentials) => Promise<void>;
   onAdminLogin: (credentials: LoginCredentials) => Promise<void>;
+  onRecoverPassword: (email: string) => Promise<string>;
   error?: string | null;
   /** Ruta de retorno tras un login exitoso. */
   nextPath?: string;
@@ -19,7 +19,7 @@ interface LoginFormProps {
   currentUserName?: string | null;
 }
 
-export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switchMode = false, currentUserName = null }: LoginFormProps) {
+export function LoginForm({ onLogin, onAdminLogin, onRecoverPassword, error, nextPath = '/', switchMode = false, currentUserName = null }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -54,8 +54,8 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
     }
     setRecoverLoading(true);
     try {
-      const temp = await authService.recoverPassword(recoverEmail);
-      setRecoverResult(temp);
+      const message = await onRecoverPassword(recoverEmail);
+      setRecoverResult(message);
     } catch (err) {
       setRecoverError(err instanceof Error ? err.message : 'No fue posible recuperar.');
     } finally {

@@ -68,5 +68,10 @@ export function useAdminOrdersController() {
     await changeStatus(id, 'preparando');
   }, [changeStatus]);
 
-  return { orders, counts, isLoading, error, reload: load, changeStatus, cancelOrder, takeOrder };
+  /** Consulta el detalle de un pedido con sus lineas. */
+  const fetchDetail = useCallback((id: string | number) => {
+    return orderService.getById(id);
+  }, []);
+
+  return { orders, counts, isLoading, error, reload: load, changeStatus, cancelOrder, takeOrder, fetchDetail };
 }

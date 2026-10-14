@@ -25,7 +25,7 @@ export const orderController = {
   /**
    * GET /api/orders
    * Devuelve todos los pedidos para el staff y solo los propios para
-   * un cliente autenticado.
+   * un cliente autenticado. Con `?items=1` incluye las lineas de detalle.
    *
    * @async
    * @param {import('express').Request} req - Peticion con `req.user`.
@@ -34,7 +34,8 @@ export const orderController = {
    */
   async list(req, res) {
     try {
-      const orders = await orderModel.findAll();
+      const withItems = req.query.items === '1';
+      const orders = withItems ? await orderModel.findAllWithItems() : await orderModel.findAll();
       if (isStaffRole(req.user?.rol)) return res.json(orders);
       const own = orders.filter((order) => Number(order.ID_Usuario) === Number(req.user?.id));
       res.json(own);

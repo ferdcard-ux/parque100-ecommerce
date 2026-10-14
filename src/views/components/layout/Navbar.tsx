@@ -4,8 +4,7 @@ import {
   ShoppingCart, Heart, Search, Menu, X, Store, ShieldCheck, User, LogOut, RefreshCw,
 } from 'lucide-react';
 import type { User as UserType, UserRole, Product } from '../../../models';
-import { useFavoritesController } from '../../../controllers';
-import { userService, productService } from '../../../services';
+import { useFavoritesController, useProductController, useUsersController } from '../../../controllers';
 import { formatPrice } from '../../../utils';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { UserAvatar } from '../shared/user-avatar';
@@ -31,6 +30,8 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
   const userMenuRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const { users: allUsers, reload: reloadUsers } = useUsersController({ autoLoad: false });
+  const { suggestProducts } = useProductController();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -52,13 +53,13 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
       return;
     }
     const t = setTimeout(() => {
-      productService.getAll().then((all) => {
-        setSuggestItems(all.filter((p) => p.name.toLowerCase().includes(q)).slice(0, 6));
+      suggestProducts(searchValue).then((items) => {
+        setSuggestItems(items);
         setSuggestOpen(true);
       }).catch(() => {});
     }, 200);
     return () => clearTimeout(t);
-  }, [searchValue]);
+  }, [searchValue, suggestProducts]);
 
   const goSearch = () => {
     if (!searchValue.trim()) return;
@@ -85,14 +86,15 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
   const [photoMap, setPhotoMap] = useState<Record<number, string>>({});
   useEffect(() => {
     if (!isLoggedIn) return;
-    userService.getAllUsers().then((rows) => {
-      const map: Record<number, string> = {};
-      for (const row of rows) {
-        if (row.Foto) map[row.ID_Usuario] = row.Foto;
-      }
-      setPhotoMap(map);
-    }).catch(() => {});
-  }, [isLoggedIn]);
+    reloadUsers().catch(() => {});
+  }, [isLoggedIn, reloadUsers]);
+  useEffect(() => {
+    const map: Record<number, string> = {};
+    for (const row of allUsers) {
+      if (row.Foto) map[row.ID_Usuario] = row.Foto;
+    }
+    setPhotoMap(map);
+  }, [allUsers]);
 
   /** Foto de una sesion: la guardada o la fresca del backend. */
   const sessionPhoto = (s: UserType): string | null => s.photo ?? photoMap[s.id] ?? null;
