@@ -61,7 +61,7 @@ export function AdminPageShell({ active, title, subtitle, children, backTo }: Ad
         <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center justify-between sticky top-0 z-20">
           <div className="min-w-0 flex items-center gap-3">
             {backTo && (
-              <Link to={backTo} aria-label="Volver" className="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0">
+              <Link to={backTo} aria-label="Volver" className="relative w-11 h-11 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0 before:absolute before:-inset-1 before:content-['']">
                 <ArrowLeft size={17} className="text-[#212121]" />
               </Link>
             )}
