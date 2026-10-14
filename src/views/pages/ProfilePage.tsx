@@ -1,12 +1,13 @@
 /**
  * @fileoverview Pagina de informacion del perfil.
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { User, Mail, Phone, Lock } from 'lucide-react';
 import { useApp } from '../../App';
 import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
 import { authService, userService } from '../../services';
+import { useDialogBehavior } from '../../utils/useDialog';
 
 interface FieldProps {
   label: string;
@@ -33,6 +34,47 @@ function ProfileField({ label, icon, value, editing, onChange }: FieldProps) {
         />
       </span>
     </label>
+  );
+}
+
+/** Dialogo de cambio de contrasena. */
+function ChangePasswordDialog({ pwdError, pwdSuccess, pwdLoading, pwdCurrent, pwdNew, pwdConfirm, setPwdCurrent, setPwdNew, setPwdConfirm, handleChangePassword, onClose }: {
+  pwdError: string | null;
+  pwdSuccess: boolean;
+  pwdLoading: boolean;
+  pwdCurrent: string;
+  pwdNew: string;
+  pwdConfirm: string;
+  setPwdCurrent: (value: string) => void;
+  setPwdNew: (value: string) => void;
+  setPwdConfirm: (value: string) => void;
+  handleChangePassword: (e: React.FormEvent) => void;
+  onClose: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(true, onClose, panelRef);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Cambiar contraseña" className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+        <h3 className="text-[#212121] font-bold mb-4" style={{ fontSize: '1rem' }}>Cambiar contrasena</h3>
+        <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
+          {pwdError && <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{pwdError}</div>}
+          {pwdSuccess && <div role="status" className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>Contrasena actualizada.</div>}
+          <ProfileField label="Contrasena actual" icon={<Lock size={16} />} value={pwdCurrent} editing onChange={setPwdCurrent} />
+          <ProfileField label="Nueva contrasena" icon={<Lock size={16} />} value={pwdNew} editing onChange={setPwdNew} />
+          <ProfileField label="Confirmar nueva contrasena" icon={<Lock size={16} />} value={pwdConfirm} editing onChange={setPwdConfirm} />
+          <div className="flex gap-2 mt-2">
+            <button type="button" onClick={onClose} className="flex-1 border border-gray-200 rounded-full py-2.5 hover:bg-gray-50 transition-colors" style={{ fontWeight: 600 }}>Cancelar</button>
+            <button type="submit" disabled={pwdLoading} className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2.5 disabled:opacity-60 transition-colors" style={{ fontWeight: 600 }}>
+              {pwdLoading ? 'Guardando...' : 'Guardar'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -225,28 +267,7 @@ export function ProfilePage() {
         </div>
       </div>
 
-      {pwdOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
-          onClick={(e) => { if (e.target === e.currentTarget) setPwdOpen(false); }}
-        >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="text-[#212121] font-bold mb-4" style={{ fontSize: '1rem' }}>Cambiar contrasena</h3>
-            <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
-              {pwdError && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{pwdError}</div>}
-              {pwdSuccess && <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>Contrasena actualizada.</div>}
-              <ProfileField label="Contrasena actual" icon={<Lock size={16} />} value={pwdCurrent} editing onChange={setPwdCurrent} />
-              <ProfileField label="Nueva contrasena" icon={<Lock size={16} />} value={pwdNew} editing onChange={setPwdNew} />
-              <ProfileField label="Confirmar nueva contrasena" icon={<Lock size={16} />} value={pwdConfirm} editing onChange={setPwdConfirm} />
-              <div className="flex gap-2 mt-2">
-                <button type="button" onClick={() => setPwdOpen(false)} className="flex-1 border border-gray-200 rounded-full py-2.5 hover:bg-gray-50 transition-colors" style={{ fontWeight: 600 }}>Cancelar</button>
-                <button type="submit" disabled={pwdLoading} className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2.5 disabled:opacity-60 transition-colors" style={{ fontWeight: 600 }}>
-                  {pwdLoading ? 'Guardando...' : 'Guardar'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      {pwdOpen && (<ChangePasswordDialog pwdError={pwdError} pwdSuccess={pwdSuccess} pwdLoading={pwdLoading} pwdCurrent={pwdCurrent} pwdNew={pwdNew} pwdConfirm={pwdConfirm} setPwdCurrent={setPwdCurrent} setPwdNew={setPwdNew} setPwdConfirm={setPwdConfirm} handleChangePassword={handleChangePassword} onClose={() => setPwdOpen(false)} />)}
     </main>
   );
 }

@@ -3,9 +3,11 @@
  * Lista los articulos de una orden con miniatura, nombre, descripcion
  * y flecha de seleccion.
  */
+import { useRef } from 'react';
 import { X, ChevronRight } from 'lucide-react';
 import type { ApiOrderItem, Product } from '../../../models';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { useDialogBehavior } from '../../../utils/useDialog';
 
 interface ReviewProductModalProps {
   /** Identificador del pedido origen. */
@@ -31,6 +33,8 @@ export function ReviewProductModal({
   onClose,
   onSelect,
 }: ReviewProductModalProps) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(true, onClose, panelRef);
   const byId = new Map(products.map((p) => [String(p.id), p]));
 
   return (
@@ -39,7 +43,7 @@ export function ReviewProductModal({
       style={{ background: 'rgba(0,0,0,0.45)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[85vh] overflow-y-auto">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Dejar una reseña" className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-1">
           <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>
             Dejar una reseña

@@ -3,11 +3,12 @@
  * Lado izquierdo con la info del producto y lado derecho con estrellas
  * (etiqueta dinamica), comentario y boton de envio. Sin multimedia.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { StarRating } from '../shared/star-rating';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { ratingLabel, REVIEW_COMMENT_MAX, REVIEW_COMMENT_MIN } from '../../../utils/constants';
+import { useDialogBehavior } from '../../../utils/useDialog';
 
 interface ReviewFormModalProps {
   /** Titulo del modal (crear o editar). */
@@ -52,6 +53,8 @@ export function ReviewFormModal({
   const [hovered, setHovered] = useState<number | null>(null);
   const [comment, setComment] = useState(initialComment);
   const [warning, setWarning] = useState<string | null>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(true, onClose, panelRef);
 
   const shown = hovered ?? stars;
   const label = ratingLabel(shown);
@@ -78,7 +81,7 @@ export function ReviewFormModal({
       style={{ background: 'rgba(0,0,0,0.45)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={title} className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>{title}</h3>
           <button
@@ -134,7 +137,7 @@ export function ReviewFormModal({
                 {comment.length}/{REVIEW_COMMENT_MAX}
               </p>
             </div>
-            {warning && <p className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{warning}</p>}
+            {warning && <p role="alert" className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{warning}</p>}
             {error && <p className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{error}</p>}
             <button
               type="submit"

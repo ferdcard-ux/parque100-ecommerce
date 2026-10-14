@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useScrollLock } from '../../../utils/useScrollLock';
+import { useDialogBehavior } from '../../../utils/useDialog';
 import { ProductImageInput } from './ProductImageInput';
 
 interface AddProductModalProps {
@@ -23,6 +24,8 @@ interface AddProductModalProps {
 
 export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalProps) {
   useScrollLock(isOpen);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(isOpen, onClose, panelRef);
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('');
   const [cantidad, setCantidad] = useState('');
@@ -76,53 +79,53 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Agregar producto" className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[#212121] font-bold" style={{ fontSize: '1.1rem' }}>Agregar Producto</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+          <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
             <X size={18} className="text-gray-500" />
           </button>
         </div>
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Nombre del producto</label>
-            <input type="text" placeholder="Ej: Manzanas x5" value={nombre} onChange={(e) => setNombre(e.target.value)}
+            <label htmlFor="prod-nombre" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Nombre del producto</label>
+            <input id="prod-nombre" type="text" placeholder="Ej: Manzanas x5" value={nombre} onChange={(e) => setNombre(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Categoría</label>
-            <input type="text" placeholder="Ej: Frutas" value={categoria} onChange={(e) => setCategoria(e.target.value)}
+            <label htmlFor="prod-categoria" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Categoría</label>
+            <input id="prod-categoria" type="text" placeholder="Ej: Frutas" value={categoria} onChange={(e) => setCategoria(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Cantidad inicial</label>
-            <input type="number" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(e.target.value)}
+            <label htmlFor="prod-cantidad" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Cantidad inicial</label>
+            <input id="prod-cantidad" type="number" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio (COP)</label>
-            <input type="number" placeholder="Ej: 4800" value={precio} onChange={(e) => setPrecio(e.target.value)}
+            <label htmlFor="prod-precio" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio (COP)</label>
+            <input id="prod-precio" type="number" placeholder="Ej: 4800" value={precio} onChange={(e) => setPrecio(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio anterior (opcional)</label>
-              <input type="number" placeholder="Ej: 5200" value={precioAnterior} onChange={(e) => setPrecioAnterior(e.target.value)}
+              <label htmlFor="prod-precio-ant" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio anterior (opcional)</label>
+              <input id="prod-precio-ant" type="number" placeholder="Ej: 5200" value={precioAnterior} onChange={(e) => setPrecioAnterior(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
                 style={{ fontSize: '0.9rem' }}
               />
             </div>
             <div>
-              <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Marca (opcional)</label>
-              <input type="text" placeholder="Ej: Colanta" value={marca} onChange={(e) => setMarca(e.target.value)}
+              <label htmlFor="prod-marca" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Marca (opcional)</label>
+              <input id="prod-marca" type="text" placeholder="Ej: Colanta" value={marca} onChange={(e) => setMarca(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
                 style={{ fontSize: '0.9rem' }}
               />
@@ -130,15 +133,15 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Contenido (opcional)</label>
-              <input type="number" placeholder="Ej: 500" value={contQty} onChange={(e) => setContQty(e.target.value)}
+              <label htmlFor="prod-contenido" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Contenido (opcional)</label>
+              <input id="prod-contenido" type="number" placeholder="Ej: 500" value={contQty} onChange={(e) => setContQty(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
                 style={{ fontSize: '0.9rem' }}
               />
             </div>
             <div>
-              <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Unidad</label>
-              <select value={contUnit} onChange={(e) => setContUnit(e.target.value)}
+              <label htmlFor="prod-unidad" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Unidad</label>
+              <select id="prod-unidad" value={contUnit} onChange={(e) => setContUnit(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121]"
                 style={{ fontSize: '0.9rem' }}>
                 <option value="g">g</option>

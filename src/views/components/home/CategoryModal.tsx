@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useDialogBehavior } from '../../../utils/useDialog';
 import { X, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
@@ -15,7 +16,9 @@ interface CategoryModalProps {
 
 export function CategoryModal({ category, products, onClose, onAddToCart }: CategoryModalProps) {
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
+  const panelRef = useRef<HTMLDivElement>(null);
   useScrollLock(category !== null);
+  useDialogBehavior(category !== null, onClose, panelRef);
 
   if (!category) return null;
 
@@ -35,7 +38,7 @@ export function CategoryModal({ category, products, onClose, onAddToCart }: Cate
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-8" onClick={onClose}>
-      <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={`Categoría ${category.name}`} className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div className="flex items-center gap-3">
             <div className={`w-10 h-10 rounded-full flex items-center justify-center ${category.color} ${category.border} border-2`}>
@@ -48,7 +51,7 @@ export function CategoryModal({ category, products, onClose, onAddToCart }: Cate
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+          <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
             <X size={20} className="text-gray-500" />
           </button>
         </div>

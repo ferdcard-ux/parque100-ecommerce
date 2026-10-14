@@ -1,8 +1,9 @@
 /**
  * @fileoverview Modal de cancelacion de pedido con motivo obligatorio.
  */
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X } from 'lucide-react';
+import { useDialogBehavior } from '../../../utils/useDialog';
 import { CANCEL_REASONS, CANCEL_REFUND_NOTICE } from '../../../utils/constants';
 
 const CUSTOM_OPTION = 'Otro motivo';
@@ -30,21 +31,23 @@ export function CancelOrderModal({ orderId, saving, error, onClose, onConfirm, r
   const isCustom = reason === CUSTOM_OPTION;
   const motivo = isCustom ? custom.trim() : reason;
   const valid = motivo.length > 0 && motivo.length <= 255;
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(true, onClose, panelRef);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={`Cancelar pedido ${orderId}`} className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>Cancelar pedido #{orderId}</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500" aria-label="Cerrar">
             <X size={15} />
           </button>
         </div>
-        {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{error}</div>}
+        {error && <div role="alert" className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{error}</div>}
         <p className="text-gray-500 mb-3" style={{ fontSize: '0.85rem' }}>Indica el motivo de la cancelación (obligatorio):</p>
-        <div className="flex flex-col gap-2 mb-3">
+        <div role="radiogroup" aria-label="Motivo de cancelación" className="flex flex-col gap-2 mb-3">
           {[...reasons, CUSTOM_OPTION].map((r) => (
             <label key={r} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border cursor-pointer transition-colors ${reason === r ? 'border-[#C62828] bg-[#C62828]/5' : 'border-gray-200 hover:border-gray-300'}`}>
               <input
@@ -64,6 +67,7 @@ export function CancelOrderModal({ orderId, saving, error, onClose, onConfirm, r
             onChange={(e) => setCustom(e.target.value)}
             maxLength={255}
             placeholder="Describe el motivo"
+            aria-label="Describe el motivo"
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#C62828] mb-3"
             style={{ fontSize: '0.9rem' }}
           />

@@ -197,6 +197,10 @@ export function OrdersPage() {
               <div
                 key={order.ID_Pedido}
                 onClick={() => navigate(`/compras/${order.ID_Pedido}`)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/compras/${order.ID_Pedido}`); } }}
+                role="link"
+                tabIndex={0}
+                aria-label={`Ver detalle del pedido ${order.ID_Pedido}, estado ${order.Estado}`}
                 className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-[#C62828]/20 transition-all cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-3">
