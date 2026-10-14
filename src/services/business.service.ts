@@ -3,9 +3,7 @@
  * Acceso a la ficha del negocio contra el backend (GET/PUT /business).
  */
 import type { Business, BusinessUpdate } from '../models';
-
-/** URL base de la API REST del backend. */
-const API = 'http://localhost:3001/api';
+import { API_BASE as API, authHeaders } from './api';
 
 /**
  * Servicio de datos del negocio.
@@ -41,7 +39,7 @@ export const businessService = {
     try {
       const response = await fetch(`${API}/business`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify(data),
       });
       if (!response.ok) {

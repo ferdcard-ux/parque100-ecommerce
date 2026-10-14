@@ -2,8 +2,7 @@
  * @fileoverview Servicio para consultar y actualizar datos de entrega del usuario.
  */
 import type { UserDeliveryDetails } from '../models';
-
-const API = 'http://localhost:3001/api';
+import { API_BASE as API, authHeaders } from './api';
 
 interface ApiDeliveryDetails {
   Telefono: string | number | null;
@@ -70,7 +69,7 @@ export const userService = {
    * @throws {Error} Si el servidor rechaza o no puede completar la consulta.
    */
   async getDeliveryDetails(id: number): Promise<UserDeliveryDetails> {
-    const response = await fetch(`${API}/users/${id}`);
+    const response = await fetch(`${API}/users/${id}`, { headers: authHeaders() });
     if (!response.ok) {
       throw new Error(await getErrorMessage(response, 'No fue posible cargar los datos de entrega.'));
     }
@@ -91,7 +90,7 @@ export const userService = {
   ): Promise<UserDeliveryDetails> {
     const response = await fetch(`${API}/users/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         Telefono: details.phone,
         Torre_Bloque: details.tower,
@@ -116,7 +115,7 @@ export const userService = {
   async updateProfile(id: number, data: ProfileData): Promise<ApiUserRow> {
     const response = await fetch(`${API}/users/${id}/profile`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -132,7 +131,7 @@ export const userService = {
    * @throws {Error} Si el servidor rechaza la consulta.
    */
   async getAllUsers(): Promise<ApiUserRow[]> {
-    const response = await fetch(`${API}/users`);
+    const response = await fetch(`${API}/users`, { headers: authHeaders() });
     if (!response.ok) {
       throw new Error(await getErrorMessage(response, 'No fue posible cargar los clientes.'));
     }
@@ -149,7 +148,7 @@ export const userService = {
   async createUser(data: AdminUserData & { Contrasena: string }): Promise<number> {
     const response = await fetch(`${API}/users`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
     const body = await response.json().catch(() => null);
@@ -170,7 +169,7 @@ export const userService = {
   async updateUser(id: number, data: AdminUserData): Promise<void> {
     const response = await fetch(`${API}/users/${id}/admin`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(data),
     });
     if (!response.ok) {
@@ -186,7 +185,7 @@ export const userService = {
    * @throws {Error} Si tiene pedidos (409) o falla la eliminacion.
    */
   async deleteUser(id: number): Promise<void> {
-    const response = await fetch(`${API}/users/${id}`, { method: 'DELETE' });
+    const response = await fetch(`${API}/users/${id}`, { method: 'DELETE', headers: authHeaders() });
     if (!response.ok) {
       throw new Error(await getErrorMessage(response, 'No fue posible eliminar el usuario.'));
     }
@@ -200,7 +199,7 @@ export const userService = {
    * @throws {Error} Si el servidor rechaza la consulta.
    */
   async getPermissions(id: number): Promise<UserPermissions> {
-    const response = await fetch(`${API}/users/${id}/permissions`);
+    const response = await fetch(`${API}/users/${id}/permissions`, { headers: authHeaders() });
     if (!response.ok) {
       throw new Error(await getErrorMessage(response, 'No fue posible cargar los permisos.'));
     }
@@ -218,7 +217,7 @@ export const userService = {
   async updatePermissions(id: number, puede_cancelar: boolean): Promise<UserPermissions> {
     const response = await fetch(`${API}/users/${id}/permissions`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({ puede_cancelar }),
     });
     if (!response.ok) {

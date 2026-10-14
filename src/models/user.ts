@@ -19,6 +19,8 @@ export interface User {
   role: UserRole;
   /** Foto de perfil (dataURL) o null. */
   photo: string | null;
+  /** Token JWT de la sesion (se envia como `Authorization: Bearer`). */
+  token?: string | null;
 }
 
 /** Roles soportados por la aplicacion. */

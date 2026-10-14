@@ -1,9 +1,10 @@
 /**
  * @fileoverview Rutas de productos (modulo principal del catalogo).
- * Capa de enrutamiento (patron MVC - Router) para `productController`.
+ * Lectura publica; escritura exclusiva del administrador.
  */
 import { Router } from 'express';
 import productController from '../controllers/product.controller.js';
+import { requireAuth, requireRole } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -13,13 +14,13 @@ router.get('/products', productController.list);
 /** GET /api/products/:id - Detalle de un producto. */
 router.get('/products/:id', productController.getById);
 
-/** POST /api/products - Crea un producto. */
-router.post('/products', productController.create);
+/** POST /api/products - Crea un producto (admin). */
+router.post('/products', requireAuth, requireRole('admin'), productController.create);
 
-/** PUT /api/products/:id - Actualiza un producto. */
-router.put('/products/:id', productController.update);
+/** PUT /api/products/:id - Actualiza un producto (admin). */
+router.put('/products/:id', requireAuth, requireRole('admin'), productController.update);
 
-/** DELETE /api/products/:id - Elimina un producto. */
-router.delete('/products/:id', productController.remove);
+/** DELETE /api/products/:id - Elimina un producto (admin). */
+router.delete('/products/:id', requireAuth, requireRole('admin'), productController.remove);
 
 export default router;

@@ -4,9 +4,7 @@
  * (simulada en el servidor) y con el flujo Nequi (tambien simulado).
  */
 import type { CardPaymentData, PaymentResult, PaymentMethodType } from '../models';
-
-/** URL base de la API REST del backend. */
-const API = 'http://localhost:3001/api';
+import { API_BASE as API, authHeaders } from './api';
 
 /**
  * Servicio de pagos.
@@ -23,7 +21,7 @@ export const paymentService = {
   async processCardPayment(data: CardPaymentData, amount: number): Promise<PaymentResult> {
     const res = await fetch(`${API}/payments/process`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify({
         cardNumber: data.cardNumber,
         expiryDate: data.expiry,

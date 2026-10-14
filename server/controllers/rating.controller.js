@@ -62,7 +62,7 @@ export const ratingController = {
    */
   async create(req, res) {
     try {
-      const id = await ratingModel.create(req.body || {});
+      const id = await ratingModel.create({ ...(req.body || {}), ID_Usuario: Number(req.user?.id) });
       res.status(201).json({ id, message: 'Calificacion guardada' });
     } catch (err) {
       res.status(err.statusCode || 500).json({ error: err.message });
@@ -84,7 +84,7 @@ export const ratingController = {
       if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({ error: 'ID de calificacion invalido.' });
       }
-      const updated = await ratingModel.updateById(id, req.body || {});
+      const updated = await ratingModel.updateById(id, { ...(req.body || {}), ID_Usuario: Number(req.user?.id) });
       if (updated === null) return res.status(404).json({ error: 'Calificacion no encontrada' });
       res.json({ message: 'Resena actualizada' });
     } catch (err) {

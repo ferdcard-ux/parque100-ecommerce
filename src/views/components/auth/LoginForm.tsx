@@ -216,7 +216,7 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
               )}
               {recoverResult && (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>
-                  Tu clave temporal es: <strong>{recoverResult}</strong>. Inicia sesión y cámbiala desde tu perfil.
+                  {recoverResult}
                 </div>
               )}
               <div>

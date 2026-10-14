@@ -3,6 +3,7 @@
  */
 import userModel from '../models/user.model.js';
 import permissionModel from '../models/permission.model.js';
+import { hashPassword } from './auth.controller.js';
 
 const MAX_USER_ID = 2147483647;
 
@@ -116,7 +117,7 @@ export const usersController = {
       if (data.Telefono !== null && await userModel.existsByPhone(data.Telefono)) {
         return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
       }
-      const id = await userModel.createByAdmin({ ...data, Contrasena });
+      const id = await userModel.createByAdmin({ ...data, Contrasena: await hashPassword(Contrasena) });
       res.status(201).json({ id, message: 'Usuario creado' });
     } catch (err) {
       if (err.code === 'ER_DUP_ENTRY') {

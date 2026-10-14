@@ -1,6 +1,5 @@
 import type { Product, Category, AdminProduct } from '../models';
-
-const API = 'http://localhost:3001/api';
+import { API_BASE as API, authHeaders } from './api';
 
 const PEXELS = (id: number, file?: string) =>
   `https://images.pexels.com/photos/${id}/${file || `pexels-photo-${id}.jpeg`}?auto=compress&cs=tinysrgb&w=400`;
@@ -155,7 +154,7 @@ export const productService = {
 
   async deleteAdminProduct(id: number): Promise<void> {
     try {
-      await fetch(`${API}/products/${id}`, { method: 'DELETE' });
+      await fetch(`${API}/products/${id}`, { method: 'DELETE', headers: authHeaders() });
     } catch {
       // silent
     }
@@ -164,7 +163,7 @@ export const productService = {
   async createProduct(product: { ID_Producto: string; Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Precio_Anterior?: number | null; Marca?: string | null; Contenido_Cantidad?: number | null; Contenido_Unidad?: string | null; Embalaje?: string | null; Ingredientes?: string | null; Conservacion?: string | null; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
     await fetch(`${API}/products`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(product),
     });
   },
@@ -172,7 +171,7 @@ export const productService = {
   async updateProduct(id: string, product: { Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Precio_Anterior?: number | null; Marca?: string | null; Contenido_Cantidad?: number | null; Contenido_Unidad?: string | null; Embalaje?: string | null; Ingredientes?: string | null; Conservacion?: string | null; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
     await fetch(`${API}/products/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(product),
     });
   },

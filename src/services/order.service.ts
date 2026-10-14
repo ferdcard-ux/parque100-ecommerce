@@ -5,9 +5,7 @@
  */
 import type { Order, DeliveryAddress, PaymentMethodType, CartItem, ApiOrder, OrderEstado } from '../models';
 import { generateOrderId, calculateShipping } from '../utils';
-
-/** URL base de la API REST del backend. */
-const API = 'http://localhost:3001/api';
+import { API_BASE as API, authHeaders } from './api';
 
 /** Extras opcionales persistidos junto al pedido. */
 export interface OrderExtras {
@@ -63,7 +61,7 @@ export const orderService = {
     try {
       response = await fetch(`${API}/orders`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           Total: Math.round(order.total),
           Tipo_Entrega: 'domicilio',
@@ -109,7 +107,7 @@ export const orderService = {
    */
   async getAll(): Promise<ApiOrder[]> {
     try {
-      const response = await fetch(`${API}/orders`);
+      const response = await fetch(`${API}/orders`, { headers: authHeaders() });
       if (!response.ok) throw new Error('No fue posible cargar los pedidos.');
       return (await response.json()) as ApiOrder[];
     } catch (err) {
@@ -128,7 +126,7 @@ export const orderService = {
    */
   async getById(id: string | number): Promise<ApiOrder | null> {
     try {
-      const response = await fetch(`${API}/orders/${id}`);
+      const response = await fetch(`${API}/orders/${id}`, { headers: authHeaders() });
       if (response.status === 404) return null;
       if (!response.ok) throw new Error('No fue posible cargar el pedido.');
       return (await response.json()) as ApiOrder;
@@ -151,7 +149,7 @@ export const orderService = {
     try {
       const response = await fetch(`${API}/orders/${id}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ Estado: estado }),
       });
       if (!response.ok) {
@@ -182,7 +180,7 @@ export const orderService = {
     try {
       const response = await fetch(`${API}/orders/${id}/cancel`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({ Motivo: motivo, Actor: actor, ActorId: actorId }),
       });
       if (!response.ok) {
