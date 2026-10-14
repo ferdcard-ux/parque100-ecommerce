@@ -1,31 +1,30 @@
 import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
-import type { AdminProduct } from '../../../models';
+import type { AdminProduct, ProductUpsert } from '../../../models';
 import { useScrollLock } from '../../../utils/useScrollLock';
 import { useDialogBehavior } from '../../../utils/useDialog';
+import { useProductController } from '../../../controllers';
 import { ProductImageInput } from './ProductImageInput';
 
 interface EditProductModalProps {
   product: AdminProduct | null;
   onClose: () => void;
-  onUpdate: (id: string, data: {
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => Promise<void>;
+  onUpdate: (id: string, data: ProductUpsert) => Promise<void>;
 }
 
 export function EditProductModal({ product, onClose, onUpdate }: EditProductModalProps) {
   useScrollLock(product !== null);
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogBehavior(product !== null, onClose, panelRef);
+  const { products } = useProductController();
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('');
   const [cantidad, setCantidad] = useState('');
   const [precio, setPrecio] = useState('');
+  const [precioAnterior, setPrecioAnterior] = useState('');
+  const [marca, setMarca] = useState('');
+  const [contQty, setContQty] = useState('');
+  const [contUnit, setContUnit] = useState('g');
   const [imagen, setImagen] = useState('');
   const [saving, setSaving] = useState(false);
 
@@ -35,9 +34,14 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
       setCategoria(product.category);
       setCantidad(String(product.quantity));
       setPrecio(String(product.price));
+      const full = products.find((p) => String(p.id) === String(product.id));
+      setPrecioAnterior(full?.previousPrice != null ? String(full.previousPrice) : '');
+      setMarca(full?.brand ?? '');
+      setContQty(full?.contentQty != null ? String(full.contentQty) : '');
+      setContUnit(full?.contentUnit || 'g');
       setImagen('');
     }
-  }, [product]);
+  }, [product, products]);
 
   if (!product) return null;
 
@@ -57,6 +61,10 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
         Descripcion: nombre.trim(),
         Imagen: imagen.trim() || undefined,
         Precio_Venta: parseInt(precio),
+        Precio_Anterior: precioAnterior ? parseInt(precioAnterior) : null,
+        Marca: marca.trim() || null,
+        Contenido_Cantidad: contQty ? Number(contQty) : null,
+        Contenido_Unidad: contQty ? contUnit : null,
         Stock_Minimo: parseInt(cantidad),
         ID_Categoria: catId,
       });
@@ -67,8 +75,8 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Editar producto" className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-6 overflow-y-auto">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Editar producto" className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl my-auto max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[#212121] font-bold" style={{ fontSize: '1.1rem' }}>Editar Producto</h2>
           <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
@@ -103,6 +111,42 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="edit-precio-ant" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio anterior (opcional)</label>
+              <input id="edit-precio-ant" type="number" placeholder="Ej: 5200" value={precioAnterior} onChange={(e) => setPrecioAnterior(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+                style={{ fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-marca" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Marca (opcional)</label>
+              <input id="edit-marca" type="text" placeholder="Ej: Colanta" value={marca} onChange={(e) => setMarca(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+                style={{ fontSize: '0.9rem' }}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="edit-contenido" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Contenido (opcional)</label>
+              <input id="edit-contenido" type="number" placeholder="Ej: 500" value={contQty} onChange={(e) => setContQty(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+                style={{ fontSize: '0.9rem' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="edit-unidad" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Unidad</label>
+              <select id="edit-unidad" value={contUnit} onChange={(e) => setContUnit(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121]"
+                style={{ fontSize: '0.9rem' }}>
+                <option value="g">g</option>
+                <option value="ml">ml</option>
+                <option value="un">un</option>
+                <option value="kg">kg</option>
+              </select>
+            </div>
           </div>
           <ProductImageInput value={imagen} onChange={setImagen} />
           <div className="flex gap-3 mt-2">

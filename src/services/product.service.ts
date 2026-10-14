@@ -1,4 +1,4 @@
-import type { Product, Category, AdminProduct } from '../models';
+import type { Product, Category, AdminProduct, ProductUpsert, ProductCreate } from '../models';
 import { API_BASE as API, authHeaders } from './api';
 
 const PEXELS = (id: number, file?: string) =>
@@ -196,7 +196,7 @@ export const productService = {
     }
   },
 
-  async createProduct(product: { ID_Producto: string; Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Precio_Anterior?: number | null; Marca?: string | null; Contenido_Cantidad?: number | null; Contenido_Unidad?: string | null; Embalaje?: string | null; Ingredientes?: string | null; Conservacion?: string | null; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
+  async createProduct(product: ProductCreate): Promise<void> {
     let res: Response;
     try {
       res = await fetch(`${API}/products`, {
@@ -213,7 +213,7 @@ export const productService = {
     }
   },
 
-  async updateProduct(id: string, product: { Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Precio_Anterior?: number | null; Marca?: string | null; Contenido_Cantidad?: number | null; Contenido_Unidad?: string | null; Embalaje?: string | null; Ingredientes?: string | null; Conservacion?: string | null; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
+  async updateProduct(id: string, product: ProductUpsert): Promise<void> {
     let res: Response;
     try {
       res = await fetch(`${API}/products/${id}`, {
