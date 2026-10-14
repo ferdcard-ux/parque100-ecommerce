@@ -22,13 +22,14 @@ export function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardP
         <p className="text-[#C62828] font-bold mt-1" style={{ fontSize: '1rem' }}>{formatPrice(item.price)}</p>
       </div>
       <div className="flex flex-col items-end gap-3 shrink-0">
-        <button onClick={() => onRemove(item.id)} className="text-gray-300 hover:text-[#C62828] transition-colors">
+        <button onClick={() => onRemove(item.id)} aria-label={`Quitar ${item.name} del carrito`} className="min-w-10 min-h-10 p-2 rounded-lg text-gray-300 hover:text-[#C62828] hover:bg-red-50 transition-colors flex items-center justify-center">
           <Trash2 size={16} />
         </button>
         <div className="flex items-center gap-2 bg-[#F5F5F5] rounded-xl px-1 py-1">
           <button
             onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-            className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-[#C62828] hover:text-white transition-all"
+            aria-label={`Quitar uno de ${item.name}`}
+            className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-[#C62828] hover:text-white transition-all"
           >
             <Minus size={12} />
           </button>
@@ -37,7 +38,8 @@ export function CartItemCard({ item, onRemove, onUpdateQuantity }: CartItemCardP
             onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
             disabled={atMax}
             title={atMax ? `Máximo ${item.stock} disponibles` : 'Agregar uno'}
-            className="w-7 h-7 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-[#C62828] hover:text-white transition-all disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-current"
+            aria-label={atMax ? `${item.name}: máximo ${item.stock} disponibles` : `Agregar uno de ${item.name}`}
+            className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center hover:bg-[#C62828] hover:text-white transition-all disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-current"
           >
             <Plus size={12} />
           </button>

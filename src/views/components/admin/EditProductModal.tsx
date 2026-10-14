@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import type { AdminProduct } from '../../../models';
 import { useScrollLock } from '../../../utils/useScrollLock';
+import { useDialogBehavior } from '../../../utils/useDialog';
 import { ProductImageInput } from './ProductImageInput';
 
 interface EditProductModalProps {
@@ -19,6 +20,8 @@ interface EditProductModalProps {
 
 export function EditProductModal({ product, onClose, onUpdate }: EditProductModalProps) {
   useScrollLock(product !== null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(product !== null, onClose, panelRef);
   const [nombre, setNombre] = useState('');
   const [categoria, setCategoria] = useState('');
   const [cantidad, setCantidad] = useState('');
@@ -65,38 +68,38 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4">
-      <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Editar producto" className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-[#212121] font-bold" style={{ fontSize: '1.1rem' }}>Editar Producto</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
+          <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
             <X size={18} className="text-gray-500" />
           </button>
         </div>
         <div className="flex flex-col gap-4">
           <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Nombre del producto</label>
-            <input type="text" placeholder="Ej: Manzanas x5" value={nombre} onChange={(e) => setNombre(e.target.value)}
+            <label htmlFor="edit-nombre" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Nombre del producto</label>
+            <input id="edit-nombre" type="text" placeholder="Ej: Manzanas x5" value={nombre} onChange={(e) => setNombre(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Categoría</label>
-            <input type="text" placeholder="Ej: Frutas" value={categoria} onChange={(e) => setCategoria(e.target.value)}
+            <label htmlFor="edit-categoria" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Categoría</label>
+            <input id="edit-categoria" type="text" placeholder="Ej: Frutas" value={categoria} onChange={(e) => setCategoria(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Cantidad</label>
-            <input type="number" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(e.target.value)}
+            <label htmlFor="edit-cantidad" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Cantidad</label>
+            <input id="edit-cantidad" type="number" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div>
-            <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio (COP)</label>
-            <input type="number" placeholder="Ej: 4800" value={precio} onChange={(e) => setPrecio(e.target.value)}
+            <label htmlFor="edit-precio" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio (COP)</label>
+            <input id="edit-precio" type="number" placeholder="Ej: 4800" value={precio} onChange={(e) => setPrecio(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />

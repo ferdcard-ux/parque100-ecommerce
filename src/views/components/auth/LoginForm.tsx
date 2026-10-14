@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { Mail, Lock, Eye, EyeOff, Store, UserCog, X, ArrowLeft } from 'lucide-react';
 import type { LoginCredentials } from '../../../models';
 import { isValidEmail } from '../../../utils';
 import { useScrollLock } from '../../../utils/useScrollLock';
+import { useDialogBehavior } from '../../../utils/useDialog';
 import { authService } from '../../../services';
 
 interface LoginFormProps {
@@ -34,6 +35,10 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
 
   const [recoverOpen, setRecoverOpen] = useState(false);
   useScrollLock(recoverOpen);
+  const recoverPanelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(recoverOpen, () => setRecoverOpen(false), recoverPanelRef);
+  const adminPanelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(adminModalOpen, () => setAdminModalOpen(false), adminPanelRef);
   const [recoverEmail, setRecoverEmail] = useState('');
   const [recoverResult, setRecoverResult] = useState<string | null>(null);
   const [recoverError, setRecoverError] = useState<string | null>(null);
@@ -121,17 +126,17 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
               </div>
             )}
             {error && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.875rem' }}>
+              <div role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.875rem' }}>
                 {error}
               </div>
             )}
 
             <form onSubmit={handleLogin} className="flex flex-col gap-4">
               <div>
-                <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Correo electrónico</label>
+                <label htmlFor="login-email" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Correo electrónico</label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com"
+                  <input id="login-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.9rem' }}
                   />
@@ -139,14 +144,14 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
               </div>
 
               <div>
-                <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Contraseña</label>
+                <label htmlFor="login-password" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Contraseña</label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
+                  <input id="login-password" type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
                     className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.9rem' }}
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
@@ -203,25 +208,25 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setRecoverOpen(false); }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+          <div ref={recoverPanelRef} role="dialog" aria-modal="true" aria-label="Recuperar contraseña" className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>Recuperar contraseña</h3>
-              <button type="button" onClick={() => setRecoverOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
+              <button type="button" onClick={() => setRecoverOpen(false)} aria-label="Cerrar" className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
                 <X size={15} />
               </button>
             </div>
             <form onSubmit={handleRecover} className="px-6 py-6 flex flex-col gap-4">
               {recoverError && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{recoverError}</div>
+                <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{recoverError}</div>
               )}
               {recoverResult && (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>
+                <div role="status" className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>
                   {recoverResult}
                 </div>
               )}
               <div>
-                <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Correo de la cuenta</label>
-                <input type="email" value={recoverEmail} onChange={(e) => setRecoverEmail(e.target.value)} placeholder="correo@ejemplo.com"
+                <label htmlFor="recover-email" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Correo de la cuenta</label>
+                <input id="recover-email" type="email" value={recoverEmail} onChange={(e) => setRecoverEmail(e.target.value)} placeholder="correo@ejemplo.com"
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121]"
                   style={{ fontSize: '0.875rem' }}
                 />
@@ -238,7 +243,7 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setAdminModalOpen(false); }}
         >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
+          <div ref={adminPanelRef} role="dialog" aria-modal="true" aria-label="Inicio de sesión administrativo" className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-[#C62828]/10 flex items-center justify-center">
@@ -249,37 +254,37 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
                   <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>Ingresa tus credenciales de administrador</p>
                 </div>
               </div>
-              <button type="button" onClick={() => setAdminModalOpen(false)} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
+              <button type="button" onClick={() => setAdminModalOpen(false)} aria-label="Cerrar" className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors">
                 <X size={15} />
               </button>
             </div>
 
             {adminError && (
-              <div className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>
+              <div role="alert" className="mx-6 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>
                 {adminError}
               </div>
             )}
 
             <form onSubmit={handleAdminLogin} className="px-6 py-6 flex flex-col gap-4">
               <div>
-                <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Correo</label>
+                <label htmlFor="admin-email" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Correo</label>
                 <div className="relative">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="email" required value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="admin@ejemplo.com"
+                  <input id="admin-email" type="email" required value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="admin@ejemplo.com"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.875rem' }}
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Contraseña</label>
+                <label htmlFor="admin-password" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Contraseña</label>
                 <div className="relative">
                   <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type={showAdminPassword ? 'text' : 'password'} required value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••"
+                  <input id="admin-password" type={showAdminPassword ? 'text' : 'password'} required value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••"
                     className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.875rem' }}
                   />
-                  <button type="button" onClick={() => setShowAdminPassword(!showAdminPassword)} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400">
+                  <button type="button" onClick={() => setShowAdminPassword(!showAdminPassword)} aria-label={showAdminPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400">
                     {showAdminPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
                 </div>

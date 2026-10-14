@@ -2,10 +2,11 @@
  * @fileoverview Gestion de clientes (panel admin).
  * CRUD completo: crear, editar (incluido rol) y eliminar usuarios.
  */
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Pencil, Trash2, Plus, X } from 'lucide-react';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { userService, type ApiUserRow, type AdminUserData } from '../../services/user.service';
+import { useDialogBehavior } from '../../utils/useDialog';
 
 const ROLES = ['cliente', 'domiciliario', 'admin'] as const;
 
@@ -42,6 +43,8 @@ interface UserModalProps {
 
 function UserModal({ title, initial, showPassword, error, saving, onClose, onSubmit }: UserModalProps) {
   const [form, setForm] = useState(initial);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(true, onClose, panelRef);
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
 
@@ -49,14 +52,14 @@ function UserModal({ title, initial, showPassword, error, saving, onClose, onSub
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 overflow-y-auto" style={{ background: 'rgba(0,0,0,0.45)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 my-auto">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={title} className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto p-6 my-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>{title}</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500" aria-label="Cerrar">
             <X size={15} />
           </button>
         </div>
-        {error && <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{error}</div>}
+        {error && <div role="alert" className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{error}</div>}
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="flex flex-col gap-3">
           <label className="block">
             <span className="text-gray-500 block mb-1" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Nombre</span>
@@ -94,6 +97,29 @@ function UserModal({ title, initial, showPassword, error, saving, onClose, onSub
             {saving ? 'Guardando...' : 'Guardar'}
           </button>
         </form>
+      </div>
+    </div>
+  );
+}
+
+/** Confirmacion de borrado de usuario. */
+function DeleteConfirm({ nombre, onClose, onConfirm }: { nombre: string; onClose: () => void; onConfirm: () => void }) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogBehavior(true, onClose, panelRef);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Eliminar usuario" className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
+        <h3 className="text-[#212121] font-bold mb-2">Eliminar usuario</h3>
+        <p className="text-gray-500 mb-6" style={{ fontSize: '0.9rem' }}>
+          ¿Eliminar a <strong>{nombre}</strong>? No es posible si tiene pedidos asociados.
+        </p>
+        <div className="flex gap-2">
+          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-full py-2.5 hover:bg-gray-50 transition-colors" style={{ fontWeight: 600 }}>Cancelar</button>
+          <button onClick={onConfirm} className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2.5 transition-colors" style={{ fontWeight: 600 }}>Eliminar</button>
+        </div>
       </div>
     </div>
   );
@@ -341,22 +367,7 @@ export function AdminClientsPage() {
           initial={{ Nombre: editing.Nombre, Correo: editing.Correo, Rol: normalizeRole(editing.Rol), Telefono: editing.Telefono === null ? '' : String(editing.Telefono), Contrasena: '' }}
           onClose={() => { setModal(null); setEditing(null); }} onSubmit={handleUpdate} />
       )}
-      {deleting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
-          onClick={(e) => { if (e.target === e.currentTarget) setDeleting(null); }}
-        >
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-            <h3 className="text-[#212121] font-bold mb-2">Eliminar usuario</h3>
-            <p className="text-gray-500 mb-6" style={{ fontSize: '0.9rem' }}>
-              ¿Eliminar a <strong>{deleting.Nombre}</strong>? No es posible si tiene pedidos asociados.
-            </p>
-            <div className="flex gap-2">
-              <button onClick={() => setDeleting(null)} className="flex-1 border border-gray-200 rounded-full py-2.5 hover:bg-gray-50 transition-colors" style={{ fontWeight: 600 }}>Cancelar</button>
-              <button onClick={handleDelete} className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2.5 transition-colors" style={{ fontWeight: 600 }}>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      )}
+      {deleting && (<DeleteConfirm nombre={deleting.Nombre} onClose={() => setDeleting(null)} onConfirm={handleDelete} />)}
     </AdminPageShell>
   );
 }

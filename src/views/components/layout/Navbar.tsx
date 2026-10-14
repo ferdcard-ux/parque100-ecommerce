@@ -165,7 +165,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
 
           <div className="flex items-center gap-2">
             {isLoggedIn && <UserNotifications userId={user?.id ?? null} />}
-            <Link to="/favoritos" className="relative p-2 rounded-full hover:bg-red-50 transition-colors">
+            <Link to="/favoritos" aria-label={`Favoritos${favoriteCount > 0 ? `, ${favoriteCount} productos` : ''}`} className="relative p-2 rounded-full hover:bg-red-50 transition-colors">
               <Heart size={22} className="text-[#C62828]" />
               {favoriteCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#C62828] text-white flex items-center justify-center" style={{ fontSize: '0.65rem', fontWeight: 700 }}>
@@ -173,7 +173,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                 </span>
               )}
             </Link>
-            <Link to="/cart" className="relative p-2 rounded-full hover:bg-red-50 transition-colors">
+            <Link to="/cart" aria-label={`Carrito${cartCount > 0 ? `, ${cartCount} productos` : ''}`} className="relative p-2 rounded-full hover:bg-red-50 transition-colors">
               <ShoppingCart size={22} className="text-[#212121]" />
               {cartCount > 0 && (
                 <span
@@ -187,7 +187,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
 
             {isLoggedIn && user ? (
               <div className="relative" ref={userMenuRef}>
-                <button onClick={() => setUserMenuOpen(!userMenuOpen)}
+                <button onClick={() => setUserMenuOpen(!userMenuOpen)} aria-expanded={userMenuOpen} aria-haspopup="menu"
                   className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C62828] text-white font-medium hover:bg-[#b71c1c] transition-colors"
                   style={{ fontSize: '0.875rem' }}
                 >
