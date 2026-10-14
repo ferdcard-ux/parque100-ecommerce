@@ -5,6 +5,7 @@
  */
 import { useState, useCallback, useEffect } from 'react';
 import type { User, LoginCredentials, RegisterData } from '../models';
+import { normalizeUserRole } from '../models';
 import { authService, userService } from '../services';
 import { setAuthToken } from '../services/api';
 
@@ -165,7 +166,7 @@ export function useAuthController() {
       Foto: data.photo ?? null,
     });
     const parts = (row.Nombre || '').split(' ');
-    const role = row.Rol === 'admin' ? 'admin' : row.Rol === 'empleado' || row.Rol === 'domiciliario' ? 'domiciliario' : 'cliente';
+    const role = normalizeUserRole(row.Rol);
     const updated: User = {
       id: row.ID_Usuario,
       firstName: parts[0] || '',

@@ -32,7 +32,7 @@ export function UserNotifications({ userId }: UserNotificationsProps) {
 
   return (
     <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((v) => !v)} className="relative p-2 rounded-full hover:bg-red-50 transition-colors" aria-label="Notificaciones de pedidos">
+      <button onClick={() => setOpen((v) => !v)} className="relative p-2 rounded-full hover:bg-red-50 transition-colors" aria-label="Notificaciones de pedidos" aria-expanded={open}>
         <Bell size={22} className="text-[#212121]" />
         {active.length > 0 && (
           <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#C62828] text-white flex items-center justify-center" style={{ fontSize: '0.65rem', fontWeight: 700 }}>

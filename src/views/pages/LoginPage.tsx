@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useApp } from '../../App';
 import { LoginForm } from '../components/auth/LoginForm';
-import { isValidEmail } from '../../utils';
+import { isValidEmail, isSafeRedirectPath } from '../../utils';
 
 export function LoginPage() {
   const { login, recoverPassword, isLoggedIn, user } = useApp();
@@ -14,7 +14,8 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
 
-  const nextPath = searchParams.get('next') || '/';
+  const rawNext = searchParams.get('next');
+  const nextPath = isSafeRedirectPath(rawNext) ? rawNext : '/';
   const switchMode = searchParams.get('mode') === 'switch';
 
   const handleLogin = async (credentials: { email: string; password: string; remember?: boolean }) => {
@@ -29,7 +30,7 @@ export function LoginPage() {
     }
     try {
       await login(credentials);
-      navigate(nextPath.startsWith('/') ? nextPath : '/');
+      navigate(nextPath);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Error al iniciar sesión.';
       setError(message);
@@ -39,7 +40,7 @@ export function LoginPage() {
 
   const handleAdminLogin = async (credentials: { email: string; password: string; remember?: boolean }) => {
     await login(credentials);
-    navigate(nextPath.startsWith('/') ? nextPath : '/');
+    navigate(nextPath);
   };
 
   return (

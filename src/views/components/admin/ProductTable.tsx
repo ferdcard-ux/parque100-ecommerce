@@ -297,6 +297,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
           <div className="relative">
             <button onClick={() => setExportOpen((v) => !v)} disabled={busy !== null}
               title="Exportar inventario en PDF o Excel"
+              aria-expanded={exportOpen}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-[#212121] hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
               {busy === 'excel' || busy === 'pdf' || busy === 'template' ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Exportar
             </button>

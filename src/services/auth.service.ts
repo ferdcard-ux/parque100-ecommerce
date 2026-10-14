@@ -5,6 +5,7 @@
  * modelo `User` del cliente (arquitectura MVC - Service/DAO).
  */
 import type { User, UserRole, LoginCredentials, RegisterData } from '../models';
+import { normalizeUserRole } from '../models';
 import { API_BASE as API, setAuthToken } from './api';
 
 /**
@@ -15,9 +16,7 @@ import { API_BASE as API, setAuthToken } from './api';
  * @returns {UserRole} Rol normalizado.
  */
 function mapRole(raw: any): UserRole {
-  if (raw === 'admin') return 'admin';
-  if (raw === 'empleado' || raw === 'domiciliario') return 'domiciliario';
-  return 'cliente';
+  return normalizeUserRole(raw);
 }
 
 /**

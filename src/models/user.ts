@@ -26,6 +26,19 @@ export interface User {
 /** Roles soportados por la aplicacion. */
 export type UserRole = 'admin' | 'domiciliario' | 'cliente';
 
+/**
+ * Normaliza el rol crudo del backend al `UserRole` vigente.
+ * Legados: `empleado` -> domiciliario, `usuario`/null -> cliente.
+ *
+ * @param {unknown} raw - Rol crudo almacenado.
+ * @returns {UserRole} Rol normalizado.
+ */
+export function normalizeUserRole(raw: unknown): UserRole {
+  if (raw === 'admin') return 'admin';
+  if (raw === 'empleado' || raw === 'domiciliario') return 'domiciliario';
+  return 'cliente';
+}
+
 /** Datos de entrega persistentes asociados al usuario autenticado. */
 export interface UserDeliveryDetails {
   /** Telefono de contacto. */

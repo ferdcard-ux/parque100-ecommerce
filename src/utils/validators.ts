@@ -15,6 +15,23 @@ export function isValidEmail(email: string): boolean {
 }
 
 /**
+ * Indica si una ruta de retorno es segura para navegar tras el login.
+ * Solo rutas internas absolutas (`/...`); rechaza URLs relativas a
+ * protocolo (`//evil`) y barras invertidas.
+ *
+ * @param {string|null} path - Valor del parametro `next`.
+ * @returns {boolean} true si es una ruta interna segura.
+ */
+export function isSafeRedirectPath(path: string | null): path is string {
+  return (
+    typeof path === 'string' &&
+    path.startsWith('/') &&
+    !path.startsWith('//') &&
+    !path.includes('\\')
+  );
+}
+
+/**
  * Valida que la contrasena cumpla el minimo de seguridad (8+ chars).
  *
  * @param {string} password - Contrasena a validar.

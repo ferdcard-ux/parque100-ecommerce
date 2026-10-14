@@ -209,6 +209,7 @@ function ProfileWrapper() { return <Protected><ProfilePage /></Protected>; }
 function OrdersWrapper() { return <Protected><OrdersPage /></Protected>; }
 function OrderDetailWrapper() { return <Protected><OrderDetailPage /></Protected>; }
 function FavoritesWrapper() { return <Protected><FavoritesPage /></Protected>; }
+function PaymentSuccessWrapper() { return <Protected><PaymentSuccessPage /></Protected>; }
 
 /* ── App Component ── */
 export default function App() {
@@ -317,7 +318,7 @@ export default function App() {
     },
     { path: '/login', Component: LoginPage },
     { path: '/register', Component: RegisterPage },
-    { path: '/payment-success', Component: PaymentSuccessPage },
+    { path: '/payment-success', Component: PaymentSuccessWrapper },
     { path: '/admin', Component: () => <RequireStaff><AdminDashboardPage /></RequireStaff> },
     { path: '/admin/inventario', Component: () => <RequireAdmin><AdminWrapper /></RequireAdmin> },
     { path: '/admin/pedidos-pendientes', Component: () => <RequireStaff><AdminPendingOrdersPage /></RequireStaff> },
