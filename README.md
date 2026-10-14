@@ -113,3 +113,7 @@ Base URL: `http://localhost:3001/api`
 | [`Docs/guia-uso.md`](Docs/guia-uso.md) | Manual de usuario: funcionalidades y rutas |
 | [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md) | Estándares de codificación obligatorios |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historial de cambios del proyecto |
+
+## Herramientas externas
+
+- **[panel-parque100](https://github.com/ferdcard-ux/panel-parque100)** — panel de escritorio opcional (Python/tkinter, portable) para detectar e instalar dependencias y levantar MySQL, backend y frontend sin usar terminales. Se mantiene en su propio repositorio y **no forma parte de este entregable**.
