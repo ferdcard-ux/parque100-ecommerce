@@ -34,7 +34,7 @@ function normalize(text: string): string {
  * @returns Productos filtrados, categorias y estado de carga.
  */
 export function useCatalogController(category: string, query: string, sort: CatalogSort, opts?: { brand?: string; promoOnly?: boolean; minPrice?: number; maxPrice?: number }) {
-  const { products, categories, isLoading } = useProductController();
+  const { products, categories, isLoading, error, reload } = useProductController();
 
   const filtered = useMemo(() => {
     const q = normalize(query.trim());
@@ -72,7 +72,7 @@ export function useCatalogController(category: string, query: string, sort: Cata
     return [...set.values()].sort((a, b) => a.localeCompare(b));
   }, [products]);
 
-  return { products: filtered, categories, isLoading, brands };
+  return { products: filtered, categories, isLoading, error, reload, brands };
 }
 
 /** Cuenta por categoria para la cabecera del catalogo. */

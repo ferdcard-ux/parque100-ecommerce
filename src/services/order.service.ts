@@ -17,6 +17,9 @@ export interface OrderExtras {
   receipt?: string | null;
 }
 
+/** Evita crear el mismo pedido dos veces ante doble clic. */
+let createInFlight = false;
+
 /**
  * Servicio de pedidos.
  * @namespace orderService
@@ -40,6 +43,9 @@ export const orderService = {
     userId: number | null = null,
     extras: OrderExtras = {},
   ): Promise<Order> {
+    if (createInFlight) throw new Error('El pedido ya se esta procesando.');
+    createInFlight = true;
+    try {
     /** Suma de precio * cantidad de todas las lineas. */
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     /** Costo de envio segun umbral de envio gratis. */
@@ -97,6 +103,9 @@ export const orderService = {
     order.cashChange = extras.change ?? null;
     order.receiptDataUrl = extras.receipt ?? null;
     return order;
+    } finally {
+      createInFlight = false;
+    }
   },
 
   /**

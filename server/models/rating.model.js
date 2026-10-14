@@ -100,6 +100,30 @@ export const ratingModel = {
     if ((Tipo === 'pedido' || Tipo === 'envio') && !ID_Pedido) {
       throw createRatingError('ID_Pedido es obligatorio para esta calificacion.', 400);
     }
+    if (Tipo === 'pedido' || Tipo === 'envio') {
+      const userId = Number(ID_Usuario);
+      const orderId = Number(ID_Pedido);
+      if (!Number.isInteger(userId) || userId <= 0) {
+        throw createRatingError('Debes iniciar sesion para calificar.', 400);
+      }
+      if (!Number.isInteger(orderId) || orderId <= 0) {
+        throw createRatingError('ID_Pedido es obligatorio para esta calificacion.', 400);
+      }
+      const [orders] = await pool.query('SELECT ID_Usuario FROM pedidos WHERE ID_Pedido = ? LIMIT 1', [orderId]);
+      if (orders.length === 0) {
+        throw createRatingError('El pedido no existe.', 404);
+      }
+      if (Number(orders[0].ID_Usuario) !== userId) {
+        throw createRatingError('Solo puedes calificar tus propios pedidos.', 403);
+      }
+      const [existing] = await pool.query(
+        'SELECT ID_Calificacion FROM calificaciones WHERE Tipo = ? AND ID_Usuario = ? AND ID_Pedido = ? LIMIT 1',
+        [Tipo, userId, orderId],
+      );
+      if (existing.length > 0) {
+        throw createRatingError('Ya calificaste este pedido. Puedes editar tu resena.', 409);
+      }
+    }
     if (Tipo === 'producto') {
       const userId = Number(ID_Usuario);
       const orderId = Number(ID_Pedido);

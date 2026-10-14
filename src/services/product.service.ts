@@ -104,23 +104,29 @@ function mapAdminProduct(row: any): AdminProduct {
 
 export const productService = {
   async getAll(): Promise<Product[]> {
+    let res: Response;
     try {
-      const res = await fetch(`${API}/products`);
-      const data = await res.json();
-      return data.map(mapProduct);
+      res = await fetch(`${API}/products`);
     } catch {
-      return [];
+      throw new Error('No fue posible conectar con el servidor.');
     }
+    if (!res.ok) throw new Error('No fue posible cargar los productos.');
+    const data = await res.json().catch(() => null);
+    if (!Array.isArray(data)) throw new Error('Respuesta inesperada del servidor.');
+    return data.map(mapProduct);
   },
 
   async getById(id: number): Promise<Product | null> {
+    let res: Response;
     try {
-      const res = await fetch(`${API}/products/${id}`);
-      const data = await res.json();
-      return data.error ? null : mapProduct(data);
+      res = await fetch(`${API}/products/${id}`);
     } catch {
-      return null;
+      throw new Error('No fue posible conectar con el servidor.');
     }
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('No fue posible cargar el producto.');
+    const data = await res.json().catch(() => null);
+    return data?.error ? null : mapProduct(data);
   },
 
   async getByCategory(category: string): Promise<Product[]> {
@@ -129,50 +135,79 @@ export const productService = {
   },
 
   async getCategories(): Promise<Category[]> {
+    let res: Response;
     try {
-      const res = await fetch(`${API}/categories`);
-      const data = await res.json();
-      return data.map((row: any, i: number) => {
-        const name = normalizeCategory(row.Nombre_Categoria);
-        const style = CATEGORY_MAP[name] || { emoji: '📦', color: 'bg-gray-100 text-gray-700', border: 'border-gray-200' };
-        return { id: i + 1, name, ...style };
-      });
+      res = await fetch(`${API}/categories`);
     } catch {
-      return Object.entries(CATEGORY_MAP).map(([name, style], i) => ({ id: i + 1, name, ...style }));
+      throw new Error('No fue posible conectar con el servidor.');
     }
+    if (!res.ok) throw new Error('No fue posible cargar las categorias.');
+    const data = await res.json().catch(() => null);
+    if (!Array.isArray(data)) throw new Error('Respuesta inesperada del servidor.');
+    return data.map((row: any, i: number) => {
+      const name = normalizeCategory(row.Nombre_Categoria);
+      const style = CATEGORY_MAP[name] || { emoji: '📦', color: 'bg-gray-100 text-gray-700', border: 'border-gray-200' };
+      return { id: i + 1, name, ...style };
+    });
   },
 
   async getAdminProducts(): Promise<AdminProduct[]> {
+    let res: Response;
     try {
-      const res = await fetch(`${API}/products`);
-      const data = await res.json();
-      return data.map(mapAdminProduct);
+      res = await fetch(`${API}/products`);
     } catch {
-      return [];
+      throw new Error('No fue posible conectar con el servidor.');
     }
+    if (!res.ok) throw new Error('No fue posible cargar el inventario.');
+    const data = await res.json().catch(() => null);
+    if (!Array.isArray(data)) throw new Error('Respuesta inesperada del servidor.');
+    return data.map(mapAdminProduct);
   },
 
   async deleteAdminProduct(id: number): Promise<void> {
+    let res: Response;
     try {
-      await fetch(`${API}/products/${id}`, { method: 'DELETE', headers: authHeaders() });
+      res = await fetch(`${API}/products/${id}`, { method: 'DELETE', headers: authHeaders() });
     } catch {
-      // silent
+      throw new Error('No fue posible conectar con el servidor.');
+    }
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      throw new Error(payload?.error || 'No fue posible eliminar el producto.');
     }
   },
 
   async createProduct(product: { ID_Producto: string; Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Precio_Anterior?: number | null; Marca?: string | null; Contenido_Cantidad?: number | null; Contenido_Unidad?: string | null; Embalaje?: string | null; Ingredientes?: string | null; Conservacion?: string | null; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
-    await fetch(`${API}/products`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(product),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API}/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(product),
+      });
+    } catch {
+      throw new Error('No fue posible conectar con el servidor.');
+    }
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      throw new Error(payload?.error || 'No fue posible crear el producto.');
+    }
   },
 
   async updateProduct(id: string, product: { Nombre: string; Descripcion: string; Imagen?: string; Precio_Venta: number; Precio_Anterior?: number | null; Marca?: string | null; Contenido_Cantidad?: number | null; Contenido_Unidad?: string | null; Embalaje?: string | null; Ingredientes?: string | null; Conservacion?: string | null; Stock_Minimo: number; ID_Categoria: number }): Promise<void> {
-    await fetch(`${API}/products/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify(product),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${API}/products/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...authHeaders() },
+        body: JSON.stringify(product),
+      });
+    } catch {
+      throw new Error('No fue posible conectar con el servidor.');
+    }
+    if (!res.ok) {
+      const payload = await res.json().catch(() => null);
+      throw new Error(payload?.error || 'No fue posible actualizar el producto.');
+    }
   },
 };

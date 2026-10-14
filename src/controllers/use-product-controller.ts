@@ -17,6 +17,7 @@ import { productService } from '../services';
  * @property {Category[]} categories - Categorias con estilo visual.
  * @property {AdminProduct[]} adminProducts - Filas para la tabla admin.
  * @property {boolean} isLoading - true durante la carga inicial/recargas.
+ * @property {string|null} error - Mensaje si la carga fallo (null si OK).
  * @property {Function} getFeaturedProducts - Productos destacados a mostrar.
  * @property {Function} deleteProduct - Elimina un producto y refresca.
  * @property {Function} createProduct - Crea un producto y refresca.
@@ -28,10 +29,12 @@ export function useProductController() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   /** Carga en paralelo catalogo, categorias y datos de inventario. */
   const loadProducts = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const [allProducts, allCategories, allAdmin] = await Promise.all([
         productService.getAll(),
@@ -41,6 +44,8 @@ export function useProductController() {
       setProducts(allProducts);
       setCategories(allCategories);
       setAdminProducts(allAdmin);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible cargar los productos.');
     } finally {
       setIsLoading(false);
     }
@@ -111,6 +116,7 @@ export function useProductController() {
     categories,
     adminProducts,
     isLoading,
+    error,
     getFeaturedProducts,
     deleteProduct,
     createProduct,
