@@ -50,7 +50,7 @@ export function ProductDetailPage() {
   const unit = product ? formatUnitPrice(product.price, product.contentQty, product.contentUnit) : null;
 
   const handleAdd = () => {
-    if (!product) return;
+    if (!product || product.stock <= 0) return;
     for (let i = 0; i < quantity; i++) addToCart(product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
@@ -167,20 +167,27 @@ export function ProductDetailPage() {
               <p className="text-gray-400" style={{ fontSize: '0.8rem' }}>Antes <span className="line-through">{formatPrice(product.previousPrice as number)}</span></p>
             )}
             <p className="text-[#C62828] font-bold mb-1" style={{ fontSize: '1.4rem' }}>{formatPrice(product.price)}</p>
-            <p className="flex items-center gap-2 text-green-600 mb-6" style={{ fontSize: '0.85rem' }}>
-              <span className="w-2 h-2 rounded-full bg-green-500" /> {product.stock} disponibles
-            </p>
+            {product.stock <= 0 ? (
+              <p className="flex items-center gap-2 text-[#C62828] mb-6" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                <span className="w-2 h-2 rounded-full bg-[#C62828]" /> Agotado
+              </p>
+            ) : (
+              <p className="flex items-center gap-2 text-green-600 mb-6" style={{ fontSize: '0.85rem' }}>
+                <span className="w-2 h-2 rounded-full bg-green-500" /> {product.stock} disponibles
+              </p>
+            )}
             <div className="flex items-center justify-between border border-gray-200 rounded-full px-2 py-1.5 mb-4">
-              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} className="p-1.5 hover:bg-gray-100 rounded-full" aria-label="Menos"><Minus size={16} /></button>
+              <button onClick={() => setQuantity((q) => Math.max(1, q - 1))} disabled={product.stock <= 0} className="p-1.5 hover:bg-gray-100 rounded-full disabled:opacity-40" aria-label="Menos"><Minus size={16} /></button>
               <span className="font-semibold">{quantity}</span>
-              <button onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))} className="p-1.5 hover:bg-gray-100 rounded-full" aria-label="Mas"><Plus size={16} /></button>
+              <button onClick={() => setQuantity((q) => Math.min(product.stock, q + 1))} disabled={product.stock <= 0} className="p-1.5 hover:bg-gray-100 rounded-full disabled:opacity-40" aria-label="Mas"><Plus size={16} /></button>
             </div>
             <button
               onClick={handleAdd}
-              className="w-full bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-3 transition-colors"
+              disabled={product.stock <= 0}
+              className="w-full bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ fontWeight: 600 }}
             >
-              {added ? 'Anadido!' : 'Anadir al carrito'}
+              {product.stock <= 0 ? 'Agotado' : added ? 'Anadido!' : 'Anadir al carrito'}
             </button>
           </aside>
         </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CreditCard, Calendar, Lock, ShieldCheck } from 'lucide-react';
 import type { CardPaymentData } from '../../../models';
 import { formatPrice, formatCardNumber, formatExpiry, detectCardType } from '../../../utils';
+import { isValidCardNumber, isValidExpiry, isValidCvv, isNotEmpty } from '../../../utils/validators';
 
 interface CardFormProps {
   total: number;
@@ -20,10 +21,29 @@ export function CardForm({ total, isProcessing, onSubmit }: CardFormProps) {
     else setForm((p) => ({ ...p, [name]: value }));
   };
 
+  const [formError, setFormError] = useState<string | null>(null);
+
   const cardType = detectCardType(form.cardNumber);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isValidCardNumber(form.cardNumber)) {
+      setFormError('El número de tarjeta debe tener 16 dígitos.');
+      return;
+    }
+    if (!isNotEmpty(form.holder)) {
+      setFormError('Ingresa el nombre del titular.');
+      return;
+    }
+    if (!isValidExpiry(form.expiry)) {
+      setFormError('La fecha de vencimiento debe ser MM/AA con mes válido.');
+      return;
+    }
+    if (!isValidCvv(form.cvv)) {
+      setFormError('El CVV debe tener 3 o 4 dígitos.');
+      return;
+    }
+    setFormError(null);
     onSubmit(form);
   };
 
@@ -66,6 +86,11 @@ export function CardForm({ total, isProcessing, onSubmit }: CardFormProps) {
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+        {formError && (
+          <div role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>
+            {formError}
+          </div>
+        )}
         <div className="mb-4">
           <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Número de tarjeta *</label>
           <div className="relative">

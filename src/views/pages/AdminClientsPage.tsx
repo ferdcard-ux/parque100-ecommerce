@@ -6,23 +6,11 @@ import { useState, useRef } from 'react';
 import { Pencil, Trash2, Plus, X } from 'lucide-react';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import type { ApiUserRow, AdminUserData } from '../../services/user.service';
+import { normalizeUserRole as normalizeRole } from '../../models';
 import { useUsersController } from '../../controllers/use-users-controller';
 import { useDialogBehavior } from '../../utils/useDialog';
 
 const ROLES = ['cliente', 'domiciliario', 'admin'] as const;
-
-/**
- * Normaliza el rol crudo de la BD a los roles vigentes
- * (legados: `empleado` -> domiciliario, `usuario`/null -> cliente).
- *
- * @param {string|null} raw - Rol crudo de la fila.
- * @returns {string} Rol normalizado.
- */
-function normalizeRole(raw: string | null): string {
-  if (raw === 'admin') return 'admin';
-  if (raw === 'empleado' || raw === 'domiciliario') return 'domiciliario';
-  return 'cliente';
-}
 
 const EMPTY_FORM: AdminUserData & { Contrasena: string } = {
   Nombre: '',

@@ -65,7 +65,7 @@ export function AdminPageShell({ active, title, subtitle, children, backTo }: Ad
               <Home size={14} /> Ver tienda
             </Link>
             <div className="relative" ref={bellRef}>
-              <button onClick={() => setBellOpen((v) => !v)} className="relative p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Notificaciones">
+              <button onClick={() => setBellOpen((v) => !v)} className="relative p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Notificaciones" aria-expanded={bellOpen}>
                 <Bell size={18} className="text-gray-500" />
                 {pending.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-[#C62828] rounded-full" />}
               </button>
