@@ -72,3 +72,36 @@ export interface AdminProduct {
 
 /** Estados posibles del inventario calculados desde el stock. */
 export type InventoryStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
+
+/**
+ * Campos editables de un producto en el panel admin (alta y edición
+ * usan el mismo contrato para que los datos coincidan).
+ */
+export interface ProductUpsert {
+  /** Nombre comercial. */
+  Nombre: string;
+  /** Descripción corta. */
+  Descripcion: string;
+  /** Imagen (URL o dataURL). */
+  Imagen?: string;
+  /** Precio de venta en COP. */
+  Precio_Venta: number;
+  /** Precio anterior tachado (opcional). */
+  Precio_Anterior?: number | null;
+  /** Marca (opcional). */
+  Marca?: string | null;
+  /** Cantidad de contenido (opcional). */
+  Contenido_Cantidad?: number | null;
+  /** Unidad de contenido (opcional). */
+  Contenido_Unidad?: string | null;
+  /** Stock disponible. */
+  Stock_Minimo: number;
+  /** Categoría asociada. */
+  ID_Categoria: number;
+}
+
+/** Alta de producto: mismos campos más el identificador. */
+export interface ProductCreate extends ProductUpsert {
+  /** Identificador único del producto. */
+  ID_Producto: string;
+}

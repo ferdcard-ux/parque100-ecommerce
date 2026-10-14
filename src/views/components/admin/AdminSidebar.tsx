@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import {
   Package, ShoppingCart, Users, BarChart2, Settings, ClipboardList,
   Store, ChevronLeft, ChevronRight as ChevRight, LogOut, LayoutDashboard, Menu, X,
 } from 'lucide-react';
-import type { UserRole } from '../../../models';
+import type { User, UserRole } from '../../../models';
 
 const SIDEBAR_ITEMS = [
   { key: 'dashboard', icon: <LayoutDashboard size={18} />, label: 'Dashboard', path: '/admin' },
@@ -26,12 +26,61 @@ interface AdminSidebarProps {
   pendingCount?: number;
   /** Rol del usuario (filtra las secciones visibles). */
   role?: UserRole | null;
+  /** Cuenta con la sesión activa (se muestra en el pie). */
+  user?: User | null;
+  /** Cierra la sesión activa. */
+  onLogout?: () => void;
 }
 
-export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'admin' }: AdminSidebarProps) {
+/** Iniciales para el avatar (nombre o correo como respaldo). */
+function initialsOf(user: User | null | undefined): string {
+  const first = user?.firstName?.charAt(0) ?? '';
+  const last = user?.lastName?.charAt(0) ?? '';
+  const initials = `${first}${last}`.toUpperCase();
+  if (initials) return initials;
+  return (user?.email?.charAt(0) ?? 'A').toUpperCase();
+}
+
+/** Nombre visible y etiqueta de rol de la cuenta activa. */
+function accountOf(user: User | null | undefined): { name: string; email: string; roleLabel: string } {
+  if (!user) return { name: 'Administrador', email: 'admin@parque100.com', roleLabel: 'Administrador' };
+  const name = `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email;
+  const roleLabel = user.isAdmin ? 'Administrador' : user.role === 'domiciliario' ? 'Domiciliario' : 'Cliente';
+  return { name, email: user.email, roleLabel };
+}
+
+export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'admin', user = null, onLogout }: AdminSidebarProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navigate = useNavigate();
   const items = role === 'domiciliario' ? SIDEBAR_ITEMS.filter((item) => DOMICILIARIO_KEYS.includes(item.key)) : SIDEBAR_ITEMS;
+  const account = accountOf(user);
+
+  /** Cierra la sesión activa y vuelve a la tienda. */
+  const handleLogout = () => {
+    onLogout?.();
+    setMobileOpen(false);
+    navigate('/');
+  };
+
+  /** Bloque de cuenta: refleja siempre la sesión activa. */
+  const accountBlock = (showName: boolean) => (
+    <div className="flex items-center gap-2 mb-3 px-1">
+      {user?.photo ? (
+        <img src={user.photo} alt={`Foto de ${account.name}`} className="w-7 h-7 rounded-full object-cover shrink-0" />
+      ) : (
+        <div className="w-7 h-7 rounded-full bg-[#C62828] flex items-center justify-center shrink-0">
+          <span className="text-white font-bold" style={{ fontSize: '0.7rem' }}>{initialsOf(user)}</span>
+        </div>
+      )}
+      {showName && (
+        <div className="min-w-0">
+          <p className="text-white font-medium truncate" style={{ fontSize: '0.78rem' }}>{account.name}</p>
+          <p className="text-white/40 truncate" style={{ fontSize: '0.68rem' }}>{account.email} · {account.roleLabel}</p>
+        </div>
+      )}
+    </div>
+  );
 
   const nav = (onNavigate?: () => void) => (
     <nav className="flex-1 py-4 flex flex-col gap-1 px-2 overflow-y-auto">
@@ -83,23 +132,11 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
         {nav()}
 
         <div className="border-t border-white/10 p-3">
-          {sidebarOpen && (
-            <div className="flex items-center gap-2 mb-3 px-1">
-              <div className="w-7 h-7 rounded-full bg-[#C62828] flex items-center justify-center shrink-0">
-                <span className="text-white font-bold" style={{ fontSize: '0.7rem' }}>AD</span>
-              </div>
-              <div className="min-w-0">
-                <p className="text-white font-medium truncate" style={{ fontSize: '0.78rem' }}>Administrador</p>
-                <p className="text-white/40 truncate" style={{ fontSize: '0.68rem' }}>admin@parque100.com</p>
-              </div>
-            </div>
-          )}
-          <Link to="/login">
-            <button className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full min-h-11">
-              <LogOut size={16} className="shrink-0" />
-              {sidebarOpen && <span style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>}
-            </button>
-          </Link>
+          {sidebarOpen && accountBlock(true)}
+          <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full min-h-11">
+            <LogOut size={16} className="shrink-0" />
+            {sidebarOpen && <span style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>}
+          </button>
         </div>
       </aside>
 
@@ -133,12 +170,11 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
             {nav(() => setMobileOpen(false))}
 
             <div className="border-t border-white/10 p-3">
-              <Link to="/login" onClick={() => setMobileOpen(false)}>
-                <button className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full min-h-11">
-                  <LogOut size={16} className="shrink-0" />
-                  <span style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>
-                </button>
-              </Link>
+              {accountBlock(true)}
+              <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full min-h-11">
+                <LogOut size={16} className="shrink-0" />
+                <span style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>
+              </button>
             </div>
           </aside>
         </div>

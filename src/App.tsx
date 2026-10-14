@@ -33,7 +33,7 @@ import { HelpPage } from './views/pages/HelpPage';
 import { PrivacyPage } from './views/pages/PrivacyPage';
 import { TermsPage } from './views/pages/TermsPage';
 import { SitemapPage } from './views/pages/SitemapPage';
-import type { CardPaymentData, User, UserRole, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, Product, CartItem, AdminProduct, Order } from './models';
+import type { CardPaymentData, User, UserRole, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, Product, CartItem, AdminProduct, Order, ProductCreate, ProductUpsert } from './models';
 
 /* ── Context Definition ── */
 interface AppContextValue {
@@ -61,31 +61,8 @@ interface AppContextValue {
   products: Product[];
   adminProducts: AdminProduct[];
   deleteAdminProduct: (id: number) => void;
-  createAdminProduct: (data: {
-    ID_Producto: string;
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Precio_Anterior?: number | null;
-    Marca?: string | null;
-    Contenido_Cantidad?: number | null;
-    Contenido_Unidad?: string | null;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => Promise<void>;
-  updateAdminProduct: (id: string, data: {
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Precio_Anterior?: number | null;
-    Marca?: string | null;
-    Contenido_Cantidad?: number | null;
-    Contenido_Unidad?: string | null;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => Promise<void>;
+  createAdminProduct: (data: ProductCreate) => Promise<void>;
+  updateAdminProduct: (id: string, data: ProductUpsert) => Promise<void>;
   reloadProducts: () => Promise<void>;
   fetchInventoryRows: () => Promise<any[]>;
   paymentMethod: PaymentMethodType | null;

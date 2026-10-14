@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { AdminProduct, InventoryStatus } from '../../models';
+import type { AdminProduct, InventoryStatus, ProductCreate, ProductUpsert } from '../../models';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { AdminStats } from '../components/admin/AdminStats';
 import { ProductTable } from '../components/admin/ProductTable';
@@ -9,23 +9,8 @@ import { EditProductModal } from '../components/admin/EditProductModal';
 interface AdminInventoryPageProps {
   products: AdminProduct[];
   onDelete: (id: number) => void;
-  onCreate: (data: {
-    ID_Producto: string;
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => Promise<void>;
-  onUpdate: (id: string, data: {
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => Promise<void>;
+  onCreate: (data: ProductCreate) => Promise<void>;
+  onUpdate: (id: string, data: ProductUpsert) => Promise<void>;
   /** Recarga el catalogo tras una importación masiva. */
   onImported?: () => Promise<void>;
   /** Lee las filas crudas del inventario (exportar/importar). */

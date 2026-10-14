@@ -6,7 +6,7 @@
  * servicios.
  */
 import { useState, useEffect, useCallback } from 'react';
-import type { Product, Category, AdminProduct } from '../models';
+import type { Product, Category, AdminProduct, ProductUpsert, ProductCreate } from '../models';
 import { productService } from '../services';
 
 /**
@@ -63,41 +63,12 @@ export function useProductController() {
   }, []);
 
   /** Crea un producto en el backend y recarga el catalogo. */
-  const createProduct = useCallback(async (data: {
-    ID_Producto: string;
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Precio_Anterior?: number | null;
-    Marca?: string | null;
-    Contenido_Cantidad?: number | null;
-    Contenido_Unidad?: string | null;
-    Embalaje?: string | null;
-    Ingredientes?: string | null;
-    Conservacion?: string | null;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => {
+  const createProduct = useCallback(async (data: ProductCreate) => {
     await productService.createProduct(data);
     await loadProducts();
   }, [loadProducts]);
 
-  const updateProduct = useCallback(async (id: string, data: {
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Precio_Anterior?: number | null;
-    Marca?: string | null;
-    Contenido_Cantidad?: number | null;
-    Contenido_Unidad?: string | null;
-    Embalaje?: string | null;
-    Ingredientes?: string | null;
-    Conservacion?: string | null;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => {
+  const updateProduct = useCallback(async (id: string, data: ProductUpsert) => {
     await productService.updateProduct(id, data);
     await loadProducts();
   }, [loadProducts]);

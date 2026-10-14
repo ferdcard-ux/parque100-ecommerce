@@ -29,7 +29,7 @@ export function AdminPageShell({ active, title, subtitle, children, backTo }: Ad
   const pending = orders.filter((o) => o.Estado === 'pendiente');
   const bellRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
-  const { userRole } = useApp();
+  const { userRole, user, logout } = useApp();
 
   useEffect(() => {
     const timer = setInterval(reload, 15000);
@@ -46,7 +46,13 @@ export function AdminPageShell({ active, title, subtitle, children, backTo }: Ad
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] flex h-screen overflow-hidden">
-      <AdminSidebar active={active} pendingCount={pending.length} role={userRole} />
+      <AdminSidebar
+        active={active}
+        pendingCount={pending.length}
+        role={userRole}
+        user={user}
+        onLogout={() => { logout(); navigate('/'); }}
+      />
       <main className="flex-1 min-w-0 overflow-y-auto h-screen">
         <div className="bg-white border-b border-gray-200 px-5 py-3 flex items-center justify-between sticky top-0 z-20">
           <div className="min-w-0 flex items-center gap-3">
