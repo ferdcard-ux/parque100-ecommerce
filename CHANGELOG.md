@@ -2,6 +2,24 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [1.6.0] — 2026-10-14
+
+### Seguridad
+- Auth con JWT (`Authorization: Bearer`, 8 h) y contraseñas con bcrypt (migración de claves incluida); `recover` neutro sin exponer la clave.
+- Autorización por rutas (admin/staff/propio) con identidad del token; CORS con lista blanca, rate-limit en `/api/auth` y config por `.env`.
+- `next` post-login validado contra open-redirect (`//evil`).
+
+### Integridad y validación
+- Pedidos con totales recalculados en servidor, estado inicial `pendiente`, máquina `pendiente → preparando → enviando → entregado` y validación de entradas (pagos, productos, comprobante).
+- Reseñas con propiedad verificada; anti-doble-envío en checkout; catálogo distingue error de vacío.
+
+### Accesibilidad y arquitectura
+- 11 modales con `role="dialog"`, `Escape`, trampa y restauración de foco (`useDialogBehavior`); etiquetas asociadas, `alert`/`status`, skip-link y `<main>`.
+- Vistas solo contra controladores (`useUsersController` nuevo); fin del N+1 de pedidos (`GET /orders?items=1`); eliminados `ui/` shadcn y componentes muertos (~5 400 líneas).
+
+### Herramientas y docs
+- `npm test` (batería 57 checks), `npm run typecheck` (strict + `noUnused*`), `README` y `Docs/` alineados (31 endpoints, 8 tablas, Express 5).
+
 ## [1.5.3] — 2026-10-09
 
 ### Correcciones

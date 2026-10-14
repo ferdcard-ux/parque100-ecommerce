@@ -12,24 +12,45 @@ Se apoya en los archivos `.editorconfig` y `.prettierrc` de la raíz.
 | Model         | `src/models/`       | Tipos e interfaces del dominio                    |
 | Service/DAO   | `src/services/`     | Acceso a datos vía API REST (`fetch`)             |
 | Controller    | `src/controllers/`  | Hooks React con estado y lógica de presentación   |
-| View          | `src/views/`        | Páginas y componentes puros (sin lógica de datos) |
+| View          | `src/views/`        | Páginas y componentes (solo controllers/models/utils; sin `services`) |
 
 ### Backend (`server/`) — MVC clásico
 
 ```
 server/
-├── config/db.js            # Pool de conexiones MySQL
+├── config/db.js            # Pool de conexiones MySQL (por entorno)
+├── middleware/auth.js      # JWT: signToken, requireAuth, requireRole, requireSelfOrAdmin
 ├── models/                 # Capa Model: solo SQL
 │   ├── product.model.js
-│   ├── user.model.js
 │   ├── category.model.js
-│   └── order.model.js
-├── controllers/            # Capa Controller: lógica + HTTP
-└── routes/                 # Capa Router: mapeo endpoint -> controller
+│   ├── user.model.js
+│   ├── permission.model.js
+│   ├── order.model.js
+│   ├── business.model.js
+│   └── rating.model.js
+├── controllers/            # Capa Controller: lógica + HTTP (+bcrypt, validación)
+│   ├── product.controller.js
+│   ├── category.controller.js
+│   ├── auth.controller.js
+│   ├── users.controller.js
+│   ├── order.controller.js
+│   ├── business.controller.js
+│   ├── rating.controller.js
+│   └── payment.controller.js
+└── routes/                 # Capa Router: mapeo endpoint -> controller (+autorización)
+    ├── products.js         # /api/products
+    ├── categories.js       # /api/categories
+    ├── auth.js             # /api/auth (rate-limit)
+    ├── users.js            # /api/users
+    ├── business.js         # /api/business
+    ├── orders.js           # /api/orders
+    ├── ratings.js          # /api/ratings
+    └── payments.js         # /api/payments
 ```
 
 Reglas de dependencia: `routes → controllers → models → config`.
 Nunca se ejecuta SQL fuera de `models/`, ni se importa un modelo desde una ruta.
+La identidad (usuario/rol) sale del JWT (`req.user`); los cuerpos nunca otorgan permisos.
 
 ## 2. Formato
 

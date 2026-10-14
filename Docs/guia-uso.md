@@ -6,6 +6,7 @@
 |-----|--------|------------|
 | Usuario estándar | `usuario@ejemplo.com` | `12345678` |
 | Administrador | `admin@parque100.com` | `admin123` |
+| Domiciliario | `domiciliario@parque100.com` | `domiciliario123` |
 
 ## Funcionalidades por pantalla
 
@@ -21,7 +22,7 @@
 - Validaciones visibles: correo inválido, contraseña vacía y credenciales incorrectas
 - Botón **X** en la esquina superior derecha para cerrar y volver al inicio
 - Opción "Recuérdame": persiste la sesión entre cierres (localStorage) o solo la pestaña (sessionStorage)
-- "¿Olvidaste tu contraseña?": genera una clave temporal aplicable al instante
+- "¿Olvidaste tu contraseña?": solicita clave temporal con respuesta neutra (no revela si el correo existe; la entrega de la clave es manual)
 - Retorno post-login con `?next=`: tras ingresar vuelve a la página solicitada
 - Modo multisesión con `?mode=switch`: agrega otra cuenta sin cerrar la actual
 - Enlace a registro de cuenta
@@ -59,7 +60,8 @@
 ### Mi cuenta (`/cuenta`), Perfil (`/perfil`) y Compras (`/compras`, `/compras/:id`)
 - Panel con accesos a perfil, direcciones y compras; cierre de sesión
 - Perfil editable (modo Editar/Guardar con persistencia real en la BD y mensajes de error) y cambio de contraseña funcional
-- Historial de pedidos: cada tarjeta abre su detalle al clic; botón rojo "Cancelar pedido" en pendiente/preparando (inhabilitado en envío/entregado) con motivo obligatorio y aviso de reembolso; detalle con productos, totales y entrega
+- Historial de pedidos: cada tarjeta abre su detalle al clic (también con teclado); botón rojo "Cancelar pedido" en pendiente/preparando (inhabilitado en envío/entregado) con motivo obligatorio y aviso de reembolso; detalle con productos, totales y entrega
+- Reseñas: "Dejar una reseña" en pedidos entregados (1–5 estrellas por producto, solo lo comprado) y calificación del envío en el detalle
 - Envío siempre sin costo
 
 ### Favoritos (`/favoritos`), Ayuda (`/ayuda`), Privacidad (`/privacidad`), Mapa (`/mapa-sitio`)
@@ -160,9 +162,11 @@ Inicio → Agregar productos al carrito (sin sesión: redirige al login)
 | `/payment-card` | Card Payment | Pago con tarjeta |
 | `/payment-success` | Success | Confirmación |
 | `/admin` | Admin | Panel administrativo |
+| `/admin/inventario` | Admin | Gestión de inventario |
 | `/catalogo` | Catálogo | Listado con filtros por categoría |
 | `/producto/:id` | Producto | Detalle de un producto |
 | `/cuenta` | Cuenta | Panel de control del usuario |
+| `/direccion` | Dirección | Dirección de entrega guardada |
 | `/perfil` | Perfil | Datos personales editables |
 | `/compras` | Compras | Historial de pedidos |
 | `/compras/:id` | Detalle compra | Estado y detalle de un pedido |

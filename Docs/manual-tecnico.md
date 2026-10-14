@@ -20,7 +20,7 @@ cd parque100-ecommerce
 npm install
 
 # Configurar base de datos (requiere MySQL)
-mysql -u root < scripts_dev/setup.sql
+mysql -u root < setup.sql
 
 # Iniciar backend (Terminal 1)
 npm run server
@@ -93,7 +93,7 @@ npm run build
 
 ### Esquema
 
-La base de datos `parque100` consta de 5 tablas: `categorias`, `productos`, `usuario`, `pedidos`, `detalle_pedido`.
+La base de datos `parque100` consta de 8 tablas: `categorias`, `productos`, `usuario`, `pedidos`, `detalle_pedido`, `negocio`, `permisos_usuario` y `calificaciones`.
 
 La tabla `productos` incluye una columna `Imagen MEDIUMTEXT` opcional para almacenar URLs web o imagenes locales en dataURL al crear/editar productos desde el panel administrativo (el backend acepta cuerpos JSON de hasta 10 MB).
 
@@ -106,20 +106,21 @@ Los pedidos se fechan en horario del servidor (fecha local, sin desfase UTC) y l
 Los datos del proyecto son ficticios (creados para pruebas), por lo que el estado completo de la BD se comparte con los commits mediante el dump `.BD/parque100.sql`:
 
 - **Exportar** (tras cambios en la BD local): `npm run db:dump` → guarda esquema + datos en `.BD/parque100.sql`; hay que commitear ese archivo.
-- **Importar** (tras hacer pull): `npm run db:restore` → reemplaza las 5 tablas del proyecto por las del dump (idempotente).
-- Ambos comandos (`scripts/db.mjs`) son multi-entorno (Windows, Linux, macOS) y localizan el cliente MySQL o MariaDB así: `MYSQL_BIN` → rutas por defecto de la plataforma (`C:\Program Files\MySQL\MySQL Server 8.4\bin`, `/usr/bin`, `/usr/local/bin`, `/usr/local/mysql/bin`, `/opt/homebrew/bin`) → `mysql`/`mysqldump` o `mariadb`/`mariadb-dump` en el PATH. Autenticación `root` sin contraseña, o `MYSQL_PWD` / `DB_USER`.
+- **Importar** (tras hacer pull): `npm run db:restore` → reemplaza las 8 tablas del proyecto por las del dump (idempotente).
+- Ambos comandos (`scripts/db.mjs`) son multi-entorno (Windows, Linux, macOS) y localizan el cliente MySQL o MariaDB así: `MYSQL_BIN` → rutas por defecto de la plataforma (`C:\Program Files\MySQL\MySQL Server 8.4\bin`, `/usr/bin`, `/usr/local/bin`, `/usr/local/mysql/bin`, `/opt/homebrew/bin`) → `mysql`/`mysqldump` o `mariadb`/`mariadb-dump` en el PATH. Autenticación por entorno (`DB_USER`, `DB_PASSWORD`, `DB_NAME`, ver `.env.example`).
 - Para una BD nueva sin datos compartidos basta el esquema de `setup.sql`.
 
 ### Conexión
 
-Archivo `server/config/db.js` — pool de conexiones MySQL con `mysql2/promise`:
+Archivo `server/config/db.js` — pool de conexiones MySQL con `mysql2/promise` (credenciales por entorno, con valores de desarrollo por defecto; el servidor carga `.env` si existe, ver `.env.example`):
 
 ```js
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'root',
-  password: '',        // Cambiar si root tiene contraseña
-  database: 'parque100',
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'parque100',
   waitForConnections: true,
   connectionLimit: 10,
 });
@@ -137,29 +138,40 @@ Corre en el puerto 3001 con las siguientes rutas:
 |----------|-------------|
 | `GET /api/products` | Listar productos con categoría |
 | `GET /api/products/:id` | Producto por ID |
-| `POST /api/products` | Crear producto |
-| `PUT /api/products/:id` | Actualizar producto |
-| `DELETE /api/products/:id` | Eliminar producto |
+| `POST /api/products` | Crear producto (admin, validado) |
+| `PUT /api/products/:id` | Actualizar producto (admin, validado; 404 si no existe) |
+| `DELETE /api/products/:id` | Eliminar producto (admin; 409 si tiene pedidos) |
 | `GET /api/categories` | Listar todas las categorías |
-| `POST /api/auth/login` | Iniciar sesión |
+| `POST /api/auth/login` | Iniciar sesión (emite JWT) |
 | `POST /api/auth/register` | Registrar usuario (nombre, correo y teléfono únicos; 409 si existen) |
-| `POST /api/auth/recover` | Generar clave temporal para un correo |
+| `POST /api/auth/recover` | Respuesta neutra 200 (no revela si el correo existe ni devuelve la clave) |
 | `PUT /api/auth/password` | Cambiar contraseña (valida la actual) |
-| `GET /api/users` | Listar usuarios registrados |
-| `POST /api/users` | Crear usuario desde el panel admin |
-| `PUT /api/users/:id/admin` | Editar nombre, correo, rol y teléfono |
+| `GET /api/users` | Listar usuarios registrados (admin) |
+| `POST /api/users` | Crear usuario desde el panel admin (admin) |
+| `PUT /api/users/:id/admin` | Editar nombre, correo, rol y teléfono (admin) |
 | `PUT /api/users/:id/profile` | Editar perfil propio (nombre, correo, teléfono; 409 si existen) |
-| `DELETE /api/users/:id` | Eliminar usuario sin pedidos (409 si tiene) |
-| `GET /api/users/:id` | Consultar datos de entrega del usuario |
-| `PUT /api/users/:id` | Actualizar teléfono, torre/bloque, piso y apartamento |
-| `GET /api/orders` | Listar pedidos |
-| `GET /api/orders/:id` | Detalle de pedido con sus líneas |
-| `POST /api/orders` | Crear pedido (con snapshot de entrega y pago) |
-| `PUT /api/orders/:id/status` | Cambiar estado (pendiente, preparando, enviando, entregado; 409 al reanudar un cancelado) |
-| `PUT /api/orders/:id/cancel` | Cancelar con motivo (devuelve stock; 400 sin motivo, 409 si el estado no admite) |
-| `POST /api/payments/process` | Procesar pago |
+| `DELETE /api/users/:id` | Eliminar usuario sin pedidos (admin; 409 si tiene) |
+| `GET /api/users/:id` | Consultar datos de entrega (propio o admin) |
+| `GET /api/users/:id/permissions` | Permisos delegables (propio o admin) |
+| `PUT /api/users/:id/permissions` | Delegar `puede_cancelar` (admin) |
+| `PUT /api/users/:id` | Actualizar teléfono, torre/bloque, piso y apartamento (propio o admin) |
+| `GET /api/business` | Ficha del negocio |
+| `PUT /api/business` | Actualizar ficha (admin) |
+| `GET /api/orders` | Listar pedidos (staff: todos; cliente: propios; `?items=1` con detalles) |
+| `GET /api/orders/:id` | Detalle de pedido con sus líneas (dueño o staff) |
+| `POST /api/orders` | Crear pedido (total recalculado en servidor, estado `pendiente`) |
+| `PUT /api/orders/:id/status` | Avanzar estado (staff; `pendiente → preparando → enviando → entregado`, 409 ante saltos/retrocesos) |
+| `PUT /api/orders/:id/cancel` | Cancelar con motivo (devuelve stock; actor del token; 400 sin motivo, 409 si el estado no admite) |
+| `GET /api/ratings` | Listar calificaciones (filtros `producto`, `pedido`, `usuario`) |
+| `GET /api/ratings/resumen?producto=ID` | Promedio y total de un producto |
+| `POST /api/ratings` | Calificar (sesión; compra/propiedad verificada, 409 duplicada) |
+| `PUT /api/ratings/:id` | Editar reseña (solo el autor) |
+| `DELETE /api/ratings/:id` | Eliminar calificación (admin) |
+| `POST /api/payments/process` | Procesar pago simulado (sesión; tarjeta validada) |
 
-## Scroll Lock en modales
+> Salvo lectura pública (catálogo, negocio, reseñas), los endpoints exigen `Authorization: Bearer <JWT>`; la escritura sensible y los datos ajenos exigen rol `admin` o staff según la ruta.
+
+## Modales accesibles
 
 El hook `useScrollLock` (en `src/utils/useScrollLock.ts`) se usa en todos los modales del sistema para evitar el scroll del fondo mientras el modal está abierto:
 
@@ -169,6 +181,8 @@ useScrollLock(product !== null);  // EditProductModal, CategoryModal
 ```
 
 Aplica `overflow: hidden` al `body` al montarse y lo restaura al desmontarse.
+
+El hook `useDialogBehavior` (en `src/utils/useDialog.ts`) se combina en los 11 modales propios: `Escape` cierra, el foco entra al panel al abrir, cicla dentro con `Tab` y se restaura al cerrar. Los paneles llevan `role="dialog"`, `aria-modal="true"` y `aria-label`.
 
 ## Imágenes de productos
 
@@ -181,12 +195,11 @@ El sistema maneja imágenes en este orden de prioridad:
 
 ## Pruebas
 
-Actualmente el proyecto no cuenta con pruebas automatizadas.
-
-Para agregarlas, se recomienda:
+Batería automatizada API + BD: `scripts/smoke-lote2.mjs` (57 checks: negocio, permisos/roles, reglas de cancelación, reseñas con compra verificada, autorización 401/403, integridad del pedido y limpieza de datos de prueba).
 
 ```bash
-npm install --save-dev vitest @testing-library/react
+npm test            # requiere backend en :3001 y MySQL local
+npm run typecheck   # tsc --noEmit (strict + noUnusedLocals/Parameters)
 ```
 
 ## Despliegue

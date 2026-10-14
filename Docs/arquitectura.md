@@ -41,55 +41,72 @@ src/
 ├── App.tsx                   # Orquestador: contexto global + router
 │
 ├── models/                   # Capa Modelo
-│   ├── index.ts              # Re-exportaciones
+│   ├── index.ts              # Re-exportaciones (+ `normalizeUserRole`)
 │   ├── product.ts            # Producto, Categoría, Inventario
 │   ├── cart.ts               # Item del carrito
-│   ├── user.ts               # Usuario, autenticación
+│   ├── user.ts               # Usuario, autenticación y roles
 │   ├── order.ts              # Pedido, dirección de entrega
-│   └── payment.ts            # Datos de pago
+│   ├── payment.ts            # Datos de pago
+│   ├── business.ts           # Ficha del negocio
+│   └── rating.ts             # Calificaciones y resenas
 │
 ├── services/                 # Capa de acceso a datos
 │   ├── index.ts              # Re-exportaciones
+│   ├── api.ts                # URL base (`VITE_API_URL`) + token JWT (`Bearer`)
 │   ├── product.service.ts    # CRUD de productos
-│   ├── auth.service.ts       # Autenticación (login/register)
+│   ├── auth.service.ts       # Autenticación (login/register/recover)
 │   ├── payment.service.ts    # Procesamiento de pagos
-│   └── order.service.ts      # Gestión de pedidos
+│   ├── order.service.ts      # Gestión de pedidos
+│   ├── user.service.ts       # Usuarios, perfiles y permisos
+│   ├── business.service.ts   # Ficha del negocio
+│   └── rating.service.ts     # Calificaciones
 │
-├── controllers/              # Capa Controlador
+├── controllers/              # Capa Controlador (única usada por las vistas)
 │   ├── index.ts              # Re-exportaciones
 │   ├── use-product-controller.ts
+│   ├── use-catalog-controller.ts
 │   ├── use-cart-controller.ts
 │   ├── use-auth-controller.ts
-│   └── use-payment-controller.ts
+│   ├── use-payment-controller.ts
+│   ├── use-orders-controller.ts      # + `useOrderDetailController`
+│   ├── use-admin-orders-controller.ts
+│   ├── use-users-controller.ts
+│   ├── use-user-delivery-controller.ts
+│   ├── use-ratings-controller.ts
+│   ├── use-favorites-controller.ts
+│   └── use-business-controller.ts
 │
-├── views/                    # Capa Vista
+├── views/                    # Capa Vista (solo controllers/models/utils)
 │   ├── pages/                # Páginas completas (composición)
-│   │   ├── HomePage.tsx
-│   │   ├── CartPage.tsx
-│   │   ├── LoginPage.tsx
-│   │   ├── RegisterPage.tsx
-│   │   ├── AddressPage.tsx
-│   │   ├── PaymentMethodPage.tsx
-│   │   ├── CardPaymentPage.tsx
+│   │   ├── HomePage.tsx, CatalogPage.tsx, ProductDetailPage.tsx
+│   │   ├── CartPage.tsx, FavoritesPage.tsx
+│   │   ├── LoginPage.tsx, RegisterPage.tsx, AccountPage.tsx, ProfilePage.tsx
+│   │   ├── AddressPage.tsx, PaymentMethodPage.tsx, CardPaymentPage.tsx
 │   │   ├── PaymentSuccessPage.tsx
-│   │   └── AdminInventoryPage.tsx
+│   │   ├── OrdersPage.tsx, OrderDetailPage.tsx
+│   │   ├── AdminInventoryPage.tsx, AdminOrdersPage.tsx, AdminOrderDetailPage.tsx
+│   │   ├── AdminPendingOrdersPage.tsx, AdminClientsPage.tsx, AdminDashboardPage.tsx
+│   │   ├── AdminReportsPage.tsx, AdminSettingsPage.tsx
+│   │   └── HelpPage.tsx, SitemapPage.tsx, TermsPage.tsx, PrivacyPage.tsx
 │   └── components/           # Componentes atómicos
-│       ├── layout/           # Navbar, Footer, RootLayout
+│       ├── layout/           # Navbar, Footer, RootLayout, UserNotifications
 │       ├── home/             # HeroBanner, CategoryGrid, CategoryModal, AllCategoriesModal, etc.
+│       ├── shop/             # product-card
 │       ├── cart/             # CartItemCard, RecommendedList
-│       ├── checkout/         # AddressForm, PaymentOptions, CardForm
-│       ├── admin/            # AdminSidebar, ProductTable, AddProductModal, EditProductModal
+│       ├── checkout/         # AddressForm, PaymentOptions, CardForm, checkout-steps/summary
+│       ├── admin/            # AdminPageShell/Sidebar/Stats, ProductTable, Add/EditProductModal
 │       ├── auth/             # LoginForm, RegisterForm
-│       ├── shared/           # ProgressSteps, OrderSummary
-│       ├── figma/            # ImageWithFallback
-│       └── ui/               # shadcn/ui (Radix UI primitives)
+│       ├── ratings/          # review-card, review-form/product-modal
+│       ├── shared/           # page-header, status-badge, cancel-order-modal, star-rating, etc.
+│       └── figma/            # ImageWithFallback
 │
 ├── utils/                    # Utilidades
 │   ├── index.ts              # Re-exportaciones
 │   ├── constants.ts          # Constantes globales
 │   ├── formatters.ts         # Formateo de precios, tarjetas
-│   ├── validators.ts         # Validación de formularios
-│   └── useScrollLock.ts      # Hook para bloquear scroll del body en modales
+│   ├── validators.ts         # Validación de formularios (+ `isSafeRedirectPath`)
+│   ├── useScrollLock.ts      # Bloqueo de scroll del body en modales
+│   └── useDialog.ts          # Escape, foco inicial, trampa y restauración de foco
 │
 └── styles/                   # Estilos globales
     ├── index.css             # Punto de entrada CSS
@@ -105,32 +122,46 @@ server/
 ├── index.js                    # Bootstrap: middleware, montaje de routers, puerto 3001
 │
 ├── config/
-│   └── db.js                   # Pool de conexiones MySQL (mysql2/promise)
+│   └── db.js                   # Pool MySQL (host/puerto/usuario/BD por entorno, `.env`)
+│
+├── middleware/
+│   └── auth.js                 # JWT: `signToken`, `requireAuth`, `requireRole`, `requireSelfOrAdmin`
 │
 ├── models/                     # Capa Modelo — única capa que ejecuta SQL
 │   ├── product.model.js        # Consultas CRUD sobre productos
 │   ├── category.model.js       # Consultas de categorías
-│   ├── user.model.js           # Búsqueda/creación de usuarios
-│   └── order.model.js          # Pedidos + detalle (transaccional)
+│   ├── user.model.js           # Búsqueda/creación de usuarios (bcrypt en controladores)
+│   ├── permission.model.js     # Permisos delegables (`puede_cancelar`)
+│   ├── order.model.js          # Pedidos + detalle (transaccional, totales autoritativos)
+│   ├── business.model.js       # Ficha del negocio
+│   └── rating.model.js         # Calificaciones (compra verificada, autoría)
 │
 ├── controllers/                # Capa Controlador — lógica de negocio y HTTP
-│   ├── product.controller.js   # Listar, crear, editar, eliminar productos
+│   ├── product.controller.js   # Listar, crear, editar, eliminar productos (validado)
 │   ├── category.controller.js  # Listar categorías
-│   ├── auth.controller.js      # Login / registro
-│   ├── order.controller.js     # Consulta y creación de pedidos
-│   └── payment.controller.js   # Procesamiento de pagos
+│   ├── auth.controller.js      # Login / registro / recover neutro / cambio de clave (JWT + bcrypt)
+│   ├── users.controller.js     # Gestión admin, perfil propio y datos de entrega
+│   ├── order.controller.js     # Listado por rol, detalle, creación y cancelación (identidad del token)
+│   ├── business.controller.js  # Ficha del negocio
+│   ├── rating.controller.js    # Calificaciones (autor del token)
+│   └── payment.controller.js   # Procesamiento simulado (tarjeta validada)
 │
-└── routes/                     # Capa de enrutamiento (routers delgados)
-    ├── products.js             # /api/products
+└── routes/                     # Capa de enrutamiento (routers delgados con autorización)
+    ├── products.js             # /api/products (escritura: admin)
     ├── categories.js           # /api/categories
-    ├── auth.js                 # /api/auth
-    ├── orders.js               # /api/orders
-    └── payments.js             # /api/payments
+    ├── auth.js                 # /api/auth (con rate-limit)
+    ├── users.js                # /api/users (admin o propio-según-ruta)
+    ├── business.js             # /api/business (escritura: admin)
+    ├── orders.js               # /api/orders (sesión; staff para estados)
+    ├── ratings.js              # /api/ratings (escritura con sesión; borrado: admin)
+    └── payments.js             # /api/payments (con sesión)
 ```
 
-**Regla de dependencias del backend:** `routes → controllers → models → db`. Las rutas solo delegan; los controladores nunca ejecutan SQL; los modelos nunca conocen HTTP.
+**Regla de dependencias del backend:** `routes → controllers → models → db`. Las rutas solo delegan (más middleware de sesión/rol); los controladores nunca ejecutan SQL; los modelos nunca conocen HTTP.
 
-La creación de pedidos es **transaccional**: `beginTransaction` → insertar pedido e ítems → `commit`; ante cualquier error, `rollback` garantiza que no queden pedidos parciales.
+**Autenticación:** login/registro emiten JWT (`Authorization: Bearer`, 8 h por defecto); las contraseñas se guardan y comparan con bcrypt; la identidad (usuario/rol) siempre sale del token, nunca del cuerpo.
+
+La creación de pedidos es **transaccional**: `beginTransaction` → validar stock (`FOR UPDATE`), recalcular totales con precios vigentes, insertar pedido e ítems → `commit`; ante cualquier error, `rollback` garantiza que no queden pedidos parciales.
 
 ## Flujo de datos
 
