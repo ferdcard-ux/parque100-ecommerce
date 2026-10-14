@@ -12,6 +12,25 @@ function createOrderError(message, statusCode) {
   return error;
 }
 
+/** Transiciones de estado permitidas (hacia adelante, sin saltos). */
+const NEXT_STATUS = {
+  pendiente: ['preparando'],
+  preparando: ['enviando'],
+  enviando: ['entregado'],
+};
+
+/** Metodos de entrega admitidos. */
+const VALID_DELIVERY = ['domicilio', 'recogida'];
+
+/** Metodos de pago admitidos. */
+const VALID_PAYMENT = ['Efectivo', 'Nequi', 'Tarjeta'];
+
+/** Tamano maximo aceptado para el comprobante en dataURL (~7 MB). */
+const MAX_RECEIPT_LENGTH = 7000000;
+
+/** Longitud maxima de las notas del cliente. */
+const MAX_NOTES_LENGTH = 500;
+
 /** Fecha actual en horario del servidor (YYYY-MM-DD), sin desfase UTC. */
 function localDate() {
   const now = new Date();
@@ -45,20 +64,28 @@ export const orderModel = {
   },
 
   /**
-   * Actualiza el estado de un pedido existente.
+   * Actualiza el estado de un pedido existente siguiendo la maquina
+   * de estados (pendiente -> preparando -> enviando -> entregado).
+   * El mismo estado se acepta (idempotente); retrocesos, saltos y
+   * estados terminales responden 409. La cancelacion usa `cancelById`.
    *
    * @async
    * @param {number} id - Identificador del pedido.
    * @param {string} estado - Nuevo estado ('pendiente', 'preparando',
    *   'enviando', 'entregado').
    * @returns {Promise<boolean>} true si se actualizo, false si no existe.
-   * @throws {Error} Si falla la consulta a la base de datos.
+   * @throws {Error} 409 si la transicion no esta permitida.
    */
   async updateStatus(id, estado) {
     const [rows] = await pool.query('SELECT Estado FROM pedidos WHERE ID_Pedido = ?', [id]);
     if (rows.length === 0) return false;
-    if (rows[0].Estado === 'cancelado' && estado !== 'cancelado') {
-      throw createOrderError('Un pedido cancelado no se puede reanudar', 409);
+    const current = rows[0].Estado;
+    if (current === 'cancelado' || current === 'entregado') {
+      throw createOrderError(`Un pedido ${current} no admite cambios de estado`, 409);
+    }
+    if (current === estado) return true;
+    if (!(NEXT_STATUS[current] || []).includes(estado)) {
+      throw createOrderError(`No se puede pasar de '${current}' a '${estado}'`, 409);
     }
     const [result] = await pool.query('UPDATE pedidos SET Estado = ? WHERE ID_Pedido = ?', [estado, id]);
     return result.affectedRows === 1;
@@ -181,9 +208,7 @@ export const orderModel = {
    * @async
    * @param {Object} data - Datos del pedido.
    * @param {string} [data.Fecha] - Fecha YYYY-MM-DD (por defecto hoy).
-   * @param {string} [data.Estado] - Estado inicial ('pendiente' por defecto).
-   * @param {number} data.Total - Total monetario del pedido.
-   * @param {string} data.Tipo_Entrega - 'domicilio' o 'recogida'.
+   * @param {string} [data.Tipo_Entrega] - 'domicilio' o 'recogida'.
    * @param {number} data.ID_Usuario - Usuario que realiza el pedido.
    * @param {Array<Object>} [data.productos] - Lineas de detalle:
    *   `{ ID_Producto, Cantidad, Subtotal }`.
@@ -192,10 +217,48 @@ export const orderModel = {
   * @throws {Error} Si falta stock o falla una operacion; revierte todo.
    */
   async createWithDetails({
-    Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, productos,
+    Fecha, Tipo_Entrega, ID_Usuario, productos,
     Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago,
     Monto_Recibido, Cambio, Comprobante, Notas,
   }) {
+    if (!Array.isArray(productos) || productos.length === 0) {
+      throw createOrderError('El pedido debe incluir al menos un producto', 400);
+    }
+    const delivery = Tipo_Entrega ?? 'domicilio';
+    if (!VALID_DELIVERY.includes(delivery)) {
+      throw createOrderError(`Tipo de entrega invalido. Usa: ${VALID_DELIVERY.join(', ')}`, 400);
+    }
+    const payMethod = Metodo_Pago ?? 'Efectivo';
+    if (!VALID_PAYMENT.includes(payMethod)) {
+      throw createOrderError(`Metodo de pago invalido. Usa: ${VALID_PAYMENT.join(', ')}`, 400);
+    }
+    const orderText = (value, max, name) => {
+      if (value === undefined || value === null || value === '') return null;
+      if (typeof value !== 'string' || value.length > max) {
+        throw createOrderError(`${name} invalido (maximo ${max} caracteres)`, 400);
+      }
+      return value;
+    };
+    const orderPhone = orderText(Telefono, 20, 'Telefono');
+    if (orderPhone !== null && !/^[\d+\s-]+$/.test(orderPhone)) {
+      throw createOrderError('Telefono invalido', 400);
+    }
+    if (Comprobante !== undefined && Comprobante !== null && Comprobante !== '') {
+      if (
+        typeof Comprobante !== 'string' ||
+        Comprobante.length > MAX_RECEIPT_LENGTH ||
+        !Comprobante.startsWith('data:image/')
+      ) {
+        throw createOrderError('Comprobante invalido: debe ser una imagen', 400);
+      }
+    }
+    const orderNumberOrNull = (value, name) => {
+      if (value === undefined || value === null || value === '') return null;
+      const num = Number(value);
+      if (!Number.isFinite(num)) throw createOrderError(`${name} invalido`, 400);
+      return num;
+    };
+
     const connection = await pool.getConnection();
     try {
       await connection.beginTransaction();
@@ -214,14 +277,23 @@ export const orderModel = {
         });
       }
 
+      let orderTotal = 0;
+      const orderPrices = new Map();
       for (const item of stockPorProducto.values()) {
         const [products] = await connection.query(
-          'SELECT Nombre, Stock_Minimo FROM productos WHERE ID_Producto = ? FOR UPDATE',
+          'SELECT Nombre, Precio_Venta, Stock_Minimo FROM productos WHERE ID_Producto = ? FOR UPDATE',
           [item.ID_Producto],
         );
         if (products.length === 0) {
           throw createOrderError(`El producto ${item.ID_Producto} no existe`, 404);
         }
+
+        const unitPrice = Number(products[0].Precio_Venta);
+        if (!Number.isFinite(unitPrice) || unitPrice < 0) {
+          throw createOrderError(`El producto "${products[0].Nombre}" no tiene un precio valido`, 409);
+        }
+        orderPrices.set(String(item.ID_Producto), unitPrice);
+        orderTotal += unitPrice * item.Cantidad;
 
         const available = Number(products[0].Stock_Minimo || 0);
         if (available < item.Cantidad) {
@@ -238,20 +310,20 @@ export const orderModel = {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           Fecha || localDate(),
-          Estado || 'pendiente',
-          Total,
-          Tipo_Entrega,
+          'pendiente',
+          Math.round(orderTotal),
+          delivery,
           ID_Usuario ?? null,
-          Destinatario ?? null,
-          Telefono ?? null,
-          Torre ?? null,
-          Piso ?? null,
-          Apartamento ?? null,
-          Metodo_Pago ?? null,
-          Monto_Recibido ?? null,
-          Cambio ?? null,
-          Comprobante ?? null,
-          Notas ?? null,
+          orderText(Destinatario, 50, 'Destinatario'),
+          orderPhone,
+          orderText(Torre, 20, 'Torre'),
+          orderText(Piso, 20, 'Piso'),
+          orderText(Apartamento, 20, 'Apartamento'),
+          payMethod,
+          orderNumberOrNull(Monto_Recibido, 'Monto recibido'),
+          orderNumberOrNull(Cambio, 'Cambio'),
+          Comprobante || null,
+          orderText(Notas, MAX_NOTES_LENGTH, 'Notas'),
         ],
       );
       const pedidoId = result.insertId;
@@ -260,7 +332,7 @@ export const orderModel = {
         for (const item of productos) {
           await connection.query(
             'INSERT INTO detalle_pedido (ID_Pedido, ID_Producto, Cantidad, Subtotal) VALUES (?, ?, ?, ?)',
-            [pedidoId, item.ID_Producto, item.Cantidad, item.Subtotal],
+            [pedidoId, item.ID_Producto, item.Cantidad, Math.round((orderPrices.get(String(item.ID_Producto)) || 0) * item.Cantidad)],
           );
         }
       }

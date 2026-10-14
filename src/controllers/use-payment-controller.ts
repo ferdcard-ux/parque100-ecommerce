@@ -4,7 +4,7 @@
  * entrega, procesamiento del cobro y creacion del pedido resultante.
  * Coordina `paymentService` (pasarela) y `orderService` (persistencia).
  */
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type {
   PaymentMethodType,
   CardPaymentData,
@@ -35,6 +35,8 @@ export function usePaymentController() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<PaymentResult | null>(null);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
+  /** Evita procesar dos pagos a la vez (doble clic antes del re-render). */
+  const busyRef = useRef(false);
 
   /** Guarda el metodo de pago elegido en el estado del checkout. */
   const selectMethod = useCallback((m: PaymentMethodType) => {
@@ -62,6 +64,8 @@ export function usePaymentController() {
       items: CartItem[],
       userId: number | null = null,
     ) => {
+      if (busyRef.current) throw new Error('El pago ya se esta procesando.');
+      busyRef.current = true;
       setIsProcessing(true);
       try {
         const paymentResult = await paymentService.processCardPayment(
@@ -76,6 +80,7 @@ export function usePaymentController() {
 
         return paymentResult;
       } finally {
+        busyRef.current = false;
         setIsProcessing(false);
       }
     },
@@ -104,6 +109,8 @@ export function usePaymentController() {
    */
   const processNequi = useCallback(
     async (receiptDataUrl: string, amount: number, items: CartItem[], userId: number | null = null) => {
+      if (busyRef.current) throw new Error('El pago ya se esta procesando.');
+      busyRef.current = true;
       setIsProcessing(true);
       try {
         const paymentResult = await paymentService.processNequiPayment(receiptDataUrl, amount);
@@ -113,6 +120,7 @@ export function usePaymentController() {
         }
         return paymentResult;
       } finally {
+        busyRef.current = false;
         setIsProcessing(false);
       }
     },
@@ -135,6 +143,8 @@ export function usePaymentController() {
       if (!Number.isFinite(tendered) || tendered < amount) {
         throw new Error('El monto en efectivo debe cubrir el total de la compra.');
       }
+      if (busyRef.current) throw new Error('El pago ya se esta procesando.');
+      busyRef.current = true;
       setIsProcessing(true);
       try {
         const change = Math.round(tendered - amount);
@@ -146,6 +156,7 @@ export function usePaymentController() {
         setResult(paymentResult);
         return created;
       } finally {
+        busyRef.current = false;
         setIsProcessing(false);
       }
     },

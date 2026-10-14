@@ -34,7 +34,7 @@ export function CatalogPage() {
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
   const [draftMin, setDraftMin] = useState('');
   const [draftMax, setDraftMax] = useState('');
-  const { products, categories, isLoading, brands } = useCatalogController(category, query, sort, {
+  const { products, categories, isLoading, error, reload, brands } = useCatalogController(category, query, sort, {
     brand,
     promoOnly,
     minPrice,
@@ -195,6 +195,21 @@ export function CatalogPage() {
                   </div>
                 ))}
               </div>
+            ) : error ? (
+              <EmptyState
+                icon={SearchX}
+                title="No fue posible cargar el catálogo"
+                description={error}
+                action={
+                  <button
+                    onClick={reload}
+                    className="bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full px-6 py-2.5 transition-colors"
+                    style={{ fontSize: '0.875rem', fontWeight: 600 }}
+                  >
+                    Reintentar
+                  </button>
+                }
+              />
             ) : products.length === 0 ? (
               <EmptyState
                 icon={SearchX}

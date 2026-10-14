@@ -202,6 +202,8 @@ await test('POST /orders crea pedido de prueba (pendiente)', async () => {
   }, clientToken);
   assert(status === 201, `status ${status} ${JSON.stringify(data)}`);
   cancelOrderId = data.id;
+  const toPrep = await call('PUT', `/orders/${cancelOrderId}/status`, { Estado: 'preparando' }, adminToken);
+  assert(toPrep.status === 200, `a preparando status ${toPrep.status}`);
   const st = await call('PUT', `/orders/${cancelOrderId}/status`, { Estado: 'enviando' }, adminToken);
   assert(st.status === 200, `a enviando status ${st.status}`);
 });
@@ -310,8 +312,10 @@ await test('POST /orders crea pedido entregable para la resena', async () => {
   }, clientToken);
   assert(status === 201, `status ${status} ${JSON.stringify(data)}`);
   reviewOrderId = data.id;
-  const st = await call('PUT', `/orders/${reviewOrderId}/status`, { Estado: 'entregado' }, adminToken);
-  assert(st.status === 200, `a entregado status ${st.status}`);
+  for (const estado of ['preparando', 'enviando', 'entregado']) {
+    const st = await call('PUT', `/orders/${reviewOrderId}/status`, { Estado: estado }, adminToken);
+    assert(st.status === 200, `a ${estado} status ${st.status}`);
+  }
 });
 
 await test('GET /ratings/resumen base de P010', async () => {
@@ -438,6 +442,130 @@ await test('GET /orders del staff trae todos', async () => {
   assert(status === 200 && Array.isArray(data) && data.length > 0, `status ${status}`);
 });
 
+/* --- Integridad del pedido (fase 2: el servidor es autoridad) --- */
+let tamperOrderId = null;
+
+await test('POST /orders ignora Total/Estado/ID_Usuario del cliente', async () => {
+  const { status, data } = await call('POST', '/orders', {
+    Total: 1,
+    Estado: 'entregado',
+    Tipo_Entrega: 'domicilio',
+    ID_Usuario: 999,
+    Destinatario: 'Prueba',
+    Telefono: '300123456',
+    Torre: '1',
+    Piso: '1',
+    Apartamento: '101',
+    Metodo_Pago: 'Efectivo',
+    productos: [{ ID_Producto: 'P010', Cantidad: 1, Subtotal: 1 }],
+  }, clientToken);
+  assert(status === 201, `status ${status} ${JSON.stringify(data)}`);
+  tamperOrderId = data.id;
+  const full = await call('GET', `/orders/${tamperOrderId}`, undefined, adminToken);
+  assert(full.status === 200, `detalle status ${full.status}`);
+  assert(full.data.Total === 4500, `total ${full.data.Total}`);
+  assert(full.data.Estado === 'pendiente', `estado ${full.data.Estado}`);
+  assert(Number(full.data.ID_Usuario) === 1, 'dueno inesperado');
+});
+
+await test('POST /orders sin productos es 400', async () => {
+  const { status } = await call('POST', '/orders', {
+    Total: 100,
+    Tipo_Entrega: 'domicilio',
+    productos: [],
+  }, clientToken);
+  assert(status === 400, `status ${status}`);
+});
+
+await test('POST /orders con entrega invalida es 400', async () => {
+  const { status } = await call('POST', '/orders', {
+    Tipo_Entrega: 'drone',
+    productos: [{ ID_Producto: 'P010', Cantidad: 1 }],
+  }, clientToken);
+  assert(status === 400, `status ${status}`);
+});
+
+let stateOrderId = null;
+
+await test('Maquina de estados: sin saltos ni retrocesos', async () => {
+  const created = await call('POST', '/orders', {
+    Tipo_Entrega: 'domicilio',
+    Metodo_Pago: 'Efectivo',
+    productos: [{ ID_Producto: 'P010', Cantidad: 1 }],
+  }, clientToken);
+  assert(created.status === 201, `status ${created.status}`);
+  stateOrderId = created.data.id;
+  const skip = await call('PUT', `/orders/${stateOrderId}/status`, { Estado: 'entregado' }, adminToken);
+  assert(skip.status === 409, `salto status ${skip.status}`);
+  const fwd = await call('PUT', `/orders/${stateOrderId}/status`, { Estado: 'preparando' }, adminToken);
+  assert(fwd.status === 200, `avance status ${fwd.status}`);
+  const back = await call('PUT', `/orders/${stateOrderId}/status`, { Estado: 'pendiente' }, adminToken);
+  assert(back.status === 409, `retroceso status ${back.status}`);
+});
+
+await test('POST /payments/process valida tarjeta y monto', async () => {
+  const base = { cardNumber: '4111111111111111', expiryDate: '12/30', cvv: '123', amount: 1000 };
+  const badCard = await call('POST', '/payments/process', { ...base, cardNumber: '123' }, clientToken);
+  assert(badCard.status === 400, `tarjeta status ${badCard.status}`);
+  const expired = await call('POST', '/payments/process', { ...base, expiryDate: '01/20' }, clientToken);
+  assert(expired.status === 400, `vencida status ${expired.status}`);
+  const badAmount = await call('POST', '/payments/process', { ...base, amount: -5 }, clientToken);
+  assert(badAmount.status === 400, `monto status ${badAmount.status}`);
+});
+
+await test('POST /products valida precio no negativo', async () => {
+  const { status } = await call('POST', '/products', {
+    ID_Producto: 'PX-TEST',
+    Nombre: 'X',
+    Descripcion: 'X',
+    Precio_Venta: -5,
+    Stock_Minimo: 1,
+    ID_Categoria: 1,
+  }, adminToken);
+  assert(status === 400, `status ${status}`);
+});
+
+await test('POST /products duplicado es 409', async () => {
+  const { status } = await call('POST', '/products', {
+    ID_Producto: 'P001',
+    Nombre: 'N',
+    Descripcion: 'D',
+    Precio_Venta: 100,
+    Stock_Minimo: 1,
+    ID_Categoria: 1,
+  }, adminToken);
+  assert(status === 409, `status ${status}`);
+});
+
+await test('PUT /products inexistente es 404', async () => {
+  const { status } = await call('PUT', '/products/NO-EXISTE', {
+    Nombre: 'N',
+    Descripcion: 'D',
+    Precio_Venta: 100,
+    Stock_Minimo: 1,
+    ID_Categoria: 1,
+  }, adminToken);
+  assert(status === 404, `status ${status}`);
+});
+
+let foreignOrderId = null;
+
+await test('POST /ratings de pedido ajeno es 403', async () => {
+  const created = await call('POST', '/orders', {
+    Tipo_Entrega: 'domicilio',
+    Metodo_Pago: 'Efectivo',
+    productos: [{ ID_Producto: 'P010', Cantidad: 1 }],
+  }, adminToken);
+  assert(created.status === 201, `status ${created.status}`);
+  foreignOrderId = created.data.id;
+  const { status } = await call('POST', '/ratings', {
+    Tipo: 'pedido',
+    ID_Pedido: foreignOrderId,
+    Estrellas: 5,
+  }, clientToken);
+  assert(status === 403, `status ${status}`);
+});
+
 /* --- Limpieza: elimina la calificacion y el pedido de prueba --- */
 await test('DELETE /ratings/:id limpia la prueba', async () => {
   const ratingId = results.find((r) => r.ratingId)?.ratingId;
@@ -494,6 +622,23 @@ await test('Limpieza del pedido ajeno en BD (restaura stock)', async () => {
   assert(candidates.length > 0, 'sin cliente mysql');
   execSync(
     `"${candidates[0]}" -u root -e "UPDATE parque100.productos SET Stock_Minimo = Stock_Minimo + 1 WHERE ID_Producto='P010'; DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${ownedOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${ownedOrderId};"`,
+  );
+});
+
+await test('Limpieza de pedidos de integridad en BD (restaura stock)', async () => {
+  assert(tamperOrderId && stateOrderId && foreignOrderId, 'sin pedidos de integridad');
+  const { execSync } = await import('node:child_process');
+  const { existsSync } = await import('node:fs');
+  const candidates = [
+    process.env.MYSQL_BIN ? `${process.env.MYSQL_BIN}\\mysql.exe` : '',
+    'C:\\Program Files\\MySQL\\MySQL Server 8.4\\bin\\mysql.exe',
+    `${process.env.LOCALAPPDATA}\\MySQL-8.4\\mysql-8.4.9-winx64\\bin\\mysql.exe`,
+    'C:\\xampp\\mysql\\bin\\mysql.exe',
+  ].filter((c) => c && existsSync(c));
+  assert(candidates.length > 0, 'sin cliente mysql');
+  const ids = [tamperOrderId, stateOrderId, foreignOrderId].join(',');
+  execSync(
+    `"${candidates[0]}" -u root -e "UPDATE parque100.productos SET Stock_Minimo = Stock_Minimo + 3 WHERE ID_Producto='P010'; DELETE FROM parque100.detalle_pedido WHERE ID_Pedido IN (${ids}); DELETE FROM parque100.pedidos WHERE ID_Pedido IN (${ids});"`,
   );
 });
 
