@@ -8,6 +8,7 @@
 |-----------|-------------|
 | [`arquitectura.md`](arquitectura.md) | Arquitectura MVC, estructura del proyecto y decisiones técnicas |
 | [`manual-tecnico.md`](manual-tecnico.md) | Guía técnica para desarrolladores: convenciones, estándares, despliegue |
+| [`guia-despliegue.md`](guia-despliegue.md) | Despliegue: publicar la tienda desde un servidor propio (Caddy + DuckDNS + reenvío de puertos) |
 | [`guia-uso.md`](guia-uso.md) | Manual de usuario: funcionalidades, rutas, credenciales de prueba |
 | [`CODING_STANDARDS.md`](CODING_STANDARDS.md) | Estándares de codificación obligatorios del proyecto |
 | [`CHANGELOG.md`](../CHANGELOG.md) | Historial de cambios del proyecto |
