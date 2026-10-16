@@ -1,0 +1,316 @@
+# Guía de Despliegue — Servidor propio expuesto a Internet
+
+Esta guía describe **el método de despliegue actual** del proyecto: usar un equipo Windows
+como servidor, exponer los puertos **80/443** del router y publicar la tienda con **HTTPS
+automático** bajo un dominio de **DuckDNS**, todo con herramientas **gratuitas**.
+
+- **Alcance:** entorno de pruebas/demostración (equipo encendido, IP dinámica).
+- **No es** un despliegue de producción con alta disponibilidad. Para eso, usar un host en la nube.
+
+---
+
+## 1. Arquitectura
+
+```
+Internet ──► <IP pública>:80/:443 ──► Router (port forwarding) ──► PC (<IP local>)
+   │
+   └─► Caddy (TLS Let's Encrypt)
+         ├── /         → dist/  (SPA con fallback a index.html)
+         └── /api/*    → reverse_proxy 127.0.0.1:3001  (Express)
+                                  └── MySQL 127.0.0.1:3306  (solo local)
+```
+
+**Principio clave — "mismo origen":** el frontend y la API se sirven bajo el **mismo
+dominio**. El frontend compila con `VITE_API_URL=/api` y Caddy enruta `/api/*` al backend.
+Así **no hay CORS** y el dominio no queda fijado en el bundle.
+
+| Componente | Rol | Expuesto a Internet |
+|---|---|---|
+| Caddy | TLS + estáticos + reverse proxy | **Sí** (80/443) |
+| Express | API (`/api`) | No (solo `127.0.0.1:3001`) |
+| MySQL | Base de datos | No (solo `127.0.0.1:3306`) |
+| DuckDNS | DNS dinámico | — |
+
+---
+
+## 2. Requisitos previos
+
+| Requisito | Detalle |
+|---|---|
+| Equipo | Windows 10/11, que pueda quedar **encendido** |
+| Node.js | v20+ (probado con v24) |
+| MySQL | Servidor local funcionando (nativo o servicio) |
+| Caddy | 2.7+ (probado con 2.11.7) |
+| Cuenta DuckDNS | Gratuita (subdominio + token) |
+| Router | Con **port forwarding** y **IP pública no compartida** (sin CGNAT) |
+| Permisos | Administrador local (para firewall y tareas programadas) |
+
+> **Comprobar CGNAT:** si la IP que ve Internet **no** coincide con la IP de la interfaz WAN
+> del router, su operador usa CGNAT y **este método no funcionará** (habría que usar un túnel).
+
+---
+
+## 3. Pasos
+
+### Paso 1 — Reserva DHCP (IP local fija)
+
+En el router, crear una **reserva DHCP** (Static Lease) por **MAC** → IP local fija
+(p. ej. `192.168.1.3`). Esto evita que el reenvío se rompa si el router cambia de IP.
+
+> Elige una IP **fuera** del rango del pool DHCP, o asígnala reservada.
+
+### Paso 2 — Reenvío de puertos
+
+En el router (`NAT → Port Mapping` o equivalente), crear **dos** reglas **TCP** apuntando al PC:
+
+| Nombre | Puerto externo | IP interna | Puerto interno |
+|---|---|---|---|
+| HTTP | 80 | `<IP local>` | 80 |
+| HTTPS | 443 | `<IP local>` | 443 |
+
+Selecciona la **interfaz WAN** correcta (la que tiene la IP pública), no la interfaz LAN.
+
+### Paso 3 — Firewall de Windows
+
+```powershell
+New-NetFirewallRule -DisplayName "Parque100 HTTP 80"  -Direction Inbound -Action Allow -Protocol TCP -LocalPort 80
+New-NetFirewallRule -DisplayName "Parque100 HTTPS 443" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 443
+```
+
+> Aplica a **todos los perfiles** (una red Wi-Fi puede clasificarse como "Public").
+> **No** abras `3001` ni `3306`: deben quedar solo locales.
+
+### Paso 4 — DNS dinámico (DuckDNS)
+
+1. Crear el subdominio en <https://www.duckdns.org> y copiar el **token**.
+2. Crea un archivo de configuración y un script de actualización (ejemplo):
+
+`duckdns.conf`
+```
+DOMAIN=<subdominio>
+TOKEN=<TU_TOKEN>
+```
+
+`duckdns-update.ps1`
+```powershell
+$ErrorActionPreference = 'Stop'
+$root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$conf = @{}
+foreach ($line in Get-Content (Join-Path $root 'duckdns.conf')) {
+  if ($line -match '^\s*([^=]+)=(.*)$') { $conf[$Matches[1].Trim()] = $Matches[2].Trim() }
+}
+$url = "https://www.duckdns.org/update?domains=$($conf.DOMAIN)&token=$($conf.TOKEN)&ip="
+"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')  $(Invoke-RestMethod -Uri $url -TimeoutSec 20)" |
+  Out-File (Join-Path $root 'duckdns.log') -Append -Encoding utf8
+```
+
+3. Programar su ejecución **cada 5 min** (ver Paso 9). Comprueba la resolución:
+
+```powershell
+Resolve-DnsName <subdominio>.duckdns.org -Type A
+```
+
+### Paso 5 — Instalar Caddy
+
+```powershell
+winget install --id CaddyServer.Caddy -e
+```
+
+### Paso 6 — Compilar el frontend "mismo origen"
+
+En la raíz del proyecto, crear `.env.production`:
+
+```
+VITE_API_URL=/api
+```
+
+Y compilar:
+
+```powershell
+npm run build
+```
+
+### Paso 7 — Variables de entorno del backend
+
+Crear `.env` en la raíz del proyecto (no se versiona):
+
+```
+PORT=3001
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=parque100
+
+JWT_SECRET=<cadena-larga-y-aleatoria>
+JWT_EXPIRES_IN=8h
+
+CORS_ORIGIN=https://<subdominio>.duckdns.org,http://localhost:5173,http://127.0.0.1:5173
+```
+
+> Genera el `JWT_SECRET` con, p. ej.:
+> `-join ((1..48) | % { '{0:x}' -f (Get-Random -Max 16) })`
+
+### Paso 8 — Caddyfile
+
+Crear `Caddyfile` (fuera del repo, p. ej. `C:\parque100-server\Caddyfile`):
+
+```
+{
+	email admin@<subdominio>.duckdns.org
+	storage file_system C:/parque100-server/caddy-data
+}
+
+<subdominio>.duckdns.org {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy 127.0.0.1:3001
+	}
+
+	handle {
+		root * C:/ruta/al/proyecto/dist
+		try_files {path} /index.html
+		file_server
+	}
+}
+```
+
+> **Correo:** usa uno del propio dominio (p. ej. `admin@<subdominio>.duckdns.org`).
+> Let's Encrypt **rechaza** dominios reservados como `example.com`.
+
+### Paso 9 — Arranque y automatización
+
+**Arranque manual** (para probar):
+
+```powershell
+# 1) Base de datos (si es portable: mysqld --datadir=...)
+# 2) Backend
+node server/index.js
+# 3) Caddy
+caddy run --config C:\parque100-server\Caddyfile --adapter caddyfile
+```
+
+**Arranque automático** — Tareas Programadas al iniciar Windows (cuenta **SYSTEM**), cada una
+con su **directorio de trabajo** (clave para que Express encuentre el `.env`):
+
+| Tarea | Programa | Argumentos | Dir. de trabajo |
+|---|---|---|---|
+| `Parque100-MySQL` | `mysqld.exe` | `--datadir=<datadir>` | carpeta de `bin` de MySQL |
+| `Parque100-Backend` | `node.exe` | `server\index.js` | raíz del proyecto |
+| `Parque100-Caddy` | `caddy.exe` | `run --config <Caddyfile> --adapter caddyfile` | carpeta del Caddyfile |
+| `Parque100-DDNS` | `powershell` | `-File duckdns-update.ps1` (cada 5 min) | — |
+
+Ejemplo de registro (PowerShell como administrador):
+
+```powershell
+$principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
+$settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
+             -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) `
+             -ExecutionTimeLimit ([TimeSpan]::Zero)
+$trigger   = New-ScheduledTaskTrigger -AtStartup
+
+function Register-Svc($name, $exe, $args, $wd) {
+  $a = New-ScheduledTaskAction -Execute $exe -Argument $args -WorkingDirectory $wd
+  Register-ScheduledTask -TaskName $name -Action $a -Trigger $trigger -Principal $principal -Settings $settings -Force
+}
+
+Register-Svc 'Parque100-Backend' (Get-Command node).Source 'server\index.js' 'C:\ruta\al\proyecto'
+Register-Svc 'Parque100-Caddy'   'C:\ruta\caddy.exe' 'run --config C:\parque100-server\Caddyfile --adapter caddyfile' 'C:\parque100-server'
+# DDNS cada 5 min:
+schtasks /Create /TN "Parque100-DDNS" /SC MINUTE /MO 5 /RU SYSTEM /F `
+  /TR "powershell -NoProfile -ExecutionPolicy Bypass -File C:\parque100-server\duckdns-update.ps1"
+```
+
+### Paso 10 — Energía (evitar que se duerma)
+
+```powershell
+powercfg /change standby-timeout-ac 0
+powercfg /change standby-timeout-dc 0
+powercfg /change hibernate-timeout-ac 0
+powercfg /change hibernate-timeout-dc 0
+powercfg /change disk-timeout-ac 0
+powercfg /setacvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 0
+powercfg /setdcvalueindex SCHEME_CURRENT SUB_BUTTONS LIDACTION 0
+powercfg /setactive SCHEME_CURRENT
+```
+
+---
+
+## 4. Verificación
+
+```powershell
+# Puertos escuchando
+Get-NetTCPConnection -State Listen | Where-Object LocalPort -in 80,443,3001,3306
+
+# DNS
+Resolve-DnsName <subdominio>.duckdns.org -Type A
+
+# API y sitio (desde el propio PC)
+Invoke-WebRequest https://<subdominio>.duckdns.org/api/products -UseBasicParsing
+
+# Certificado emitido (log de Caddy)
+Select-String -Path C:\parque100-server\logs\caddy.err.log -Pattern 'certificate obtained successfully'
+
+# Batería de la app
+node scripts/smoke-lote2.mjs
+```
+
+Comprobar además el acceso **desde fuera** (otra red/dispositivo) abriendo
+`https://<subdominio>.duckdns.org/`.
+
+---
+
+## 5. Operación diaria
+
+```powershell
+# Estado de las tareas
+Get-ScheduledTask -TaskName 'Parque100-*' | Select TaskName,State
+
+# Reiniciar un servicio
+Stop-ScheduledTask  -TaskName 'Parque100-Backend'
+Start-ScheduledTask -TaskName 'Parque100-Backend'
+
+# Logs
+Get-Content C:\parque100-server\logs\caddy.err.log -Tail 20
+Get-Content C:\parque100-server\duckdns.log       -Tail 5
+
+# Publicar cambios del frontend
+npm run build      # Caddy sirve dist/ directamente; no hay que reiniciar Caddy
+```
+
+> Cambios en el **backend**: reiniciar la tarea `Parque100-Backend`.
+> Cambios en el **Caddyfile**: reiniciar la tarea `Parque100-Caddy`.
+
+---
+
+## 6. Solución de problemas (casos reales)
+
+| Síntoma | Causa | Solución |
+|---|---|---|
+| Caddy no obtiene certificado | El correo ACME es un dominio reservado (`example.com`) → Let's Encrypt lo rechaza | Usar un correo del propio dominio (`admin@<subdominio>.duckdns.org`) |
+| Caddy no arranca / puerto ocupado | Otro proceso en `:80` (p. ej. un servidor de prueba) | Detener ese proceso antes de arrancar Caddy |
+| El sitio abre pero la API falla (CORS / rutas) | El frontend se compiló sin `VITE_API_URL=/api` | Recompilar con `.env.production` |
+| Login responde `401` aunque las credenciales sean correctas | El backend espera `Correo`/`Contrasena`, no `email`/`password` | Enviar los nombres de campo correctos |
+| `mysqld` no arranca como servicio | Instalación **portable** sin servicio | Ejecutar `mysqld.exe --datadir=<datadir>` (o registrarlo como servicio) |
+| Las tareas no levantan el backend | Directorio de trabajo mal configurado → no encuentra `.env` | Configurar "Start in" de la tarea en la raíz del proyecto |
+| El dominio no resuelve o apunta a IP vieja | DuckDNS no actualizado | Verificar `duckdns.log` y la tarea `Parque100-DDNS` |
+| No entra desde fuera | CGNAT, reenvío mal configurado o firewall | Verificar IP WAN vs. pública; revisar Port Mapping (interfaz WAN) y reglas de firewall |
+
+---
+
+## 7. Seguridad y mantenimiento
+
+- **Mantén cerrados** `3001` (API) y `3306` (MySQL); solo Caddy habla con ellos.
+- Usa un **`JWT_SECRET`** fuerte y **no** lo subas al repositorio.
+- El **token de DuckDNS** y los `.env` son **secretos**: nunca al control de versiones.
+- **Windows Update** puede reiniciar el equipo: programa las actualizaciones fuera de las horas de demo.
+- Considera una capa de acceso (Cloudflare Access, *basic-auth*) si el sitio no debe ser de acceso público.
+- Si cambia la **MAC** de red (p. ej. pasar de Wi-Fi a cable): rehacer la reserva DHCP y revisar el reenvío.
+- Let's Encrypt **renueva** el certificado automáticamente; no requiere intervención.
+
+---
+
+> ¿Necesitas el detalle narrativo completo del montaje (incluidas las pruebas descartadas y
+> las capturas de pantalla de cada paso)? Ese informe es **interno** y se guarda fuera del
+> repositorio, en `C:\Users\migue\parque100-server\documentacion\`.
