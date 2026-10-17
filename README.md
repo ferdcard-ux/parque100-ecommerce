@@ -118,7 +118,8 @@ Base URL: `http://localhost:3001/api`
 | [`Docs/arquitectura.md`](Docs/arquitectura.md) | Arquitectura MVC, estructura y decisiones técnicas |
 | [`Docs/manual-tecnico.md`](Docs/manual-tecnico.md) | Guía técnica: convenciones, estándares, despliegue |
 | [`Docs/guia-despliegue.md`](Docs/guia-despliegue.md) | Guía de despliegue: servidor propio expuesto a Internet (Caddy + DuckDNS) |
-| [`Docs/guia-uso.md`](Docs/guia-uso.md) | Manual de usuario: funcionalidades y rutas |
+| [`Docs/manual-usuario.md`](Docs/manual-usuario.md) | Manual de usuario completo: roles, flujo de compra, panel administrativo y FAQ |
+| [`Docs/guia-uso.md`](Docs/guia-uso.md) | Guía rápida de uso: funcionalidades y rutas |
 | [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md) | Estándares de codificación obligatorios |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historial de cambios del proyecto |
 
