@@ -7,11 +7,12 @@ import { useMemo } from 'react';
 import type { Product } from '../models';
 import { useProductController } from './use-product-controller';
 
-export type CatalogSort = 'relevance' | 'price_asc' | 'price_desc' | 'name_asc';
+export type CatalogSort = 'relevance' | 'rating_desc' | 'price_asc' | 'price_desc' | 'name_asc';
 
 /** Ordenamiento visible en la barra superior del catalogo. */
 export const CATALOG_SORT_OPTIONS: { value: CatalogSort; label: string }[] = [
   { value: 'relevance', label: 'Mas relevantes' },
+  { value: 'rating_desc', label: 'Mejor calificados' },
   { value: 'price_asc', label: 'Menor precio' },
   { value: 'price_desc', label: 'Mayor precio' },
   { value: 'name_asc', label: 'Nombre A-Z' },
@@ -49,6 +50,16 @@ export function useCatalogController(category: string, query: string, sort: Cata
       return matchCategory && matchQuery && matchBrand && matchPromo && matchMin && matchMax;
     });
     switch (sort) {
+      case 'rating_desc':
+        list = [...list].sort((a, b) => {
+          const avgA = a.ratingAverage ?? -1;
+          const avgB = b.ratingAverage ?? -1;
+          if (avgB !== avgA) return avgB - avgA;
+          const countDiff = (b.ratingCount ?? 0) - (a.ratingCount ?? 0);
+          if (countDiff !== 0) return countDiff;
+          return a.name.localeCompare(b.name);
+        });
+        break;
       case 'price_asc':
         list = [...list].sort((a, b) => a.price - b.price);
         break;

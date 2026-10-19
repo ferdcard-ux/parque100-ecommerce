@@ -14,9 +14,11 @@ import type { Category } from '../../models';
 
 interface HomePageProps {
   onAddToCart: (product: import('../../models').Product) => void;
+  /** Cuenta activa para aislar los favoritos por usuario. */
+  userId?: number | null;
 }
 
-export function HomePage({ onAddToCart }: HomePageProps) {
+export function HomePage({ onAddToCart, userId }: HomePageProps) {
   const { products, categories, isLoading } = useProductController();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
@@ -57,9 +59,10 @@ export function HomePage({ onAddToCart }: HomePageProps) {
           title="Ofertas de la semana"
           count={promos.length}
           seeMoreTo="/catalogo?promo=1"
+          userId={userId}
         />
       )}
-      <FeaturedProducts products={products.slice(0, 8)} onAddToCart={onAddToCart} count={products.length} seeMoreTo="/catalogo" />
+      <FeaturedProducts products={products.slice(0, 8)} onAddToCart={onAddToCart} count={products.length} seeMoreTo="/catalogo" userId={userId} />
       {fresh.length > 0 && (
         <FeaturedProducts
           products={fresh}
@@ -68,6 +71,7 @@ export function HomePage({ onAddToCart }: HomePageProps) {
           title="Frescos del día"
           count={fresh.length}
           seeMoreTo="/catalogo?cat=Frutas"
+          userId={userId}
         />
       )}
       <PromoBanner />

@@ -99,7 +99,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
   /** Foto de una sesion: la guardada o la fresca del backend. */
   const sessionPhoto = (s: UserType): string | null => s.photo ?? photoMap[s.id] ?? null;
 
-  const { favorites: favoriteIds } = useFavoritesController();
+  const { favorites: favoriteIds } = useFavoritesController(user?.id ?? null);
   const favoriteCount = favoriteIds.length;
 
   return (

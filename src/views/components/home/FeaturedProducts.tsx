@@ -19,11 +19,13 @@ interface FeaturedProductsProps {
   seeMoreTo?: string;
   /** Texto de Ver más. Por defecto Ver carrito (legacy). */
   seeMoreLabel?: string;
+  /** Cuenta activa para aislar los favoritos por usuario. */
+  userId?: number | null;
 }
 
-export function FeaturedProducts({ products, onAddToCart, eyebrow = 'DESTACADOS', title = 'Productos Destacados', count, seeMoreTo = '/catalogo', seeMoreLabel = 'Ver más >' }: FeaturedProductsProps) {
+export function FeaturedProducts({ products, onAddToCart, eyebrow = 'DESTACADOS', title = 'Productos Destacados', count, seeMoreTo = '/catalogo', seeMoreLabel = 'Ver más >', userId }: FeaturedProductsProps) {
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
-  const { toggleFavorite, isFavorite } = useFavoritesController();
+  const { toggleFavorite, isFavorite } = useFavoritesController(userId ?? null);
 
   const handleAddToCart = (product: Product) => {
     onAddToCart(product);

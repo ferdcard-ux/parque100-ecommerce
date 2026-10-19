@@ -11,9 +11,9 @@ import { ProductCard } from '../components/shop/product-card';
 
 /** Lista de productos marcados como favoritos. */
 export function FavoritesPage() {
-  const { addToCart } = useApp();
+  const { addToCart, user } = useApp();
   const { products } = useProductController();
-  const { favorites, toggleFavorite, isFavorite } = useFavoritesController();
+  const { favorites, toggleFavorite, isFavorite } = useFavoritesController(user?.id ?? null);
   const favProducts = products.filter((p) => favorites.includes(String(p.id)));
 
   return (

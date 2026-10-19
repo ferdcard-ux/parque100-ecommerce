@@ -68,6 +68,8 @@ function mapProduct(row: any): Product {
   const prev = row.Precio_Anterior ?? row.previousPrice ?? null;
   const contentQty = row.Contenido_Cantidad ?? row.contentQty ?? null;
   const contentUnit = row.Contenido_Unidad ?? row.contentUnit ?? null;
+  const ratingAverage = row.Promedio_Calificacion ?? row.ratingAverage ?? null;
+  const ratingCount = row.Total_Calificaciones ?? row.ratingCount ?? 0;
   return {
     id: row.ID_Producto || row.id,
     name: productName,
@@ -86,6 +88,8 @@ function mapProduct(row: any): Product {
     category: categoryName,
     stock: row.Stock_Minimo || row.stock || 0,
     description: row.Descripcion || row.description || '',
+    ratingAverage: ratingAverage != null ? Number(ratingAverage) : null,
+    ratingCount: Number(ratingCount) || 0,
   };
 }
 
@@ -99,6 +103,7 @@ function mapAdminProduct(row: any): AdminProduct {
     quantity: row.Stock_Minimo || row.quantity || 0,
     price: row.Precio_Venta || row.price,
     status: stock <= 0 ? 'out_of_stock' : stock < 10 ? 'low_stock' : 'in_stock',
+    image: row.Imagen || null,
   };
 }
 

@@ -554,6 +554,50 @@ await test('PUT /products inexistente es 404', async () => {
   assert(status === 404, `status ${status}`);
 });
 
+const IMAGE_TEST_ID = 'PX-IMG-TEST';
+const IMAGE_TEST_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+await test('GET /products expone promedio y total de calificaciones', async () => {
+  const { status, data } = await call('GET', '/products');
+  assert(status === 200 && Array.isArray(data), `status ${status}`);
+  const rated = data.find((p) => p.ID_Producto === 'P001');
+  assert(rated && Number(rated.Total_Calificaciones) > 0, 'P001 sin calificaciones');
+  const avg = Number(rated.Promedio_Calificacion);
+  assert(avg >= 1 && avg <= 5, `promedio invalido: ${rated.Promedio_Calificacion}`);
+});
+
+await test('PUT /products conserva la imagen si no se envia', async () => {
+  // Limpia un resto de una ejecucion anterior, si existe.
+  await call('DELETE', `/products/${IMAGE_TEST_ID}`, undefined, adminToken);
+  const created = await call('POST', '/products', {
+    ID_Producto: IMAGE_TEST_ID,
+    Nombre: 'Producto imagen prueba',
+    Descripcion: 'Prueba de preservacion de imagen',
+    Imagen: IMAGE_TEST_DATA,
+    Precio_Venta: 1000,
+    Stock_Minimo: 5,
+    ID_Categoria: 1,
+  }, adminToken);
+  assert(created.status === 201, `crear status ${created.status} ${JSON.stringify(created.data)}`);
+  const updated = await call('PUT', `/products/${IMAGE_TEST_ID}`, {
+    Nombre: 'Producto imagen prueba',
+    Descripcion: 'Prueba de preservacion de imagen',
+    Precio_Venta: 1200,
+    Stock_Minimo: 6,
+    ID_Categoria: 1,
+  }, adminToken);
+  assert(updated.status === 200, `actualizar status ${updated.status} ${JSON.stringify(updated.data)}`);
+  const row = await call('GET', `/products/${IMAGE_TEST_ID}`);
+  assert(row.status === 200, `detalle status ${row.status}`);
+  assert(row.data.Imagen === IMAGE_TEST_DATA, 'la imagen se perdio al actualizar sin enviarla');
+  assert(Number(row.data.Precio_Venta) === 1200, 'el precio no se actualizo');
+});
+
+await test('Limpieza del producto de prueba de imagen', async () => {
+  const { status } = await call('DELETE', `/products/${IMAGE_TEST_ID}`, undefined, adminToken);
+  assert(status === 200, `status ${status}`);
+});
+
 let foreignOrderId = null;
 
 await test('POST /ratings de pedido ajeno es 403', async () => {

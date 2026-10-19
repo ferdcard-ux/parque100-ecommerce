@@ -12,18 +12,28 @@ import pool from '../config/db.js';
  */
 export const productModel = {
   /**
-   * Obtiene todos los productos junto con el nombre de su categoria.
+   * Obtiene todos los productos junto con el nombre de su categoria y
+   * el resumen de calificaciones (promedio y total de resenas).
    *
    * @async
-   * @returns {Promise<Array<Object>>} Lista de productos con la columna
-   *   adicional `Nombre_Categoria` (puede ser null si no tiene categoria).
+   * @returns {Promise<Array<Object>>} Lista de productos con las columnas
+   *   adicionales `Nombre_Categoria`, `Promedio_Calificacion` y
+   *   `Total_Calificaciones`.
    * @throws {Error} Si falla la consulta a la base de datos.
    */
   async findAll() {
     const [rows] = await pool.query(`
-      SELECT p.*, c.Nombre_Categoria
+      SELECT p.*, c.Nombre_Categoria,
+             r.promedio AS Promedio_Calificacion,
+             r.total AS Total_Calificaciones
       FROM productos p
       LEFT JOIN categorias c ON p.ID_Categoria = c.ID_Categoria
+      LEFT JOIN (
+        SELECT ID_Producto, AVG(Estrellas) AS promedio, COUNT(*) AS total
+        FROM calificaciones
+        WHERE Tipo = 'producto' AND ID_Producto IS NOT NULL
+        GROUP BY ID_Producto
+      ) r ON r.ID_Producto = p.ID_Producto
     `);
     return rows;
   },

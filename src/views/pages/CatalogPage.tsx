@@ -15,7 +15,7 @@ const PAGE_SIZE = 12;
 
 /** Catalogo con sidebar de filtros, busqueda, ordenamiento y paginacion. */
 export function CatalogPage() {
-  const { addToCart } = useApp();
+  const { addToCart, user } = useApp();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCat = searchParams.get('cat') ?? 'Todos';
   const initialQ = searchParams.get('q') ?? '';
@@ -40,7 +40,7 @@ export function CatalogPage() {
     minPrice,
     maxPrice,
   });
-  const { toggleFavorite, isFavorite } = useFavoritesController();
+  const { toggleFavorite, isFavorite } = useFavoritesController(user?.id ?? null);
 
   useEffect(() => {
     setSearchParams((prev) => {

@@ -21,7 +21,7 @@ export function ProductDetailPage() {
   const { id } = useParams();
   const { addToCart, user, isLoggedIn } = useApp();
   const { products, isLoading } = useProductController();
-  const { toggleFavorite, isFavorite } = useFavoritesController();
+  const { toggleFavorite, isFavorite } = useFavoritesController(user?.id ?? null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
   const { summary, ratings, isSaving, edit } = useRatingsController({ producto: id });

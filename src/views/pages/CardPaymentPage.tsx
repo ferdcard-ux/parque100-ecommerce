@@ -5,8 +5,9 @@
  */
 import { useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { Upload, ReceiptText } from 'lucide-react';
+import { Upload, ReceiptText, QrCode, Smartphone } from 'lucide-react';
 import type { CardPaymentData } from '../../models';
+import { useBusinessController } from '../../controllers';
 import { CardForm } from '../components/checkout/CardForm';
 import { CheckoutSteps } from '../components/checkout/checkout-steps';
 import { CheckoutSummary } from '../components/checkout/checkout-summary';
@@ -36,6 +37,7 @@ export function CardPaymentPage({ total, itemCount, isProcessing, onPay, onPayNe
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [receiptData, setReceiptData] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { business, isLoading: isBusinessLoading } = useBusinessController();
 
   const [tendered, setTendered] = useState('');
   const tenderedValue = Number(tendered.replace(/\D/g, '')) || 0;
@@ -118,9 +120,22 @@ export function CardPaymentPage({ total, itemCount, isProcessing, onPay, onPayNe
         )}
         {isNequi ? (
           <form onSubmit={handleNequiSubmit} className="bg-white rounded-2xl border border-gray-100 p-8 max-w-md mx-auto">
-            <p className="text-gray-500 mb-4" style={{ fontSize: '0.85rem' }}>
-              Realiza la transferencia en Nequi y adjunta el comprobante en imagen.
-            </p>
+            <div className="rounded-xl border border-[#FBC02D]/40 bg-[#FBC02D]/10 p-4 mb-5">
+              <div className="flex items-center gap-2 mb-1">
+                <Smartphone size={16} className="text-[#f57f17]" />
+                <p className="text-[#212121] font-semibold" style={{ fontSize: '0.85rem' }}>Número Nequi para el pago</p>
+              </div>
+              <p className="text-[#212121] font-bold" style={{ fontSize: '1.4rem', letterSpacing: '0.04em' }}>
+                {isBusinessLoading ? 'Cargando...' : business?.Telefono || 'No configurado'}
+              </p>
+              <p className="text-gray-500 mt-1" style={{ fontSize: '0.75rem' }}>
+                Transfiere el total y luego adjunta el comprobante.
+              </p>
+              <div className="mt-4 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-200 bg-white/70 py-4">
+                <QrCode size={40} className="text-gray-300" />
+                <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>QR de pago Nequi (próximamente)</p>
+              </div>
+            </div>
             <input
               ref={fileRef}
               type="file"
@@ -162,8 +177,10 @@ export function CardPaymentPage({ total, itemCount, isProcessing, onPay, onPayNe
               inputMode="numeric"
               required
               value={tendered}
-              onChange={(e) => setTendered(e.target.value.replace(/\D/g, '').slice(0, 9))}
-              placeholder="Ej. 50000"
+              onChange={(e) => setTendered(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              maxLength={6}
+              title="Máximo 6 dígitos"
+              placeholder="Ej. 500000"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] mb-4"
             />
             <dl className="border-t border-gray-100 pt-3 mb-6 flex flex-col gap-1" style={{ fontSize: '0.9rem' }}>

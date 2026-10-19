@@ -38,6 +38,10 @@ export interface Product {
   stock: number;
   /** Descripcion corta. */
   description: string;
+  /** Promedio de estrellas (1 a 5) o null si no tiene calificaciones. */
+  ratingAverage?: number | null;
+  /** Cantidad de calificaciones de producto registradas. */
+  ratingCount?: number;
 }
 
 /** Categoria con su presentacion visual para la grilla del home. */
@@ -68,6 +72,8 @@ export interface AdminProduct {
   price: number;
   /** Estado derivado segun el nivel de stock. */
   status: InventoryStatus;
+  /** Imagen guardada en la base de datos (URL o dataURL), null si no tiene. */
+  image?: string | null;
 }
 
 /** Estados posibles del inventario calculados desde el stock. */

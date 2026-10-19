@@ -39,7 +39,8 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
       setMarca(full?.brand ?? '');
       setContQty(full?.contentQty != null ? String(full.contentQty) : '');
       setContUnit(full?.contentUnit || 'g');
-      setImagen('');
+      // Carga la imagen realmente guardada para no perderla al guardar.
+      setImagen(product.image ?? '');
     }
   }, [product, products]);
 
@@ -59,7 +60,7 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
       await onUpdate(id, {
         Nombre: nombre.trim(),
         Descripcion: nombre.trim(),
-        Imagen: imagen.trim() || undefined,
+        Imagen: imagen.trim(),
         Precio_Venta: parseInt(precio),
         Precio_Anterior: precioAnterior ? parseInt(precioAnterior) : null,
         Marca: marca.trim() || null,

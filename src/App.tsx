@@ -137,7 +137,7 @@ function LayoutWrapper() {
   return <RootLayout cartCount={cartCount} isAdmin={isAdmin || isDomiciliario} isLoggedIn={isLoggedIn} user={user} userRole={user?.role ?? null} sessions={sessions} onSwitchSession={switchSession} onLogout={logout} />;
 }
 
-function HomeWrapper() { const { addToCart } = useApp(); return <HomePage onAddToCart={addToCart} />; }
+function HomeWrapper() { const { addToCart, user } = useApp(); return <HomePage onAddToCart={addToCart} userId={user?.id ?? null} />; }
 function CartWrapper() { const ctx = useApp(); return <Protected><CartPage items={ctx.cartItems} products={ctx.products} subtotal={ctx.cartSubtotal} shipping={ctx.cartShipping} total={ctx.cartTotal} onRemove={ctx.removeFromCart} onUpdateQuantity={ctx.updateQuantity} /></Protected>; }
 function AddressWrapper() {
   const { user, saveAddress, cartCount, cartTotal } = useApp();

@@ -48,10 +48,17 @@ function validateProduct(body, requireId) {
   out.Stock_Minimo = Number(body.Stock_Minimo);
   if (!Number.isInteger(Number(body.ID_Categoria)) || Number(body.ID_Categoria) <= 0) return null;
   out.ID_Categoria = Number(body.ID_Categoria);
-  const imagen = str(body.Imagen, 7000000);
-  if (imagen === undefined) return null;
-  if (imagen && !imagen.startsWith('data:image/') && !/^https?:\/\//.test(imagen)) return null;
-  out.Imagen = imagen;
+  /**
+   * Imagen opcional. En una actualizacion, si el campo no viene en el
+   * cuerpo se omite para conservar la imagen actual; enviar cadena
+   * vacia la elimina.
+   */
+  if (body.Imagen !== undefined) {
+    const imagen = str(body.Imagen, 7000000);
+    if (imagen === undefined) return null;
+    if (imagen && !imagen.startsWith('data:image/') && !/^https?:\/\//.test(imagen)) return null;
+    out.Imagen = imagen;
+  }
   for (const field of ['Marca', 'Contenido_Unidad', 'Embalaje', 'Ingredientes', 'Conservacion', 'Promo_Desde', 'Promo_Hasta']) {
     const value = str(body[field], 255);
     if (value === undefined) return null;
