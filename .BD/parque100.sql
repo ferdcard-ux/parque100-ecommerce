@@ -131,6 +131,7 @@ CREATE TABLE `negocio` (
   `Email` varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `Horario` varchar(80) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
   `Descripcion` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci DEFAULT NULL,
+  `Imagen_QR` mediumtext CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
   PRIMARY KEY (`ID_Negocio`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -141,7 +142,7 @@ CREATE TABLE `negocio` (
 
 LOCK TABLES `negocio` WRITE;
 /*!40000 ALTER TABLE `negocio` DISABLE KEYS */;
-INSERT INTO `negocio` VALUES (1,'Tienda Parque 100','900000000-1','Calle 100 - Carrera 42F, Barranquilla.','3046068846','admin@parque100.com','Lun-Sab 8:00-19:00','Productos frescos y de canasta familiar');
+INSERT INTO `negocio` VALUES (1,'Tienda Parque 100','900000000-1','Calle 100 - Carrera 42F, Barranquilla.','3046068846','admin@parque100.com','Lun-Sab 8:00-19:00','Productos frescos y de canasta familiar',NULL);
 /*!40000 ALTER TABLE `negocio` ENABLE KEYS */;
 UNLOCK TABLES;
 

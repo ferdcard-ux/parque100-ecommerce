@@ -163,6 +163,31 @@ await test('PUT /business acepta telefono de 10 digitos', async () => {
   assert(restored.status === 200, `restaurar status ${restored.status}`);
 });
 
+const QR_TEST_DATA = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+
+await test('PUT /business rechaza un QR invalido', async () => {
+  const before = (await call('GET', '/business')).data;
+  const { status } = await call('PUT', '/business', { ...before, Imagen_QR: 'no-es-imagen' }, adminToken);
+  assert(status === 400, `status ${status}`);
+});
+
+await test('PUT /business guarda y conserva el QR', async () => {
+  const before = (await call('GET', '/business')).data;
+  const saved = await call('PUT', '/business', { ...before, Imagen_QR: QR_TEST_DATA }, adminToken);
+  assert(saved.status === 200, `guardar status ${saved.status}`);
+  assert(saved.data.Imagen_QR === QR_TEST_DATA, 'no guardo el QR');
+
+  const withoutQr = { ...before };
+  delete withoutQr.Imagen_QR;
+  const updated = await call('PUT', '/business', { ...withoutQr, Horario: 'Lun-Sab 8:00-18:00' }, adminToken);
+  assert(updated.status === 200, `actualizar status ${updated.status}`);
+  assert(updated.data.Imagen_QR === QR_TEST_DATA, 'se perdio el QR al actualizar sin enviarlo');
+
+  const restored = await call('PUT', '/business', before, adminToken);
+  assert(restored.status === 200, `restaurar status ${restored.status}`);
+  assert((restored.data.Imagen_QR ?? null) === (before.Imagen_QR ?? null), 'no se restauro el QR original');
+});
+
 /* --- Permisos / roles (lote 2) --- */
 await test('GET /users/2/permissions (admin puede cancelar)', async () => {
   const { status, data } = await call('GET', '/users/2/permissions', undefined, adminToken);

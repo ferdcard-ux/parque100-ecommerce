@@ -8,10 +8,28 @@ interface ProductImageInputProps {
   value: string;
   /** Actualiza la imagen (URL o dataURL). */
   onChange: (value: string) => void;
+  /** Etiqueta visible. Por defecto "Imagen". */
+  label?: string;
+  /** Texto de ayuda junto a la etiqueta. */
+  hint?: string;
+  /** Texto alternativo de la vista previa. */
+  previewAlt?: string;
+  /** Placeholder del campo de URL. */
+  placeholder?: string;
+  /** Clases de ajuste para la vista previa (por defecto object-cover). */
+  previewClassName?: string;
 }
 
-/** Entrada de imagen de producto: acepta URL web o archivo local (max. 2 MB). */
-export function ProductImageInput({ value, onChange }: ProductImageInputProps) {
+/** Entrada de imagen reutilizable: acepta URL web o archivo local (max. 2 MB). */
+export function ProductImageInput({
+  value,
+  onChange,
+  label = 'Imagen',
+  hint = '(URL web o archivo local, opcional)',
+  previewAlt = 'Vista previa del producto',
+  placeholder = 'https://ejemplo.com/imagen.jpg',
+  previewClassName = 'object-cover',
+}: ProductImageInputProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [reading, setReading] = useState(false);
@@ -43,11 +61,11 @@ export function ProductImageInput({ value, onChange }: ProductImageInputProps) {
   return (
     <div>
       <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>
-        Imagen <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>(URL web o archivo local, opcional)</span>
+        {label} <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>{hint}</span>
       </label>
       <input
         type="url"
-        placeholder="https://ejemplo.com/imagen.jpg"
+        placeholder={placeholder}
         value={value.startsWith('data:') ? '' : value}
         onChange={(e) => { setError(null); onChange(e.target.value); }}
         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
@@ -84,8 +102,8 @@ export function ProductImageInput({ value, onChange }: ProductImageInputProps) {
       {value && (
         <img
           src={value}
-          alt="Vista previa del producto"
-          className="mt-3 w-full h-36 object-cover rounded-xl border border-gray-100 bg-[#F5F5F5]"
+          alt={previewAlt}
+          className={`mt-3 w-full h-36 ${previewClassName} rounded-xl border border-gray-100 bg-[#F5F5F5]`}
         />
       )}
       {error && <p role="alert" className="text-[#C62828] mt-1.5" style={{ fontSize: '0.8rem' }}>{error}</p>}

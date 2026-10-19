@@ -35,22 +35,38 @@ export const businessModel = {
    * @param {string} [data.Email] - Correo de contacto.
    * @param {string} [data.Horario] - Horario de atencion.
    * @param {string} [data.Descripcion] - Descripcion corta.
+   * @param {string|null} [data.Imagen_QR] - Imagen del QR de pago.
    * @returns {Promise<boolean>} true si se actualizo la fila.
    * @throws {Error} Si falla la consulta a la base de datos.
    */
   async update(data) {
+    const fields = [
+      'Nombre = ?',
+      'NIT = ?',
+      'Direccion = ?',
+      'Telefono = ?',
+      'Email = ?',
+      'Horario = ?',
+      'Descripcion = ?',
+    ];
+    const values = [
+      data.Nombre,
+      data.NIT ?? null,
+      data.Direccion ?? null,
+      data.Telefono ?? null,
+      data.Email ?? null,
+      data.Horario ?? null,
+      data.Descripcion ?? null,
+    ];
+    // Solo se toca el QR cuando el cliente lo envia; asi se conserva
+    // la imagen actual en actualizaciones parciales.
+    if (data.Imagen_QR !== undefined) {
+      fields.push('Imagen_QR = ?');
+      values.push(data.Imagen_QR ?? null);
+    }
     const [result] = await pool.query(
-      `UPDATE negocio SET Nombre = ?, NIT = ?, Direccion = ?, Telefono = ?,
-        Email = ?, Horario = ?, Descripcion = ? WHERE ID_Negocio = 1`,
-      [
-        data.Nombre,
-        data.NIT ?? null,
-        data.Direccion ?? null,
-        data.Telefono ?? null,
-        data.Email ?? null,
-        data.Horario ?? null,
-        data.Descripcion ?? null,
-      ],
+      `UPDATE negocio SET ${fields.join(', ')} WHERE ID_Negocio = 1`,
+      values,
     );
     return result.affectedRows === 1;
   },

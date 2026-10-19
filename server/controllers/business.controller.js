@@ -75,7 +75,20 @@ export const businessController = {
       if (nit.length > 30) {
         return res.status(400).json({ error: 'El NIT no puede superar 30 caracteres.' });
       }
-      const updated = await businessModel.update({
+      let imagenQr;
+      if (body.Imagen_QR !== undefined) {
+        if (body.Imagen_QR !== null && typeof body.Imagen_QR !== 'string') {
+          return res.status(400).json({ error: 'La imagen del QR no es valida.' });
+        }
+        imagenQr = text(body.Imagen_QR);
+        if (imagenQr.length > 7000000) {
+          return res.status(400).json({ error: 'La imagen del QR no puede superar 7 MB.' });
+        }
+        if (imagenQr && !imagenQr.startsWith('data:image/') && !/^https?:\/\//.test(imagenQr)) {
+          return res.status(400).json({ error: 'La imagen del QR debe ser una URL o un archivo de imagen valido.' });
+        }
+      }
+      const updateData = {
         Nombre: text(body.Nombre),
         NIT: nit,
         Direccion: text(body.Direccion),
@@ -83,7 +96,11 @@ export const businessController = {
         Email: text(body.Email),
         Horario: text(body.Horario),
         Descripcion: text(body.Descripcion),
-      });
+      };
+      if (body.Imagen_QR !== undefined) {
+        updateData.Imagen_QR = imagenQr || null;
+      }
+      const updated = await businessModel.update(updateData);
       if (!updated) return res.status(404).json({ error: 'Datos del negocio no encontrados' });
       const business = await businessModel.find();
       res.json(business);

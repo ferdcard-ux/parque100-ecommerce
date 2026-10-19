@@ -131,10 +131,21 @@ export function CardPaymentPage({ total, itemCount, isProcessing, onPay, onPayNe
               <p className="text-gray-500 mt-1" style={{ fontSize: '0.75rem' }}>
                 Transfiere el total y luego adjunta el comprobante.
               </p>
-              <div className="mt-4 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-200 bg-white/70 py-4">
-                <QrCode size={40} className="text-gray-300" />
-                <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>QR de pago Nequi (próximamente)</p>
-              </div>
+              {business?.Imagen_QR ? (
+                <div className="mt-4 flex flex-col items-center gap-2">
+                  <img
+                    src={business.Imagen_QR}
+                    alt="QR de pago Nequi"
+                    className="h-40 w-40 rounded-xl border border-gray-200 bg-white object-contain p-2"
+                  />
+                  <p className="text-gray-400" style={{ fontSize: '0.72rem' }}>Escanea el QR o usa el número Nequi.</p>
+                </div>
+              ) : (
+                <div className="mt-4 flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-200 bg-white/70 py-4">
+                  <QrCode size={40} className="text-gray-300" />
+                  <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>QR de pago Nequi (próximamente)</p>
+                </div>
+              )}
             </div>
             <input
               ref={fileRef}

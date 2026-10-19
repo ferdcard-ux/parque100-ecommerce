@@ -4,6 +4,7 @@
  */
 import { useEffect, useState } from 'react';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
+import { ProductImageInput } from '../components/admin/ProductImageInput';
 import { useBusinessController } from '../../controllers';
 
 const STORAGE_KEY = 'parque100-admin-config';
@@ -29,7 +30,7 @@ export function AdminSettingsPage() {
   const [config, setConfig] = useState<AdminConfig>(loadConfig);
   const [saved, setSaved] = useState(false);
   const { business, isLoading, error, isSaving, saveError, reload, save } = useBusinessController();
-  const [form, setForm] = useState({ Nombre: '', NIT: '', Direccion: '', Telefono: '', Email: '', Horario: '', Descripcion: '' });
+  const [form, setForm] = useState({ Nombre: '', NIT: '', Direccion: '', Telefono: '', Email: '', Horario: '', Descripcion: '', Imagen_QR: '' });
   const [businessSaved, setBusinessSaved] = useState(false);
 
   useEffect(() => {
@@ -42,6 +43,7 @@ export function AdminSettingsPage() {
         Email: business.Email ?? '',
         Horario: business.Horario ?? '',
         Descripcion: business.Descripcion ?? '',
+        Imagen_QR: business.Imagen_QR ?? '',
       });
     }
   }, [business]);
@@ -76,6 +78,7 @@ export function AdminSettingsPage() {
         Email: form.Email.trim(),
         Horario: form.Horario.trim(),
         Descripcion: form.Descripcion.trim(),
+        Imagen_QR: form.Imagen_QR.trim(),
       });
       setBusinessSaved(true);
       setTimeout(() => setBusinessSaved(false), 2500);
@@ -161,6 +164,24 @@ export function AdminSettingsPage() {
               <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Descripción *</span>
               <textarea name="Descripcion" value={form.Descripcion} onChange={handleBusinessChange} required maxLength={255} rows={2} className={inputClass} />
             </label>
+            <div className="border-t border-gray-100 pt-3 mt-1">
+              <h3 className="text-[#212121] font-bold mb-1" style={{ fontSize: '0.9rem' }}>QR de pago (Nequi)</h3>
+              <p className="text-gray-400 mb-3" style={{ fontSize: '0.78rem' }}>
+                Sube la imagen del QR que verán los clientes al pagar con Nequi. Si no hay imagen, se muestra un marcador.
+              </p>
+              <ProductImageInput
+                value={form.Imagen_QR}
+                onChange={(value) => {
+                  setForm((prev) => ({ ...prev, Imagen_QR: value }));
+                  setBusinessSaved(false);
+                }}
+                label="Imagen del QR"
+                hint="(PNG/JPG o URL, máx. 2 MB, opcional)"
+                previewAlt="Vista previa del QR de pago"
+                placeholder="https://ejemplo.com/qr.png"
+                previewClassName="object-contain p-3"
+              />
+            </div>
             {saveError && <p className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{saveError}</p>}
             <div className="flex items-center gap-3">
               <button

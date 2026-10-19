@@ -21,6 +21,8 @@ export interface Business {
   Horario: string | null;
   /** Descripcion corta (opcional). */
   Descripcion: string | null;
+  /** Imagen del QR de pago (dataURL o URL), null si no tiene. */
+  Imagen_QR: string | null;
 }
 
 /** Payload para actualizar la ficha del negocio. */
@@ -39,4 +41,6 @@ export interface BusinessUpdate {
   Horario?: string;
   /** Descripcion corta. */
   Descripcion?: string;
+  /** Imagen del QR de pago (dataURL o URL). */
+  Imagen_QR?: string | null;
 }

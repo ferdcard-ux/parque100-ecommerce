@@ -105,7 +105,8 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
 
 -- --------------------------------------------------------
 -- NEGOCIO (ficha unica editable desde el panel admin)
--- --------------------------------------------------------CREATE TABLE IF NOT EXISTS negocio (
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS negocio (
   ID_Negocio int(11) NOT NULL,
   Nombre varchar(80) NOT NULL,
   NIT varchar(30) DEFAULT NULL,
@@ -114,6 +115,7 @@ CREATE TABLE IF NOT EXISTS detalle_pedido (
   Email varchar(80) DEFAULT NULL,
   Horario varchar(80) DEFAULT NULL,
   Descripcion varchar(255) DEFAULT NULL,
+  Imagen_QR mediumtext,
   PRIMARY KEY (ID_Negocio)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
