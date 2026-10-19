@@ -144,6 +144,25 @@ await test('PUT /business guarda y devuelve la ficha', async () => {
   await call('PUT', '/business', before, adminToken);
 });
 
+await test('PUT /business rechaza telefono distinto de 10 digitos', async () => {
+  const before = (await call('GET', '/business')).data;
+  for (const telefono of ['300987654', '30098765431', '30098abcde']) {
+    const { status } = await call('PUT', '/business', { ...before, Telefono: telefono }, adminToken);
+    assert(status === 400, `telefono ${telefono} status ${status}`);
+  }
+  const restored = await call('PUT', '/business', before, adminToken);
+  assert(restored.status === 200, `restaurar status ${restored.status}`);
+});
+
+await test('PUT /business acepta telefono de 10 digitos', async () => {
+  const before = (await call('GET', '/business')).data;
+  const { status, data } = await call('PUT', '/business', { ...before, Telefono: '3001234567' }, adminToken);
+  assert(status === 200, `status ${status}`);
+  assert(data.Telefono === '3001234567', `telefono ${data.Telefono}`);
+  const restored = await call('PUT', '/business', before, adminToken);
+  assert(restored.status === 200, `restaurar status ${restored.status}`);
+});
+
 /* --- Permisos / roles (lote 2) --- */
 await test('GET /users/2/permissions (admin puede cancelar)', async () => {
   const { status, data } = await call('GET', '/users/2/permissions', undefined, adminToken);

@@ -189,7 +189,7 @@ INSERT INTO usuario (ID_Usuario, Nombre, Correo, Contrasena, Rol, Telefono, Dire
 (2, 'Admin Parque100', 'admin@parque100.com', '$2b$10$YSanoq00sJ8PdrWGdQAskOQczeI8TDHmhofoc7hI5iesr/cUigNyW', 'admin', 300987654, 'Cra 98 #76-54');
 
 INSERT INTO negocio (ID_Negocio, Nombre, NIT, Direccion, Telefono, Email, Horario, Descripcion) VALUES
-(1, 'Tienda Parque 100', '900000000-1', 'Cra 98 #76-54, Bogota', '300987654', 'admin@parque100.com', 'Lun-Sab 8:00-18:00', 'Productos frescos y de canasta familiar')
+(1, 'Tienda Parque 100', '900000000-1', 'Cra 98 #76-54, Bogota', '3046068846', 'admin@parque100.com', 'Lun-Sab 8:00-18:00', 'Productos frescos y de canasta familiar')
 ON DUPLICATE KEY UPDATE Nombre = VALUES(Nombre);
 
 INSERT INTO permisos_usuario (ID_Usuario, puede_cancelar) VALUES

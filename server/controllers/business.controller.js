@@ -48,7 +48,6 @@ export const businessController = {
       const required = [
         ['Nombre', 80],
         ['Direccion', 120],
-        ['Telefono', 30],
         ['Email', 80],
         ['Horario', 80],
         ['Descripcion', 255],
@@ -62,6 +61,13 @@ export const businessController = {
           return res.status(400).json({ error: `El campo ${field} no puede superar ${max} caracteres.` });
         }
       }
+      const telefono = text(body.Telefono);
+      if (!telefono) {
+        return res.status(400).json({ error: 'El campo Telefono es obligatorio.' });
+      }
+      if (!/^\d{10}$/.test(telefono)) {
+        return res.status(400).json({ error: 'El telefono del negocio debe tener exactamente 10 digitos.' });
+      }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text(body.Email))) {
         return res.status(400).json({ error: 'El correo del negocio no es valido.' });
       }
@@ -73,7 +79,7 @@ export const businessController = {
         Nombre: text(body.Nombre),
         NIT: nit,
         Direccion: text(body.Direccion),
-        Telefono: text(body.Telefono),
+        Telefono: telefono,
         Email: text(body.Email),
         Horario: text(body.Horario),
         Descripcion: text(body.Descripcion),

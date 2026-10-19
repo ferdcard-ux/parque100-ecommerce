@@ -55,12 +55,18 @@ export function AdminSettingsPage() {
   };
 
   const handleBusinessChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    // El telefono del negocio debe tener exactamente 10 digitos.
+    const nextValue = name === 'Telefono' ? value.replace(/\D/g, '').slice(0, 10) : value;
+    setForm((prev) => ({ ...prev, [name]: nextValue }));
     setBusinessSaved(false);
   };
 
+  const phoneValid = /^\d{10}$/.test(form.Telefono);
+
   const saveBusiness = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!phoneValid) return;
     try {
       await save({
         Nombre: form.Nombre.trim(),
@@ -113,7 +119,30 @@ export function AdminSettingsPage() {
               </label>
               <label className="block">
                 <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Teléfono *</span>
-                <input name="Telefono" value={form.Telefono} onChange={handleBusinessChange} required maxLength={30} className={inputClass} />
+                <input
+                  name="Telefono"
+                  value={form.Telefono}
+                  onChange={handleBusinessChange}
+                  required
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={10}
+                  pattern="[0-9]{10}"
+                  title="Ingresa un número de teléfono de 10 dígitos"
+                  placeholder="Ej. 3001234567"
+                  aria-invalid={!phoneValid}
+                  className={inputClass}
+                />
+                <span
+                  className={`block mt-1 ${phoneValid ? 'text-gray-400' : 'text-[#C62828]'}`}
+                  style={{ fontSize: '0.72rem' }}
+                >
+                  {phoneValid
+                    ? '10 dígitos, solo números.'
+                    : form.Telefono.length === 0
+                      ? 'Debe tener exactamente 10 dígitos.'
+                      : `Faltan ${10 - form.Telefono.length} dígito(s) para completar los 10.`}
+                </span>
               </label>
             </div>
             <label className="block">
@@ -136,7 +165,7 @@ export function AdminSettingsPage() {
             <div className="flex items-center gap-3">
               <button
                 type="submit"
-                disabled={isSaving}
+                disabled={isSaving || !phoneValid}
                 className="bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 text-white rounded-full px-6 py-2.5 transition-colors"
                 style={{ fontWeight: 600 }}
               >

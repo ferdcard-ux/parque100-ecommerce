@@ -141,7 +141,7 @@ CREATE TABLE `negocio` (
 
 LOCK TABLES `negocio` WRITE;
 /*!40000 ALTER TABLE `negocio` DISABLE KEYS */;
-INSERT INTO `negocio` VALUES (1,'Tienda Parque 100','900000000-1','Calle 100 - Carrera 42F, Barranquilla.','300987654','admin@parque100.com','Lun-Sab 8:00-19:00','Productos frescos y de canasta familiar');
+INSERT INTO `negocio` VALUES (1,'Tienda Parque 100','900000000-1','Calle 100 - Carrera 42F, Barranquilla.','3046068846','admin@parque100.com','Lun-Sab 8:00-19:00','Productos frescos y de canasta familiar');
 /*!40000 ALTER TABLE `negocio` ENABLE KEYS */;
 UNLOCK TABLES;
 

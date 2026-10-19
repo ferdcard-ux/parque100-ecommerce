@@ -13,7 +13,7 @@ export interface Business {
   NIT: string | null;
   /** Direccion fisica (opcional). */
   Direccion: string | null;
-  /** Telefono de contacto (opcional). */
+  /** Telefono de contacto (exactamente 10 digitos). */
   Telefono: string | null;
   /** Correo de contacto (opcional). */
   Email: string | null;
@@ -31,7 +31,7 @@ export interface BusinessUpdate {
   NIT?: string;
   /** Direccion fisica. */
   Direccion?: string;
-  /** Telefono de contacto. */
+  /** Telefono de contacto (exactamente 10 digitos). */
   Telefono?: string;
   /** Correo de contacto. */
   Email?: string;
