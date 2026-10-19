@@ -642,6 +642,68 @@ await test('Limpieza del producto de prueba de imagen', async () => {
   assert(status === 200, `status ${status}`);
 });
 
+const DESC_TEST_ID = 'PX-DESC-TEST';
+
+await test('PUT /products conserva la descripcion si no se envia', async () => {
+  await call('DELETE', `/products/${DESC_TEST_ID}`, undefined, adminToken);
+  const created = await call('POST', '/products', {
+    ID_Producto: DESC_TEST_ID,
+    Nombre: 'Producto descripcion prueba',
+    Descripcion: 'Descripcion original de prueba',
+    Precio_Venta: 1000,
+    Stock_Minimo: 5,
+    ID_Categoria: 1,
+  }, adminToken);
+  assert(created.status === 201, `crear status ${created.status} ${JSON.stringify(created.data)}`);
+  // Actualizacion parcial sin el campo Descripcion: debe conservar la
+  // descripcion real en lugar de reemplazarla por el nombre.
+  const updated = await call('PUT', `/products/${DESC_TEST_ID}`, {
+    Nombre: 'Producto descripcion prueba',
+    Precio_Venta: 1200,
+    Stock_Minimo: 6,
+    ID_Categoria: 1,
+  }, adminToken);
+  assert(updated.status === 200, `actualizar status ${updated.status} ${JSON.stringify(updated.data)}`);
+  const row = await call('GET', `/products/${DESC_TEST_ID}`);
+  assert(row.status === 200, `detalle status ${row.status}`);
+  assert(row.data.Descripcion === 'Descripcion original de prueba', `la descripcion cambio a: ${row.data.Descripcion}`);
+  assert(Number(row.data.Precio_Venta) === 1200, 'el precio no se actualizo');
+});
+
+await test('PUT /products actualiza la descripcion cuando se envia', async () => {
+  const updated = await call('PUT', `/products/${DESC_TEST_ID}`, {
+    Nombre: 'Producto descripcion prueba',
+    Descripcion: 'Descripcion editada por el admin',
+    Precio_Venta: 1200,
+    Stock_Minimo: 6,
+    ID_Categoria: 1,
+  }, adminToken);
+  assert(updated.status === 200, `actualizar status ${updated.status} ${JSON.stringify(updated.data)}`);
+  const row = await call('GET', `/products/${DESC_TEST_ID}`);
+  assert(row.status === 200, `detalle status ${row.status}`);
+  assert(row.data.Descripcion === 'Descripcion editada por el admin', `descripcion: ${row.data.Descripcion}`);
+});
+
+await test('POST /products sin descripcion usa el nombre (alta)', async () => {
+  await call('DELETE', `/products/${DESC_TEST_ID}`, undefined, adminToken);
+  const created = await call('POST', '/products', {
+    ID_Producto: DESC_TEST_ID,
+    Nombre: 'Producto sin descripcion',
+    Precio_Venta: 1000,
+    Stock_Minimo: 5,
+    ID_Categoria: 1,
+  }, adminToken);
+  assert(created.status === 201, `crear status ${created.status} ${JSON.stringify(created.data)}`);
+  const row = await call('GET', `/products/${DESC_TEST_ID}`);
+  assert(row.status === 200, `detalle status ${row.status}`);
+  assert(row.data.Descripcion === 'Producto sin descripcion', `descripcion: ${row.data.Descripcion}`);
+});
+
+await test('Limpieza del producto de prueba de descripcion', async () => {
+  const { status } = await call('DELETE', `/products/${DESC_TEST_ID}`, undefined, adminToken);
+  assert(status === 200 || status === 404, `status ${status}`);
+});
+
 let foreignOrderId = null;
 
 await test('POST /ratings de pedido ajeno es 403', async () => {

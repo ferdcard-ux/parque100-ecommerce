@@ -219,9 +219,9 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
             const s = String(v ?? '').trim();
             return s ? s : null;
           };
+          const descripcion = String(row.Descripcion ?? '').trim();
           const payload: any = {
             Nombre: nombre,
-            Descripcion: String(row.Descripcion ?? '').trim() || nombre,
             Precio_Venta: precio,
             Precio_Anterior: numOrNull(row.Precio_Anterior),
             Marca: strOrNull(row.Marca),
@@ -233,11 +233,15 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
             Stock_Minimo: stock,
             ID_Categoria: cat,
           };
+          // La descripción solo se envía si el CSV trae un valor: así una
+          // actualización sin descripción conserva la existente en vez de
+          // reemplazarla por el nombre.
+          if (descripcion) payload.Descripcion = descripcion;
           if (existingIds.has(id)) {
             await onUpdateProduct(id, payload);
             updated += 1;
           } else {
-            await onCreateProduct({ ID_Producto: id, ...payload });
+            await onCreateProduct({ ID_Producto: id, ...payload, Descripcion: descripcion || nombre });
             created += 1;
           }
         } catch (e) {

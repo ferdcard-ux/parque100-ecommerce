@@ -74,6 +74,8 @@ export interface AdminProduct {
   status: InventoryStatus;
   /** Imagen guardada en la base de datos (URL o dataURL), null si no tiene. */
   image?: string | null;
+  /** Descripcion corta del producto. */
+  description: string;
 }
 
 /** Estados posibles del inventario calculados desde el stock. */
@@ -86,8 +88,12 @@ export type InventoryStatus = 'in_stock' | 'low_stock' | 'out_of_stock';
 export interface ProductUpsert {
   /** Nombre comercial. */
   Nombre: string;
-  /** Descripción corta. */
-  Descripcion: string;
+  /**
+   * Descripción corta. En una actualización, si se omite se conserva la
+   * descripción actual y enviarla vacía la elimina. En el alta, si se omite
+   * o llega vacía se usa el nombre del producto.
+   */
+  Descripcion?: string;
   /** Imagen (URL o dataURL). */
   Imagen?: string;
   /** Precio de venta en COP. */

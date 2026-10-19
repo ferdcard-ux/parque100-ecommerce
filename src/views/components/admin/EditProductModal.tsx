@@ -18,6 +18,7 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
   useDialogBehavior(product !== null, onClose, panelRef);
   const { products } = useProductController();
   const [nombre, setNombre] = useState('');
+  const [descripcion, setDescripcion] = useState('');
   const [categoria, setCategoria] = useState('');
   const [cantidad, setCantidad] = useState('');
   const [precio, setPrecio] = useState('');
@@ -31,10 +32,12 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
   useEffect(() => {
     if (product) {
       setNombre(product.name);
+      const full = products.find((p) => String(p.id) === String(product.id));
+      // Conserva la descripción real; si el resumen no la trae, usa la del catálogo.
+      setDescripcion(product.description ?? full?.description ?? '');
       setCategoria(product.category);
       setCantidad(String(product.quantity));
       setPrecio(String(product.price));
-      const full = products.find((p) => String(p.id) === String(product.id));
       setPrecioAnterior(full?.previousPrice != null ? String(full.previousPrice) : '');
       setMarca(full?.brand ?? '');
       setContQty(full?.contentQty != null ? String(full.contentQty) : '');
@@ -47,7 +50,7 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
   if (!product) return null;
 
   const handleSubmit = async () => {
-    if (!nombre || !categoria || !cantidad || !precio) return;
+    if (!nombre || !descripcion.trim() || !categoria || !cantidad || !precio) return;
     setSaving(true);
     try {
       const catMap: Record<string, number> = {
@@ -59,7 +62,7 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
       const id = product.id.toString();
       await onUpdate(id, {
         Nombre: nombre.trim(),
-        Descripcion: nombre.trim(),
+        Descripcion: descripcion.trim(),
         Imagen: imagen.trim(),
         Precio_Venta: parseInt(precio),
         Precio_Anterior: precioAnterior ? parseInt(precioAnterior) : null,
@@ -91,6 +94,14 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
+          </div>
+          <div>
+            <label htmlFor="edit-descripcion" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Descripción</label>
+            <textarea id="edit-descripcion" rows={2} maxLength={255} placeholder="Describe el producto (ej: frescas, unidad por libra)" value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] resize-none"
+              style={{ fontSize: '0.9rem' }}
+            />
+            <p className="text-gray-400 mt-1" style={{ fontSize: '0.72rem' }}>Máximo 255 caracteres.</p>
           </div>
           <div>
             <label htmlFor="edit-categoria" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Categoría</label>
@@ -157,7 +168,7 @@ export function EditProductModal({ product, onClose, onUpdate }: EditProductModa
             >
               Cancelar
             </button>
-            <button onClick={handleSubmit} disabled={saving || !nombre || !categoria || !cantidad || !precio}
+            <button onClick={handleSubmit} disabled={saving || !nombre || !descripcion.trim() || !categoria || !cantidad || !precio}
               className="flex-1 py-2.5 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-colors shadow-sm disabled:opacity-50"
               style={{ fontSize: '0.9rem' }}
             >

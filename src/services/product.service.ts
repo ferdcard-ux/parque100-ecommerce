@@ -104,6 +104,7 @@ function mapAdminProduct(row: any): AdminProduct {
     price: row.Precio_Venta || row.price,
     status: stock <= 0 ? 'out_of_stock' : stock < 10 ? 'low_stock' : 'in_stock',
     image: row.Imagen || null,
+    description: row.Descripcion || row.description || '',
   };
 }
 

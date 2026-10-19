@@ -31,9 +31,19 @@ function validateProduct(body, requireId) {
   const nombre = str(body.Nombre, 50, false);
   if (nombre === undefined || nombre === null) return null;
   out.Nombre = nombre.trim();
+  /**
+   * Descripcion. En el alta, si se omite o llega vacia se usa el nombre.
+   * En la actualizacion solo se toca cuando el campo viene en el cuerpo:
+   * asi un `PUT` parcial conserva la descripcion existente y no la
+   * reemplaza por el nombre (evita perdida de datos).
+   */
   const descripcion = str(body.Descripcion, 255);
   if (descripcion === undefined) return null;
-  out.Descripcion = descripcion ?? out.Nombre;
+  if (requireId) {
+    out.Descripcion = descripcion ?? out.Nombre;
+  } else if (body.Descripcion !== undefined) {
+    out.Descripcion = descripcion;
+  }
   const precio = Number(body.Precio_Venta);
   if (!Number.isFinite(precio) || precio < 0) return null;
   out.Precio_Venta = precio;
