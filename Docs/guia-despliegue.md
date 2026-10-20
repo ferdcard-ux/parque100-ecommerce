@@ -43,7 +43,7 @@ Así **no hay CORS** y el dominio no queda fijado en el bundle.
 | Caddy | 2.7+ (probado con 2.11.7) |
 | Cuenta DuckDNS | Gratuita (subdominio + token) |
 | Router | Con **port forwarding** y **IP pública no compartida** (sin CGNAT) |
-| Permisos | Administrador local (para firewall y tareas programadas) |
+| Permisos | Administrador local (para firewall y servicios de Windows) |
 
 > **Comprobar CGNAT:** si la IP que ve Internet **no** coincide con la IP de la interfaz WAN
 > del router, su operador usa CGNAT y **este método no funcionará** (habría que usar un túnel).
@@ -191,36 +191,42 @@ node server/index.js
 caddy run --config C:\parque100-server\Caddyfile --adapter caddyfile
 ```
 
-**Arranque automático** — Tareas Programadas al iniciar Windows (cuenta **SYSTEM**), cada una
-con su **directorio de trabajo** (clave para que Express encuentre el `.env`):
+**Servicios NSSM en inicio manual** — el servidor actual usa cuatro servicios de Windows
+administrados por **NSSM**, en **inicio manual (`SERVICE_DEMAND_START`)**: no arrancan al
+iniciar Windows; se inician desde el panel o con `control-server.ps1 start`. Cada servicio
+necesita su **directorio de trabajo** (clave para que Express encuentre el `.env`):
 
-| Tarea | Programa | Argumentos | Dir. de trabajo |
+| Servicio | Programa | Argumentos | Dir. de trabajo |
 |---|---|---|---|
 | `Parque100-MySQL` | `mysqld.exe` | `--datadir=<datadir>` | carpeta de `bin` de MySQL |
 | `Parque100-Backend` | `node.exe` | `server\index.js` | raíz del proyecto |
 | `Parque100-Caddy` | `caddy.exe` | `run --config <Caddyfile> --adapter caddyfile` | carpeta del Caddyfile |
-| `Parque100-DDNS` | `powershell` | `-File duckdns-update.ps1` (cada 5 min) | — |
+| `Parque100-DDNS` | `powershell` | `-File duckdns-service.ps1` | carpeta del servidor |
 
-Ejemplo de registro (PowerShell como administrador):
+Registro con NSSM (PowerShell como administrador; `install-servicios.ps1` lo automatiza):
 
 ```powershell
-$principal = New-ScheduledTaskPrincipal -UserId 'SYSTEM' -LogonType ServiceAccount -RunLevel Highest
-$settings  = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
-             -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) `
-             -ExecutionTimeLimit ([TimeSpan]::Zero)
-$trigger   = New-ScheduledTaskTrigger -AtStartup
-
-function Register-Svc($name, $exe, $args, $wd) {
-  $a = New-ScheduledTaskAction -Execute $exe -Argument $args -WorkingDirectory $wd
-  Register-ScheduledTask -TaskName $name -Action $a -Trigger $trigger -Principal $principal -Settings $settings -Force
-}
-
-Register-Svc 'Parque100-Backend' (Get-Command node).Source 'server\index.js' 'C:\ruta\al\proyecto'
-Register-Svc 'Parque100-Caddy'   'C:\ruta\caddy.exe' 'run --config C:\parque100-server\Caddyfile --adapter caddyfile' 'C:\parque100-server'
-# DDNS cada 5 min:
-schtasks /Create /TN "Parque100-DDNS" /SC MINUTE /MO 5 /RU SYSTEM /F `
-  /TR "powershell -NoProfile -ExecutionPolicy Bypass -File C:\parque100-server\duckdns-update.ps1"
+nssm install Parque100-Backend (Get-Command node).Source
+nssm set Parque100-Backend AppParameters 'server\index.js'
+nssm set Parque100-Backend AppDirectory 'C:\ruta\al\proyecto'
+nssm set Parque100-Backend Start SERVICE_DEMAND_START
+nssm set Parque100-Backend ObjectName LocalSystem
+nssm set Parque100-Backend AppExit Default Restart
 ```
+
+Operación:
+
+```powershell
+# Estado y tipo de inicio
+Get-Service Parque100-* | Select Name,Status,StartType
+# Iniciar / detener en orden (MySQL -> backend -> Caddy -> DDNS)
+powershell -ExecutionPolicy Bypass -File C:\ruta\servidor\control-server.ps1 start
+powershell -ExecutionPolicy Bypass -File C:\ruta\servidor\control-server.ps1 stop
+```
+
+> **Esquema anterior:** las tareas programadas `Parque100-*` quedaron **deshabilitadas**;
+> `install-tareas.ps1` se conserva solo como rollback. No ejecutarlo con los servicios
+> activos (levantaría procesos duplicados).
 
 ### Paso 10 — Energía (evitar que se duerma)
 
