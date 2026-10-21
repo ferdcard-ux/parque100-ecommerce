@@ -20,16 +20,20 @@ function loadLocalEnv() {
   }
 }
 
-function adminConnectionOptions() {
+function adminConnectionOptions({ multipleStatements = true } = {}) {
   if (!process.env.DB_USER) {
     throw new Error('Falta DB_USER en el .env local para aprovisionar la base privada.');
   }
+  const host = process.env.DB_HOST || '127.0.0.1';
+  if (!['localhost', '127.0.0.1', '::1'].includes(host.toLowerCase())) {
+    throw new Error('La administración del acceso solo admite una base de datos local.');
+  }
   return {
-    host: process.env.DB_HOST || '127.0.0.1',
+    host,
     port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD || '',
-    multipleStatements: true,
+    multipleStatements,
   };
 }
 
@@ -52,7 +56,119 @@ function saveAccessCredentials(password) {
   renameSync(temporary, ENV_FILE);
 }
 
-async function provision() {
+function validateUsername(username) {
+  return typeof username === 'string' && /^[0-9]{1,32}$/.test(username);
+}
+
+function validatePassword(password) {
+  return typeof password === 'string' && password.length >= 12
+    && Buffer.byteLength(password, 'utf8') <= 72;
+}
+
+async function panelCommand() {
+  let connection;
+  try {
+    loadLocalEnv();
+    let input = '';
+    for await (const chunk of process.stdin) {
+      input += chunk;
+      if (input.length > 65536) throw new Error('La solicitud supera el tamaño permitido.');
+    }
+    const request = JSON.parse(input);
+    if (!request || typeof request !== 'object' || Array.isArray(request)) {
+      throw new Error('Solicitud de administración no válida.');
+    }
+
+    connection = await mysqlPromise.createConnection(
+      adminConnectionOptions({ multipleStatements: false }),
+    );
+    let result;
+    if (request.action === 'provision') {
+      result = await prepareAccessDatabase();
+    } else if (request.action === 'list') {
+      const [rows] = await connection.query(
+        `SELECT ID_Acceso, Usuario, Activo, Ultimo_Acceso
+         FROM ${DATABASE}.usuarios_acceso ORDER BY Usuario`,
+      );
+      result = { users: rows };
+    } else if (request.action === 'add') {
+      if (!validateUsername(request.username)) {
+        throw new Error('El usuario debe ser un identificador numérico de hasta 32 dígitos.');
+      }
+      if (!validatePassword(request.password)) {
+        throw new Error('La contraseña debe tener al menos 12 caracteres y máximo 72 bytes UTF-8.');
+      }
+      const hash = await bcrypt.hash(request.password, 12);
+      const [inserted] = await connection.execute(
+        `INSERT INTO ${DATABASE}.usuarios_acceso (Usuario, Hash_Contrasena)
+         VALUES (?, ?)`,
+        [request.username, hash],
+      );
+      result = { id: inserted.insertId, username: request.username };
+    } else if (request.action === 'update') {
+      if (!Number.isSafeInteger(request.id) || request.id < 1) {
+        throw new Error('Selecciona una cuenta válida para editar.');
+      }
+      if (!validateUsername(request.username)) {
+        throw new Error('El usuario debe ser un identificador numérico de hasta 32 dígitos.');
+      }
+      if (request.password !== undefined && !validatePassword(request.password)) {
+        throw new Error('La nueva contraseña debe tener al menos 12 caracteres y máximo 72 bytes UTF-8.');
+      }
+      if (request.active !== undefined && typeof request.active !== 'boolean') {
+        throw new Error('El estado de la cuenta no es válido.');
+      }
+      const fields = ['Usuario = ?'];
+      const values = [request.username];
+      if (request.password !== undefined) {
+        fields.push('Hash_Contrasena = ?');
+        values.push(await bcrypt.hash(request.password, 12));
+      }
+      if (request.active !== undefined) {
+        fields.push('Activo = ?');
+        values.push(request.active ? 1 : 0);
+      }
+      values.push(request.id);
+      const [updated] = await connection.execute(
+        `UPDATE ${DATABASE}.usuarios_acceso SET ${fields.join(', ')}
+         WHERE ID_Acceso = ?`,
+        values,
+      );
+      if (updated.affectedRows !== 1) {
+        const [rows] = await connection.execute(
+          `SELECT 1 FROM ${DATABASE}.usuarios_acceso WHERE ID_Acceso = ? LIMIT 1`,
+          [request.id],
+        );
+        if (rows.length !== 1) throw new Error('La cuenta ya no existe.');
+      }
+      result = { id: request.id, username: request.username };
+    } else if (request.action === 'delete') {
+      if (!Number.isSafeInteger(request.id) || request.id < 1) {
+        throw new Error('Selecciona una cuenta válida para eliminar.');
+      }
+      const [deleted] = await connection.execute(
+        `DELETE FROM ${DATABASE}.usuarios_acceso WHERE ID_Acceso = ?`,
+        [request.id],
+      );
+      if (deleted.affectedRows !== 1) throw new Error('La cuenta ya no existe.');
+      result = { id: request.id };
+    } else {
+      throw new Error('Operación de administración no permitida.');
+    }
+
+    process.stdout.write(`${JSON.stringify({ ok: true, ...result })}\n`);
+  } catch (error) {
+    const message = error?.code === 'ER_DUP_ENTRY'
+      ? 'Ya existe una cuenta con ese identificador.'
+      : error instanceof Error ? error.message : 'No se pudo administrar el acceso.';
+    process.stderr.write(`${JSON.stringify({ ok: false, error: message })}\n`);
+    process.exitCode = 1;
+  } finally {
+    if (connection) await connection.end();
+  }
+}
+
+async function provision({ quiet = false } = {}) {
   loadLocalEnv();
   const admin = await mysqlPromise.createConnection(adminConnectionOptions());
   const servicePassword = randomBytes(36).toString('base64url');
@@ -69,12 +185,30 @@ async function provision() {
       `GRANT SELECT, INSERT, UPDATE ON ${DATABASE}.* TO '${DB_USER}'@'localhost'`,
     );
     saveAccessCredentials(servicePassword);
-    console.log(`Base privada '${DATABASE}' y usuario MySQL de mínimo privilegio configurados.`);
-    console.log('Las credenciales del servicio se guardaron solo en el .env local ignorado por Git.');
-    console.log('No se crearon cuentas de acceso. Añade cada una en una terminal local segura.');
+    if (!quiet) {
+      console.log(`Base privada '${DATABASE}' y usuario MySQL de mínimo privilegio configurados.`);
+      console.log('Las credenciales del servicio se guardaron solo en el .env local ignorado por Git.');
+      console.log('No se crearon cuentas de acceso. Añade cada una en una terminal local segura.');
+    }
   } finally {
     await admin.end();
   }
+}
+
+async function prepareAccessDatabase() {
+  loadLocalEnv();
+  if (process.env.SITE_ACCESS_DB_USER && process.env.SITE_ACCESS_DB_PASSWORD) {
+    try {
+      await withAccessPool(async (pool) => {
+        await pool.query('SELECT 1 FROM usuarios_acceso LIMIT 1');
+      });
+    } catch {
+      throw new Error('Ya hay credenciales privadas configuradas, pero no funcionan; no se modificó la base.');
+    }
+    return { alreadyConfigured: true };
+  }
+  await provision({ quiet: true });
+  return { alreadyConfigured: false };
 }
 
 async function readHidden(prompt) {
@@ -139,7 +273,9 @@ async function addUser(username) {
     throw new Error('El usuario debe ser el identificador numérico asignado por el equipo.');
   }
   const password = await readHidden('Nueva contraseña (mínimo 12 caracteres): ');
-  if (password.length < 12) throw new Error('La contraseña debe tener al menos 12 caracteres.');
+  if (!validatePassword(password)) {
+    throw new Error('La contraseña debe tener al menos 12 caracteres y máximo 72 bytes UTF-8.');
+  }
   const confirmation = await readHidden('Confirma la contraseña: ');
   if (password !== confirmation) throw new Error('Las contraseñas no coinciden.');
 
@@ -185,16 +321,20 @@ async function listUsers() {
 }
 
 const [action, username] = process.argv.slice(2);
-try {
-  if (action === 'provision') await provision();
-  else if (action === 'add') await addUser(username);
-  else if (action === 'disable') await disableUser(username);
-  else if (action === 'list') await listUsers();
-  else {
-    console.error('Uso: node scripts/site-access-admin.mjs <provision|add|disable|list> [usuario]');
-    process.exitCode = 2;
+if (action === 'panel') {
+  await panelCommand();
+} else {
+  try {
+    if (action === 'provision') await provision();
+    else if (action === 'add') await addUser(username);
+    else if (action === 'disable') await disableUser(username);
+    else if (action === 'list') await listUsers();
+    else {
+      console.error('Uso: node scripts/site-access-admin.mjs <provision|add|disable|list> [usuario]');
+      process.exitCode = 2;
+    }
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : 'La operación de acceso falló.');
+    process.exitCode = 1;
   }
-} catch (error) {
-  console.error(error instanceof Error ? error.message : 'La operación de acceso falló.');
-  process.exitCode = 1;
 }
