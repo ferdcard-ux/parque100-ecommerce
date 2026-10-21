@@ -1,5 +1,14 @@
 import { createContext, useContext, useEffect, useMemo, useCallback } from 'react';
-import { RouterProvider, createBrowserRouter, Navigate, useLocation } from 'react-router';
+import {
+  RouterProvider,
+  createBrowserRouter,
+  isRouteErrorResponse,
+  Link,
+  Navigate,
+  Outlet,
+  useLocation,
+  useRouteError,
+} from 'react-router';
 import { useCartController } from './controllers/use-cart-controller';
 import { usePaymentController } from './controllers/use-payment-controller';
 import { useProductController } from './controllers/use-product-controller';
@@ -187,8 +196,33 @@ function OrderDetailWrapper() { return <Protected><OrderDetailPage /></Protected
 function FavoritesWrapper() { return <Protected><FavoritesPage /></Protected>; }
 function PaymentSuccessWrapper() { return <Protected><PaymentSuccessPage /></Protected>; }
 
+function AppErrorBoundary() {
+  const error = useRouteError();
+  const notFound = isRouteErrorResponse(error) && error.status === 404;
+  return (
+    <main className="grid min-h-screen place-items-center bg-[#F5F5F5] px-4">
+      <section className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow">
+        <h1 className="text-2xl font-bold text-[#212121]">
+          {notFound ? 'Página no encontrada' : 'No fue posible cargar el sitio'}
+        </h1>
+        <p className="mt-3 text-sm leading-6 text-gray-600">
+          {notFound
+            ? 'La dirección solicitada no corresponde a una página disponible.'
+            : 'Ocurrió un error inesperado. Puedes volver al inicio e intentarlo de nuevo.'}
+        </p>
+        <Link
+          to="/"
+          className="mt-6 inline-flex rounded-xl bg-[#C62828] px-5 py-3 font-semibold text-white"
+        >
+          Volver al inicio
+        </Link>
+      </section>
+    </main>
+  );
+}
+
 /* ── App Component ── */
-export default function App() {
+function AppDataProvider() {
   const auth = useAuthController();
   const cart = useCartController(auth.user ? String(auth.user.id) : 'guest');
   const payment = usePaymentController();
@@ -261,49 +295,61 @@ export default function App() {
     payment.method, payment.paymentMode, payment.isProcessing, handlePayWithDemo,
   ]);
 
-  const router = useMemo(() => createBrowserRouter([{
-    Component: SiteDisclaimerGate,
-    children: [
-    {
-      path: '/',
-      Component: LayoutWrapper,
-      children: [
-        { index: true, Component: HomeWrapper },
-        { path: 'cart', Component: CartWrapper },
-        { path: 'address', Component: AddressWrapper },
-        { path: 'direccion', Component: AccountAddressWrapper },
-        { path: 'payment-method', Component: PaymentMethodWrapper },
-        { path: 'payment-card', Component: CardPaymentWrapper },
-        { path: 'catalogo', Component: CatalogPage },
-        { path: 'producto/:id', Component: ProductDetailPage },
-        { path: 'cuenta', Component: AccountWrapper },
-        { path: 'perfil', Component: ProfileWrapper },
-        { path: 'compras', Component: OrdersWrapper },
-        { path: 'compras/:id', Component: OrderDetailWrapper },
-        { path: 'favoritos', Component: FavoritesWrapper },
-        { path: 'ayuda', Component: HelpPage },
-        { path: 'privacidad', Component: PrivacyPage },
-        { path: 'terminos', Component: TermsPage },
-        { path: 'mapa-sitio', Component: SitemapPage },
-      ],
-    },
-    { path: '/login', Component: LoginPage },
-    { path: '/register', Component: () => <Navigate to="/access.html" replace /> },
-    { path: '/payment-success', Component: PaymentSuccessWrapper },
-    { path: '/admin', Component: () => <RequireStaff><AdminDashboardPage /></RequireStaff> },
-    { path: '/admin/inventario', Component: () => <RequireAdmin><AdminWrapper /></RequireAdmin> },
-    { path: '/admin/pedidos-pendientes', Component: () => <RequireStaff><AdminPendingOrdersPage /></RequireStaff> },
-    { path: '/admin/pedidos', Component: () => <RequireStaff><AdminOrdersPage /></RequireStaff> },
-    { path: '/admin/pedidos/:id', Component: () => <RequireStaff><AdminOrderDetailPage /></RequireStaff> },
-    { path: '/admin/reportes', Component: () => <RequireAdmin><AdminReportsPage /></RequireAdmin> },
-    { path: '/admin/clientes', Component: () => <RequireAdmin><AdminClientsPage /></RequireAdmin> },
-    { path: '/admin/configuracion', Component: () => <RequireAdmin><AdminSettingsPage /></RequireAdmin> },
-    ],
-  }]), []);
-
   return (
     <AppContext.Provider value={contextValue}>
-      <RouterProvider router={router} />
+      <Outlet />
     </AppContext.Provider>
   );
+}
+
+export default function App() {
+  const router = useMemo(() => createBrowserRouter([
+    {
+      Component: SiteDisclaimerGate,
+      errorElement: <AppErrorBoundary />,
+      children: [
+        {
+          Component: AppDataProvider,
+          children: [
+            {
+              path: '/',
+              Component: LayoutWrapper,
+              children: [
+                { index: true, Component: HomeWrapper },
+                { path: 'cart', Component: CartWrapper },
+                { path: 'address', Component: AddressWrapper },
+                { path: 'direccion', Component: AccountAddressWrapper },
+                { path: 'payment-method', Component: PaymentMethodWrapper },
+                { path: 'payment-card', Component: CardPaymentWrapper },
+                { path: 'catalogo', Component: CatalogPage },
+                { path: 'producto/:id', Component: ProductDetailPage },
+                { path: 'cuenta', Component: AccountWrapper },
+                { path: 'perfil', Component: ProfileWrapper },
+                { path: 'compras', Component: OrdersWrapper },
+                { path: 'compras/:id', Component: OrderDetailWrapper },
+                { path: 'favoritos', Component: FavoritesWrapper },
+                { path: 'ayuda', Component: HelpPage },
+                { path: 'privacidad', Component: PrivacyPage },
+                { path: 'terminos', Component: TermsPage },
+                { path: 'mapa-sitio', Component: SitemapPage },
+              ],
+            },
+            { path: '/login', Component: LoginPage },
+            { path: '/register', Component: () => <Navigate to="/access.html" replace /> },
+            { path: '/payment-success', Component: PaymentSuccessWrapper },
+            { path: '/admin', Component: () => <RequireStaff><AdminDashboardPage /></RequireStaff> },
+            { path: '/admin/inventario', Component: () => <RequireAdmin><AdminWrapper /></RequireAdmin> },
+            { path: '/admin/pedidos-pendientes', Component: () => <RequireStaff><AdminPendingOrdersPage /></RequireStaff> },
+            { path: '/admin/pedidos', Component: () => <RequireStaff><AdminOrdersPage /></RequireStaff> },
+            { path: '/admin/pedidos/:id', Component: () => <RequireStaff><AdminOrderDetailPage /></RequireStaff> },
+            { path: '/admin/reportes', Component: () => <RequireAdmin><AdminReportsPage /></RequireAdmin> },
+            { path: '/admin/clientes', Component: () => <RequireAdmin><AdminClientsPage /></RequireAdmin> },
+            { path: '/admin/configuracion', Component: () => <RequireAdmin><AdminSettingsPage /></RequireAdmin> },
+          ],
+        },
+      ],
+    },
+  ]), []);
+
+  return <RouterProvider router={router} />;
 }

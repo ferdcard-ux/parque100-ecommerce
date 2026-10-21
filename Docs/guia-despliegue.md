@@ -206,27 +206,30 @@ Crear `Caddyfile` (fuera del repo, p. ej. `C:\parque100-server\Caddyfile`):
 	}
 
 	handle {
-		forward_auth 127.0.0.1:3001 {
-			uri /api/site-access/proxy-access
+		route {
+			forward_auth 127.0.0.1:3001 {
+				uri /api/site-access/proxy-access
+			}
+			root * C:/ruta/al/proyecto/dist
+			try_files {path} /index.html
+			file_server
 		}
-		root * C:/ruta/al/proyecto/dist
-		try_files {path} /index.html
-		file_server
 	}
 }
 ```
+
+El `route` es necesario para que `forward_auth` reciba la ruta original antes de
+que `try_files` aplique el fallback a `index.html`; de lo contrario, al iniciar
+sesión desde una ruta profunda, el navegador puede volver a `/index.html` y
+React Router mostrar un 404. La carga de datos de la tienda empieza después de
+la aceptación del descargo, evitando solicitudes API prematuras rechazadas por
+el gate de consentimiento.
 
 Antes de reiniciar backend o recargar Caddy, aprovisiona `parque100_acceso` y
 crea las cuentas autorizadas desde una terminal local interactiva, siguiendo
 [`ACCESO-ACADEMICO.md`](ACCESO-ACADEMICO.md). Publica luego el build que incluye
 `dist/access.html`. El forward-auth protege el frontend; el backend también
 exige la aceptación del descargo antes de servir las APIs.
-
-Antes de reiniciar backend o recargar Caddy, aprovisiona `parque100_acceso` y
-crea las cuentas autorizadas en terminal local interactiva con las instrucciones
-de [`ACCESO-ACADEMICO.md`](ACCESO-ACADEMICO.md). Publica luego el build que incluye
-`dist/access.html`. El endpoint de forward-auth solo valida la cookie de acceso;
-el backend también exige la aceptación del descargo antes de servir las APIs.
 
 > **Correo:** usa uno del propio dominio (p. ej. `admin@<subdominio>.duckdns.org`).
 > Let's Encrypt **rechaza** dominios reservados como `example.com`.

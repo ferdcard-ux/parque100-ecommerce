@@ -22,10 +22,23 @@ const CLEAR_COOKIE_OPTIONS = {
 
 function redirectToAccess(req, res) {
   const originalUri = req.get('X-Forwarded-Uri') || '/';
-  const safeUri = originalUri.startsWith('/') && !originalUri.startsWith('//')
-    && !originalUri.startsWith('/access.html')
-    ? originalUri
-    : '/';
+  const safePath = (value, allowIndexFallback = true) => {
+    if (typeof value !== 'string') return '/';
+    let requested;
+    try {
+      requested = new URL(value, 'http://localhost');
+    } catch {
+      return '/';
+    }
+    if (requested.origin !== 'http://localhost'
+      || requested.pathname.startsWith('/access.html')) return '/';
+    if (requested.pathname === '/index.html') {
+      if (!allowIndexFallback) return '/';
+      return safePath(requested.searchParams.get('next'), false);
+    }
+    return `${requested.pathname}${requested.search}${requested.hash}`;
+  };
+  const safeUri = safePath(originalUri);
   res.setHeader('Cache-Control', 'no-store');
   return res.redirect(302, `/access.html?next=${encodeURIComponent(safeUri)}`);
 }

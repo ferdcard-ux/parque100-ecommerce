@@ -182,3 +182,45 @@ test('proxy access redirects unauthenticated requests to a local access path', a
   assert.equal(res.location, '/access.html?next=%2F');
   assert.equal(res.cookies[0].cleared, true);
 });
+
+test('proxy access redirects the SPA index URL to its internal requested route', async () => {
+  const res = responseRecorder();
+  await siteAccessController.proxyAccess({
+    headers: {},
+    get: () => '/index.html?next=%2Fpayment-card%3Fmethod%3Dcard',
+  }, res);
+  assert.equal(
+    res.location,
+    '/access.html?next=%2Fpayment-card%3Fmethod%3Dcard',
+  );
+});
+
+test('proxy access preserves the original deep route and query string', async () => {
+  const res = responseRecorder();
+  await siteAccessController.proxyAccess({
+    headers: {},
+    get: () => '/payment-card?method=card',
+  }, res);
+  assert.equal(
+    res.location,
+    '/access.html?next=%2Fpayment-card%3Fmethod%3Dcard',
+  );
+});
+
+test('proxy access normalizes the SPA index URL without a nested route to root', async () => {
+  const res = responseRecorder();
+  await siteAccessController.proxyAccess({
+    headers: {},
+    get: () => '/index.html',
+  }, res);
+  assert.equal(res.location, '/access.html?next=%2F');
+});
+
+test('proxy access rejects external and access-page nested redirects', async () => {
+  const res = responseRecorder();
+  await siteAccessController.proxyAccess({
+    headers: {},
+    get: () => '/index.html?next=https%3A%2F%2Fevil.example',
+  }, res);
+  assert.equal(res.location, '/access.html?next=%2F');
+});
