@@ -12,6 +12,11 @@ build/
 .env.local
 .env.*.local
 
+# Private academic-site access database exports and local administration data
+.access-data/
+*.access.sql
+parque100_acceso.sql
+
 # IDE
 .vscode/
 .idea/

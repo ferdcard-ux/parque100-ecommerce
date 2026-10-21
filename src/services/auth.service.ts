@@ -6,7 +6,7 @@
  */
 import type { User, UserRole, LoginCredentials, RegisterData } from '../models';
 import { normalizeUserRole } from '../models';
-import { API_BASE as API, authHeaders, setAuthToken } from './api';
+import { API_BASE as API, setAuthToken } from './api';
 
 /**
  * Normaliza el rol crudo del backend a `UserRole`.
@@ -106,42 +106,7 @@ export const authService = {
    * @returns {Promise<void>}
    */
   async logout(): Promise<void> {
-    let res: Response;
-    try {
-      res = await fetch(`${API}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: authHeaders(),
-      });
-    } finally {
-      setAuthToken(null);
-    }
-    if (!res.ok) throw new Error('No fue posible cerrar la sesión en el servidor.');
-  },
-
-  async getDisclaimerStatus(): Promise<{ accepted: boolean; version: string }> {
-    const res = await fetch(`${API}/auth/disclaimer/status`, {
-      credentials: 'include',
-      headers: authHeaders(),
-    });
-    const body = await res.json().catch(() => null);
-    if (!res.ok) {
-      if (res.status === 401) throw new Error('SITE_SESSION_INVALID');
-      if (res.status === 403) throw new Error('SITE_ACCESS_DENIED');
-      throw new Error(body?.error || 'No fue posible verificar la autorización.');
-    }
-    return body;
-  },
-
-  async acceptDisclaimer(version: string): Promise<void> {
-    const res = await fetch(`${API}/auth/disclaimer/accept`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: authHeaders({ 'Content-Type': 'application/json' }),
-      body: JSON.stringify({ version }),
-    });
-    const body = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(body?.error || 'No fue posible guardar la aceptación.');
+    setAuthToken(null);
   },
 
   /**

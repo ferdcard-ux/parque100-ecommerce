@@ -93,7 +93,7 @@ npm run build
 
 ### Esquema
 
-La base de datos `parque100` consta de 8 tablas: `categorias`, `productos`, `usuario`, `pedidos`, `detalle_pedido`, `negocio`, `permisos_usuario` y `calificaciones`.
+La base de demostración `parque100` consta de 8 tablas: `categorias`, `productos`, `usuario`, `pedidos`, `detalle_pedido`, `negocio`, `permisos_usuario` y `calificaciones`. Las credenciales del equipo y las aceptaciones del descargo residen en la base privada local independiente `parque100_acceso`, aprovisionada con `npm run access:provision`; nunca se agregan a `setup.sql` ni a `.BD/parque100.sql`.
 
 La tabla `productos` incluye una columna `Imagen MEDIUMTEXT` opcional para almacenar URLs web o imagenes locales en dataURL al crear/editar productos desde el panel administrativo (el backend acepta cuerpos JSON de hasta 10 MB).
 
@@ -142,8 +142,11 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `PUT /api/products/:id` | Actualizar producto (admin, validado; 404 si no existe) |
 | `DELETE /api/products/:id` | Eliminar producto (admin; 409 si tiene pedidos) |
 | `GET /api/categories` | Listar todas las categorías |
-| `POST /api/auth/login` | Iniciar sesión (emite JWT) |
-| `POST /api/auth/register` | Registrar usuario (nombre, correo y teléfono únicos; 409 si existen) |
+| `POST /api/site-access/login` | Autenticar al equipo y establecer cookie HttpOnly independiente |
+| `GET /api/site-access/disclaimer/status` | Consultar aceptación vigente para la sesión |
+| `POST /api/site-access/disclaimer/accept` | Registrar aceptación del descargo |
+| `POST /api/auth/login` | Iniciar sesión demo (emite JWT; requiere acceso web autorizado) |
+| `POST /api/auth/register` | Registro de cuentas demo deshabilitado |
 | `POST /api/auth/recover` | 503 hasta configurar un canal verificado de recuperacion; no modifica ni registra contrasenas temporales |
 | `PUT /api/auth/password` | Cambiar contraseña (valida la actual) |
 | `GET /api/users` | Listar usuarios registrados (admin) |
@@ -195,7 +198,7 @@ El sistema maneja imágenes en este orden de prioridad:
 
 ## Pruebas
 
-Batería automatizada API + BD: `scripts/smoke-lote2.mjs` (57 checks: negocio, permisos/roles, reglas de cancelación, reseñas con compra verificada, autorización 401/403, integridad del pedido y limpieza de datos de prueba).
+Batería automatizada API + BD: `scripts/smoke-lote2.mjs` (requiere el backend, MySQL y una cuenta de acceso del equipo; solicita localmente sus credenciales, acepta el descargo solo para la sesión de prueba y limpia esa aceptación al finalizar). Verifica negocio, permisos/roles, reglas de cancelación, reseñas con compra verificada, autorización 401/403, integridad del pedido y limpieza de datos de prueba.
 
 ```bash
 npm test            # requiere backend en :3001 y MySQL local

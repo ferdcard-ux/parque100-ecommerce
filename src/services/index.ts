@@ -5,6 +5,7 @@
  */
 export { productService } from './product.service';
 export { authService } from './auth.service';
+export { siteAccessService } from './site-access.service';
 export { orderService } from './order.service';
 export { paymentService } from './payment.service';
 export { userService } from './user.service';

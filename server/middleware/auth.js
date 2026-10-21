@@ -50,27 +50,35 @@ export function isStaffRole(rol) {
  */
 export function signToken(user) {
   assertJwtSecret();
-  return jwt.sign({ id: user.ID_Usuario, jti: randomUUID() }, process.env.JWT_SECRET, {
+  return jwt.sign({ kind: 'store', id: user.ID_Usuario, jti: randomUUID() }, process.env.JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
     algorithm: 'HS256',
   });
 }
 
-/** Reads the session token from Authorization or the HttpOnly access cookie. */
-function getRequestToken(req) {
+/** Signs the separate server-access identity, not a store account token. */
+export function signSiteAccessToken(user) {
+  assertJwtSecret();
+  return jwt.sign({ kind: 'site-access', id: user.ID_Acceso, jti: randomUUID() }, process.env.JWT_SECRET, {
+    expiresIn: JWT_EXPIRES_IN,
+    algorithm: 'HS256',
+  });
+}
+
+function getBearerToken(req) {
   const header = req.headers.authorization || '';
-  if (header.startsWith('Bearer ')) return header.slice(7).trim();
+  return header.startsWith('Bearer ') ? header.slice(7).trim() : '';
+}
+
+function getSiteAccessCookie(req) {
   const cookies = req.headers.cookie || '';
   const accessCookie = cookies.split(';').map((part) => part.trim())
     .find((part) => part.startsWith('p100_access='));
   return accessCookie ? accessCookie.slice('p100_access='.length) : '';
 }
 
-/** Authenticates a request from its bearer token or browser access cookie. */
-export async function authenticateRequest(req) {
-  const token = getRequestToken(req);
+function verifyToken(token, kind) {
   if (!token) return null;
-
   let payload;
   try {
     assertJwtSecret();
@@ -78,16 +86,37 @@ export async function authenticateRequest(req) {
   } catch {
     return null;
   }
-  if (typeof payload !== 'object' || !Number.isSafeInteger(Number(payload.id)) || Number(payload.id) <= 0
+  if (typeof payload !== 'object' || payload.kind !== kind
+    || !Number.isSafeInteger(Number(payload.id)) || Number(payload.id) <= 0
     || typeof payload.jti !== 'string' || !/^[0-9a-f-]{36}$/i.test(payload.jti)) {
     return null;
   }
+  return payload;
+}
+
+/** Authenticates a store user exclusively from the bearer token. */
+export async function authenticateRequest(req) {
+  const payload = verifyToken(getBearerToken(req), 'store');
+  if (!payload) return null;
 
   const user = await userModel.findAuthById(Number(payload.id));
   if (!user) return null;
   return {
     id: Number(user.ID_Usuario),
     rol: user.Rol || null,
+    sessionId: payload.jti,
+  };
+}
+
+/** Authenticates the independent site-access account exclusively from its cookie. */
+export async function authenticateSiteAccessRequest(req) {
+  const payload = verifyToken(getSiteAccessCookie(req), 'site-access');
+  if (!payload) return null;
+  const user = await siteAccessModel.findActiveById(Number(payload.id));
+  if (!user) return null;
+  return {
+    id: Number(user.ID_Acceso),
+    username: user.Usuario,
     sessionId: payload.jti,
   };
 }
@@ -112,34 +141,32 @@ export async function requireAuth(req, res, next) {
   }
 }
 
-/** Requires an explicit allowlist entry in the academic-site access table. */
-export async function requireSiteAuthorization(req, res, next) {
-  if (!req.user) return res.status(401).json({ error: 'No autenticado' });
+/** Attaches the independent, active site-access identity to the request. */
+export async function requireSiteAccessAuth(req, res, next) {
   try {
-    if (!(await siteAccessModel.isAuthorized(req.user.id))) {
-      return res.status(403).json({ error: 'Esta cuenta no esta autorizada para acceder al sitio.' });
-    }
+    const siteAccess = await authenticateSiteAccessRequest(req);
+    if (!siteAccess) return res.status(401).json({ error: 'Sesion de acceso invalida o expirada' });
+    req.siteAccess = siteAccess;
     return next();
   } catch (err) {
     return next(err);
   }
 }
 
-/** Requires an allowlisted account and disclaimer acceptance for this login session. */
+/** Requires the independent access cookie and consent for this login session. */
 export async function requireSiteSession(req, res, next) {
-  if (!req.user) return res.status(401).json({ error: 'No autenticado' });
   try {
-    if (!(await siteAccessModel.isAuthorized(req.user.id))) {
-      return res.status(403).json({ error: 'Esta cuenta no esta autorizada para acceder al sitio.' });
-    }
+    const siteAccess = await authenticateSiteAccessRequest(req);
+    if (!siteAccess) return res.status(401).json({ error: 'Sesion de acceso invalida o expirada' });
     const accepted = await siteAccessModel.hasAcceptedDisclaimer(
-      req.user.id,
-      req.user.sessionId,
+      siteAccess.id,
+      siteAccess.sessionId,
       process.env.SITE_DISCLAIMER_VERSION || '2026-10-21-v1',
     );
     if (!accepted) {
       return res.status(428).json({ error: 'Debes aceptar el descargo antes de continuar.' });
     }
+    req.siteAccess = siteAccess;
     return next();
   } catch (err) {
     return next(err);
@@ -178,9 +205,11 @@ export function requireSelfOrAdmin(param = 'id') {
 
 export default {
   signToken,
+  signSiteAccessToken,
   authenticateRequest,
+  authenticateSiteAccessRequest,
   requireAuth,
-  requireSiteAuthorization,
+  requireSiteAccessAuth,
   requireSiteSession,
   requireRole,
   requireSelfOrAdmin,

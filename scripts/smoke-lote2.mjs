@@ -1,3 +1,6 @@
+import '../server/config/load-env.js';
+import mysql from 'mysql2/promise';
+
 /**
  * @fileoverview Pruebas automatizadas del lote 1 y 2 (API + BD).
  * Verifica negocio, permisos, calificaciones, foto de perfil, roles y
@@ -9,6 +12,9 @@ const API = 'http://localhost:3001/api';
 
 let passed = 0;
 let failed = 0;
+let siteCookie = '';
+let testSessionId = '';
+let disclaimerVersion = '';
 
 /**
  * Ejecuta una prueba y reporta el resultado.
@@ -50,6 +56,7 @@ function assert(cond, message) {
 async function call(method, path, body, token) {
   const headers = {};
   if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (siteCookie) headers.Cookie = siteCookie;
   if (token) headers.Authorization = `Bearer ${token}`;
   const response = await fetch(`${API}${path}`, {
     method,
@@ -58,6 +65,106 @@ async function call(method, path, body, token) {
   });
   const data = await response.json().catch(() => null);
   return { status: response.status, data };
+}
+
+async function readConsole(prompt, hidden = false) {
+  if (!process.stdin.isTTY || (hidden && typeof process.stdin.setRawMode !== 'function')) {
+    throw new Error('Ejecuta esta suite desde una terminal interactiva local.');
+  }
+  process.stdout.write(prompt);
+  if (!hidden) {
+    return new Promise((resolve) => {
+      process.stdin.setEncoding('utf8');
+      process.stdin.resume();
+      process.stdin.once('data', (value) => {
+        process.stdin.pause();
+        resolve(value.trim());
+      });
+    });
+  }
+
+  process.stdin.setRawMode(true);
+  process.stdin.setEncoding('utf8');
+  process.stdin.resume();
+  return new Promise((resolve, reject) => {
+    let value = '';
+    const finish = (error) => {
+      process.stdin.removeListener('data', onData);
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+      process.stdout.write('\n');
+      if (error) reject(error);
+      else resolve(value);
+    };
+    const onData = (chunk) => {
+      for (const char of chunk) {
+        if (char === '\u0003') return finish(new Error('Operación cancelada.'));
+        if (char === '\r' || char === '\n') return finish();
+        if (char === '\u007f' || char === '\b') {
+          value = value.slice(0, -1);
+          continue;
+        }
+        if (char >= ' ' && char !== '\u007f') {
+          value += char;
+          process.stdout.write('*');
+        }
+      }
+    };
+    process.stdin.on('data', onData);
+  });
+}
+
+async function establishSiteSession() {
+  const username = await readConsole('Usuario autorizado del equipo: ');
+  const password = await readConsole('Contraseña (entrada oculta): ', true);
+  const loginResponse = await fetch(`${API}/site-access/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!loginResponse.ok) {
+    throw new Error(`No fue posible autenticar el acceso de prueba (HTTP ${loginResponse.status}).`);
+  }
+  const cookieHeader = loginResponse.headers.get('set-cookie') || '';
+  const cookie = cookieHeader.match(/(?:^|,\s*)(p100_access=[^;]+)/)?.[1];
+  if (!cookie) throw new Error('El backend no emitió la cookie de acceso esperada.');
+  siteCookie = cookie;
+  const [, token] = cookie.split('=');
+  const payload = JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8'));
+  if (typeof payload.jti !== 'string' || !Number.isSafeInteger(Number(payload.id))) {
+    throw new Error('La sesión de acceso de prueba no tiene el formato esperado.');
+  }
+  testSessionId = payload.jti;
+
+  const status = await call('GET', '/site-access/disclaimer/status');
+  if (status.status !== 200 || typeof status.data?.version !== 'string') {
+    throw new Error(`No fue posible consultar el descargo (HTTP ${status.status}).`);
+  }
+  disclaimerVersion = status.data.version;
+  const accepted = await call('POST', '/site-access/disclaimer/accept', { version: disclaimerVersion });
+  if (accepted.status !== 201) {
+    throw new Error(`No fue posible aceptar el descargo de prueba (HTTP ${accepted.status}).`);
+  }
+}
+
+async function cleanupTestDisclaimerAcceptance() {
+  if (!testSessionId) return;
+  if (!process.env.DB_USER) throw new Error('Falta DB_USER para limpiar la aceptación de prueba.');
+  const connection = await mysql.createConnection({
+    host: process.env.DB_HOST || '127.0.0.1',
+    port: process.env.DB_PORT ? Number(process.env.DB_PORT) : 3306,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD || '',
+  });
+  try {
+    await connection.execute(
+      `DELETE FROM parque100_acceso.aceptaciones_descargo
+       WHERE Session_ID = ? AND Version = ?`,
+      [testSessionId, disclaimerVersion],
+    );
+  } finally {
+    await connection.end();
+  }
 }
 
 /**
@@ -80,6 +187,18 @@ const results = [];
 let adminToken = null;
 let clientToken = null;
 let deliveryToken = null;
+
+try {
+  await establishSiteSession();
+} catch (error) {
+  console.error(error instanceof Error ? error.message : 'No fue posible preparar la sesión de prueba.');
+  try {
+    await cleanupTestDisclaimerAcceptance();
+  } catch {
+    console.error('No fue posible limpiar la aceptación parcial de la sesión de prueba.');
+  }
+  process.exit(1);
+}
 
 await test('Login admin emite token', async () => {
   adminToken = await login('admin@parque100.com', 'admin123');
@@ -836,5 +955,6 @@ await test('Limpieza de pedidos de integridad en BD (restaura stock)', async () 
   );
 });
 
+await test('Limpieza de aceptación temporal del descargo', cleanupTestDisclaimerAcceptance);
 console.log(`\n${passed} pasadas, ${failed} fallidas`);
-process.exit(failed > 0 ? 1 : 0);
+process.exitCode = failed > 0 ? 1 : 0;

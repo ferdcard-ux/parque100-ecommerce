@@ -1,34 +1,27 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Outlet, useLocation } from 'react-router';
-import { authService } from '../../../services';
-import { useApp } from '../../../App';
+import { Outlet, useLocation } from 'react-router';
+import { siteAccessService } from '../../../services';
 
-type GateState = 'loading' | 'required' | 'accepted' | 'error' | 'unauthorized' | 'session-invalid';
+type GateState = 'loading' | 'required' | 'accepted' | 'error' | 'session-invalid' | 'unauthorized';
 
 export function SiteDisclaimerGate() {
-  const { isLoggedIn, user, logout } = useApp();
   const location = useLocation();
   const [state, setState] = useState<GateState>('loading');
   const [retry, setRetry] = useState(0);
+  const [version, setVersion] = useState('');
   const [checked, setChecked] = useState(false);
-  const [disclaimerVersion, setDisclaimerVersion] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoggedIn) return;
-    if (!user?.token) {
-      setState('session-invalid');
-      return;
-    }
     let active = true;
     setState('loading');
     setChecked(false);
     setError(null);
-    authService.getDisclaimerStatus()
+    siteAccessService.getDisclaimerStatus()
       .then((status) => {
         if (!active) return;
-        setDisclaimerVersion(status.version);
+        setVersion(status.version);
         setState(status.accepted ? 'accepted' : 'required');
       })
       .catch((cause: unknown) => {
@@ -45,16 +38,16 @@ export function SiteDisclaimerGate() {
         setState('error');
       });
     return () => { active = false; };
-  }, [isLoggedIn, user?.token, retry]);
+  }, [retry]);
 
-  if (!isLoggedIn) {
-    const next = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/access.html?next=${next}`} replace />;
-  }
-
-  const decline = async () => {
-    await logout();
-    window.location.replace('/access.html?denied=1');
+  const leaveSite = async () => {
+    setError(null);
+    try {
+      await siteAccessService.logout();
+      window.location.replace('/access.html?denied=1');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No fue posible cerrar el acceso.');
+    }
   };
 
   const accept = async () => {
@@ -62,7 +55,7 @@ export function SiteDisclaimerGate() {
     setIsSaving(true);
     setError(null);
     try {
-      await authService.acceptDisclaimer(disclaimerVersion);
+      await siteAccessService.acceptDisclaimer(version);
       setState('accepted');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No se pudo guardar la aceptación.');
@@ -71,34 +64,18 @@ export function SiteDisclaimerGate() {
     }
   };
 
-  if (state === 'unauthorized') {
+  if (state === 'session-invalid' || state === 'unauthorized') {
+    const next = encodeURIComponent(location.pathname + location.search);
+    const message = state === 'unauthorized'
+      ? 'Esta cuenta de acceso no está habilitada. Contacta al responsable del sitio.'
+      : 'Inicia sesión con tu cuenta del equipo para continuar.';
     return (
       <main className="min-h-screen grid place-items-center bg-[#F5F5F5] px-4">
         <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow">
-          <p role="alert" className="text-[#212121]">Esta cuenta ya no está autorizada para acceder al sitio.</p>
+          <p role="alert" className="text-[#212121]">{message}</p>
           <button
             type="button"
-            onClick={() => {
-              void logout().catch(() => undefined).finally(() => window.location.replace('/access.html?denied=1'));
-            }}
-            className="mt-4 rounded-lg bg-[#C62828] px-4 py-2 text-white"
-          >
-            Salir
-          </button>
-        </section>
-      </main>
-    );
-  }
-  if (state === 'session-invalid') {
-    return (
-      <main className="min-h-screen grid place-items-center bg-[#F5F5F5] px-4">
-        <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow">
-          <p role="alert" className="text-[#212121]">Tu sesión venció. Inicia sesión nuevamente para continuar.</p>
-          <button
-            type="button"
-            onClick={() => {
-              void logout().catch(() => undefined).finally(() => window.location.replace('/access.html'));
-            }}
+            onClick={() => window.location.replace(`/access.html?next=${next}`)}
             className="mt-4 rounded-lg bg-[#C62828] px-4 py-2 text-white"
           >
             Ir al acceso
@@ -107,6 +84,7 @@ export function SiteDisclaimerGate() {
       </main>
     );
   }
+
   if (state === 'loading' || state === 'error') {
     return (
       <main className="min-h-screen grid place-items-center bg-[#F5F5F5] px-4">
@@ -169,7 +147,7 @@ export function SiteDisclaimerGate() {
             <span>He leído y acepto el aviso y descargo de responsabilidad.</span>
           </label>
           <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <button type="button" onClick={() => void decline()} className="rounded-xl border border-gray-300 px-5 py-3 font-semibold text-gray-700">
+            <button type="button" onClick={() => void leaveSite()} className="rounded-xl border border-gray-300 px-5 py-3 font-semibold text-gray-700">
               No acepto y salir
             </button>
             <button

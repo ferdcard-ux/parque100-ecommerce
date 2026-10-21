@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import { authController } from './auth.controller.js';
 import { siteAccessController } from './site-access.controller.js';
 import { DISCLAIMER_VERSION } from '../config/site-access.js';
-import { requireSiteSession } from '../middleware/auth.js';
+import { requireSiteSession, signSiteAccessToken } from '../middleware/auth.js';
 import siteAccessModel from '../models/site-access.model.js';
 import userModel from '../models/user.model.js';
 
@@ -47,44 +47,28 @@ function responseRecorder() {
   };
 }
 
-test('login rejects valid credentials when account is not allowlisted', async () => {
-  const originalFindByEmail = userModel.findByEmail;
-  const originalIsAuthorized = siteAccessModel.isAuthorized;
+test('site access login creates an independent secure cookie for a valid team identity', async () => {
+  const originalFind = siteAccessModel.findByUsername;
+  const originalUpdate = siteAccessModel.updateLastLogin;
   const passwordHash = await bcrypt.hash('password123', 4);
-  userModel.findByEmail = async () => ({ ID_Usuario: 17, Contrasena: passwordHash });
-  siteAccessModel.isAuthorized = async () => false;
-  const res = responseRecorder();
-
-  try {
-    await authController.login({ body: { Correo: 'student@example.test', Contrasena: 'password123' } }, res);
-    assert.equal(res.statusCode, 403);
-    assert.deepEqual(res.body, { error: 'Esta cuenta no esta autorizada para acceder al sitio.' });
-    assert.equal(res.cookies.length, 0);
-  } finally {
-    userModel.findByEmail = originalFindByEmail;
-    siteAccessModel.isAuthorized = originalIsAuthorized;
-  }
-});
-
-test('allowlisted login issues a secure HttpOnly session cookie', async () => {
-  const originalFindByEmail = userModel.findByEmail;
-  const originalIsAuthorized = siteAccessModel.isAuthorized;
-  const passwordHash = await bcrypt.hash('password123', 4);
-  userModel.findByEmail = async () => ({
-    ID_Usuario: 17,
-    Nombre: 'Aprendiz Demo',
-    Correo: 'student@example.test',
-    Rol: 'cliente',
-    Contrasena: passwordHash,
+  siteAccessModel.findByUsername = async () => ({
+    ID_Acceso: 17,
+    Usuario: '3183694992',
+    Hash_Contrasena: passwordHash,
+    Activo: 1,
   });
-  siteAccessModel.isAuthorized = async () => true;
+  let updatedId;
+  siteAccessModel.updateLastLogin = async (id) => { updatedId = id; };
   const res = responseRecorder();
 
   try {
-    await authController.login({ body: { Correo: 'student@example.test', Contrasena: 'password123' } }, res);
+    await siteAccessController.login({
+      body: { username: '3183694992', password: 'password123' },
+    }, res);
     assert.equal(res.statusCode, 200);
-    assert.equal(res.body.id, 17);
-    assert.equal(typeof res.body.token, 'string');
+    assert.deepEqual(res.body, { authenticated: true });
+    assert.equal(updatedId, 17);
+    assert.equal(res.cookies[0].name, 'p100_access');
     assert.deepEqual(res.cookies[0].options, {
       httpOnly: true,
       secure: true,
@@ -93,12 +77,58 @@ test('allowlisted login issues a secure HttpOnly session cookie', async () => {
       maxAge: 8 * 60 * 60 * 1000,
     });
   } finally {
-    userModel.findByEmail = originalFindByEmail;
-    siteAccessModel.isAuthorized = originalIsAuthorized;
+    siteAccessModel.findByUsername = originalFind;
+    siteAccessModel.updateLastLogin = originalUpdate;
   }
 });
 
-test('disclaimer acceptance is stored against the active session and version', async () => {
+test('inactive and unknown site accounts receive the same login rejection', async () => {
+  const originalFind = siteAccessModel.findByUsername;
+  siteAccessModel.findByUsername = async () => ({
+    ID_Acceso: 17,
+    Usuario: '3183694992',
+    Hash_Contrasena: await bcrypt.hash('password123', 4),
+    Activo: 0,
+  });
+  const res = responseRecorder();
+  try {
+    await siteAccessController.login({
+      body: { username: '3183694992', password: 'password123' },
+    }, res);
+    assert.equal(res.statusCode, 401);
+    assert.deepEqual(res.body, { error: 'Usuario o contraseña no válidos.' });
+    assert.equal(res.cookies.length, 0);
+  } finally {
+    siteAccessModel.findByUsername = originalFind;
+  }
+});
+
+test('shop-role login remains independent and does not issue the site cookie', async () => {
+  const originalFindByEmail = userModel.findByEmail;
+  const passwordHash = await bcrypt.hash('password123', 4);
+  userModel.findByEmail = async () => ({
+    ID_Usuario: 17,
+    Nombre: 'Cuenta Demo',
+    Correo: 'shop@example.test',
+    Rol: 'admin',
+    Contrasena: passwordHash,
+  });
+  const res = responseRecorder();
+
+  try {
+    await authController.login({
+      body: { Correo: 'shop@example.test', Contrasena: 'password123' },
+    }, res);
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.body.id, 17);
+    assert.equal(typeof res.body.token, 'string');
+    assert.equal(res.cookies.length, 0);
+  } finally {
+    userModel.findByEmail = originalFindByEmail;
+  }
+});
+
+test('disclaimer acceptance is stored against the active site account session', async () => {
   const originalRecord = siteAccessModel.recordDisclaimerAcceptance;
   let recorded;
   siteAccessModel.recordDisclaimerAcceptance = async (...args) => { recorded = args; };
@@ -106,7 +136,7 @@ test('disclaimer acceptance is stored against the active session and version', a
 
   try {
     await siteAccessController.acceptDisclaimer({
-      user: { id: 17, sessionId: 'session-uuid' },
+      siteAccess: { id: 17, sessionId: 'session-uuid' },
       body: { version: DISCLAIMER_VERSION },
     }, res);
     assert.equal(res.statusCode, 201);
@@ -117,33 +147,32 @@ test('disclaimer acceptance is stored against the active session and version', a
   }
 });
 
-test('protected API session middleware blocks requests until consent is stored', async () => {
-  const originalIsAuthorized = siteAccessModel.isAuthorized;
+test('protected API session blocks requests until this site session accepts', async () => {
+  const originalFindActive = siteAccessModel.findActiveById;
   const originalHasAccepted = siteAccessModel.hasAcceptedDisclaimer;
-  siteAccessModel.isAuthorized = async () => true;
+  siteAccessModel.findActiveById = async () => ({ ID_Acceso: 17, Usuario: '3183694992' });
   siteAccessModel.hasAcceptedDisclaimer = async () => false;
   const res = responseRecorder();
   let continued = false;
+  const token = signSiteAccessToken({ ID_Acceso: 17 });
+  const req = { headers: { cookie: `p100_access=${token}` } };
 
   try {
-    await requireSiteSession({ user: { id: 17, sessionId: 'session-uuid' } }, res, () => {
-      continued = true;
-    });
+    await requireSiteSession(req, res, () => { continued = true; });
     assert.equal(res.statusCode, 428);
     assert.equal(continued, false);
 
     siteAccessModel.hasAcceptedDisclaimer = async () => true;
-    await requireSiteSession({ user: { id: 17, sessionId: 'session-uuid' } }, res, () => {
-      continued = true;
-    });
+    await requireSiteSession(req, res, () => { continued = true; });
     assert.equal(continued, true);
+    assert.equal(req.siteAccess.username, '3183694992');
   } finally {
-    siteAccessModel.isAuthorized = originalIsAuthorized;
+    siteAccessModel.findActiveById = originalFindActive;
     siteAccessModel.hasAcceptedDisclaimer = originalHasAccepted;
   }
 });
 
-test('proxy access redirects unauthenticated requests only to a local access path', async () => {
+test('proxy access redirects unauthenticated requests to a local access path', async () => {
   const res = responseRecorder();
   await siteAccessController.proxyAccess({
     headers: {},

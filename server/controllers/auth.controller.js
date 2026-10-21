@@ -10,7 +10,6 @@
 import bcrypt from 'bcryptjs';
 import userModel from '../models/user.model.js';
 import { signToken } from '../middleware/auth.js';
-import siteAccessModel from '../models/site-access.model.js';
 
 /** Coste del hash bcrypt. */
 const BCRYPT_ROUNDS = 10;
@@ -63,17 +62,7 @@ export const authController = {
       const user = await userModel.findByEmail(Correo.trim());
       const ok = user ? await verifyPassword(Contrasena, user.Contrasena) : false;
       if (!ok) return res.status(401).json({ error: 'Credenciales invalidas' });
-      if (!(await siteAccessModel.isAuthorized(user.ID_Usuario))) {
-        return res.status(403).json({ error: 'Esta cuenta no esta autorizada para acceder al sitio.' });
-      }
       const token = signToken(user);
-      res.cookie('p100_access', token, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
-        path: '/',
-        maxAge: 8 * 60 * 60 * 1000,
-      });
       res.setHeader('Cache-Control', 'no-store');
       res.json({ ...userModel.toPublicUser(user), token });
     } catch {

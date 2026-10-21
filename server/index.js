@@ -11,9 +11,11 @@
  *   middleware/  -> sesion y autorizacion (JWT)
  *   config/      -> configuracion compartida (pool de conexiones)
  */
+import './config/load-env.js';
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
+import { assertSiteAccessDbConfig } from './config/site-access-db.js';
 import productsRouter from './routes/products.js';
 import categoriesRouter from './routes/categories.js';
 import authRouter from './routes/auth.js';
@@ -22,16 +24,11 @@ import paymentsRouter from './routes/payments.js';
 import usersRouter from './routes/users.js';
 import businessRouter from './routes/business.js';
 import ratingsRouter from './routes/ratings.js';
-import { assertJwtSecret, requireAuth, requireSiteSession } from './middleware/auth.js';
-
-/** Carga variables de un archivo `.env` si existe (Node >= 20.6). */
-try {
-  process.loadEnvFile();
-} catch {
-  /* JWT_SECRET debe estar disponible en el entorno si no hay archivo .env. */
-}
+import siteAccessRouter from './routes/site-access.js';
+import { assertJwtSecret, requireSiteSession } from './middleware/auth.js';
 
 assertJwtSecret();
+assertSiteAccessDbConfig();
 
 /**
  * Puerto de escucha del backend.
@@ -90,38 +87,27 @@ const authLimiter = rateLimit({
 });
 
 /**
- * The only unauthenticated API endpoints are sign-in, disabled public
- * registration, proxy access validation and disclaimer/login lifecycle.
- * Everything else requires an allowlisted account and current-session consent.
+ * Website access has an identity store separate from the demo-shop users.
+ * Store account login is available only after the site disclaimer is accepted.
  */
 app.use('/api', async (req, res, next) => {
   const path = req.originalUrl.split('?')[0];
   const publicEndpoints = new Set([
-    'POST /api/auth/login',
     'POST /api/auth/register',
-    'GET /api/auth/proxy-access',
-    'POST /api/auth/logout',
-    'GET /api/auth/disclaimer/status',
-    'POST /api/auth/disclaimer/accept',
+    'POST /api/site-access/login',
+    'GET /api/site-access/proxy-access',
+    'POST /api/site-access/logout',
+    'GET /api/site-access/disclaimer/status',
+    'POST /api/site-access/disclaimer/accept',
   ]);
   if (publicEndpoints.has(`${req.method} ${path}`)) return next();
-
-  try {
-    await new Promise((resolve, reject) => {
-      requireAuth(req, res, (err) => (err ? reject(err) : resolve()));
-    });
-    await new Promise((resolve, reject) => {
-      requireSiteSession(req, res, (err) => (err ? reject(err) : resolve()));
-    });
-    if (!res.headersSent) return next();
-    return undefined;
-  } catch (err) {
-    return next(err);
-  }
+  return requireSiteSession(req, res, next);
 });
 
 /** Registro de routers por modulo. */
 app.use('/api/auth', authLimiter);
+app.use('/api/site-access/login', authLimiter);
+app.use('/api', siteAccessRouter);
 app.use('/api', productsRouter);
 app.use('/api', categoriesRouter);
 app.use('/api', authRouter);

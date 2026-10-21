@@ -6,6 +6,7 @@ automático** bajo un dominio de **DuckDNS**, todo con herramientas **gratuitas*
 
 - **Alcance:** entorno de pruebas/demostración (equipo encendido, IP dinámica).
 - **No es** un despliegue de producción con alta disponibilidad. Para eso, usar un host en la nube.
+- El acceso del equipo está separado de las cuentas de demostración de la tienda. Aprovisiona la base privada local siguiendo [`ACCESO-ACADEMICO.md`](ACCESO-ACADEMICO.md).
 
 ---
 
@@ -141,6 +142,8 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=parque100
+SITE_ACCESS_DB_USER=p100_site_access
+SITE_ACCESS_DB_PASSWORD=<generada localmente por access:provision>
 
 JWT_SECRET=<minimo-32-caracteres-aleatorios>
 JWT_EXPIRES_IN=8h
@@ -155,6 +158,11 @@ financieros, los pedidos quedan marcados como simulados/no pagados, no reservan
 inventario y el panel impide despacharlos. Para cualquier despliegue productivo,
 mantén `PAYMENTS_MODE=disabled` hasta integrar una pasarela real y verificar el
 pago en el servidor.
+
+`SITE_ACCESS_DB_USER` y `SITE_ACCESS_DB_PASSWORD` pertenecen a la base privada
+`parque100_acceso`, no a la base de demostración. Se generan únicamente en el
+equipo local con `npm run access:provision`; no copies sus credenciales ni sus
+datos al repositorio o a un dump compartido.
 
 MySQL debe escuchar solo en `127.0.0.1` para los protocolos clásico y X
 (`--bind-address=127.0.0.1 --mysqlx-bind-address=127.0.0.1`). No habilites
@@ -187,17 +195,38 @@ Crear `Caddyfile` (fuera del repo, p. ej. `C:\parque100-server\Caddyfile`):
 		-Server
 	}
 
+	@access path /access.html
+	handle @access {
+		root * C:/ruta/al/proyecto/dist
+		file_server
+	}
+
 	handle /api/* {
 		reverse_proxy 127.0.0.1:3001
 	}
 
 	handle {
+		forward_auth 127.0.0.1:3001 {
+			uri /api/site-access/proxy-access
+		}
 		root * C:/ruta/al/proyecto/dist
 		try_files {path} /index.html
 		file_server
 	}
 }
 ```
+
+Antes de reiniciar backend o recargar Caddy, aprovisiona `parque100_acceso` y
+crea las cuentas autorizadas desde una terminal local interactiva, siguiendo
+[`ACCESO-ACADEMICO.md`](ACCESO-ACADEMICO.md). Publica luego el build que incluye
+`dist/access.html`. El forward-auth protege el frontend; el backend también
+exige la aceptación del descargo antes de servir las APIs.
+
+Antes de reiniciar backend o recargar Caddy, aprovisiona `parque100_acceso` y
+crea las cuentas autorizadas en terminal local interactiva con las instrucciones
+de [`ACCESO-ACADEMICO.md`](ACCESO-ACADEMICO.md). Publica luego el build que incluye
+`dist/access.html`. El endpoint de forward-auth solo valida la cookie de acceso;
+el backend también exige la aceptación del descargo antes de servir las APIs.
 
 > **Correo:** usa uno del propio dominio (p. ej. `admin@<subdominio>.duckdns.org`).
 > Let's Encrypt **rechaza** dominios reservados como `example.com`.
