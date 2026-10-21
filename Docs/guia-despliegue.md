@@ -223,7 +223,8 @@ que `try_files` aplique el fallback a `index.html`; de lo contrario, al iniciar
 sesión desde una ruta profunda, el navegador puede volver a `/index.html` y
 React Router mostrar un 404. La carga de datos de la tienda empieza después de
 la aceptación del descargo, evitando solicitudes API prematuras rechazadas por
-el gate de consentimiento.
+el gate de consentimiento. Las pestañas antiguas en `/index.html?next=...`
+también redirigen de forma segura a su destino interno.
 
 Antes de reiniciar backend o recargar Caddy, aprovisiona `parque100_acceso` y
 crea las cuentas autorizadas desde una terminal local interactiva, siguiendo

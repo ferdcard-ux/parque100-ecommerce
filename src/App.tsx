@@ -221,6 +221,27 @@ function AppErrorBoundary() {
   );
 }
 
+function IndexRedirect() {
+  const { search } = useLocation();
+  const requested = new URLSearchParams(search).get('next');
+  let destination = '/';
+
+  if (requested) {
+    try {
+      const url = new URL(requested, window.location.origin);
+      if (url.origin === window.location.origin
+        && !url.pathname.startsWith('/access.html')
+        && url.pathname !== '/index.html') {
+        destination = `${url.pathname}${url.search}${url.hash}`;
+      }
+    } catch {
+      destination = '/';
+    }
+  }
+
+  return <Navigate to={destination} replace />;
+}
+
 /* ── App Component ── */
 function AppDataProvider() {
   const auth = useAuthController();
@@ -335,6 +356,7 @@ export default function App() {
               ],
             },
             { path: '/login', Component: LoginPage },
+            { path: '/index.html', Component: IndexRedirect },
             { path: '/register', Component: () => <Navigate to="/access.html" replace /> },
             { path: '/payment-success', Component: PaymentSuccessWrapper },
             { path: '/admin', Component: () => <RequireStaff><AdminDashboardPage /></RequireStaff> },
