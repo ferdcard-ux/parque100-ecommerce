@@ -119,8 +119,7 @@ Puedes mostrar u ocultar la contraseña con el **ícono del ojo**. Si ya estabas
 ### 4.3 Recuperar contraseña
 
 1. En el inicio de sesión, pulsa **"¿Olvidaste tu contraseña?"**.
-2. Escribe el correo de la cuenta y pulsa **Generar clave temporal**.
-3. El sistema mostrará un mensaje **neutro** (no revela si el correo existe ni muestra la clave). La clave temporal se entrega de forma manual por el administrador.
+2. La recuperación automática está temporalmente deshabilitada. Pulsa **Contactar soporte** para solicitar ayuda sin enviar tu contraseña por el sitio.
 
 ### 4.4 Cambiar de usuario (multisesión)
 
@@ -204,24 +203,23 @@ El flujo tiene cuatro pasos, con un **indicador de progreso** arriba (paso actua
 
 **b) Método de pago (`/payment-method`)**
 
-Elige una de las tres opciones:
+El efectivo contra entrega está disponible. Tarjeta y Nequi solo se habilitan si el servidor activa expresamente el modo de demostración; ese flujo no cobra, no solicita datos financieros y no reemplaza una pasarela real.
 
 | Método | Descripción |
 |--------|-------------|
-| **Tarjeta de crédito / débito** | Visa, Mastercard y American Express |
-| **Nequi** | Transferencia con comprobante en imagen |
 | **Efectivo contra entrega** | Pagas al recibir; la tienda lleva tu cambio |
+| **Tarjeta / Nequi (si el servidor habilita demo)** | Simulación identificada como DEMO; no se realiza pago ni se solicitan datos financieros |
 
 **c) Pago (`/payment-card`)**
 
-- **Tarjeta:** verás una vista previa de la tarjeta que se actualiza en tiempo real, con detección automática del tipo (Visa/Mastercard). Ingresa número (16 dígitos), titular, vencimiento (MM/AA) y CVV (3-4 dígitos). Pulsa **Pagar**; mientras se procesa aparece un indicador de "Procesando…".
-- **Nequi** (`?method=nequi`): adjunta el **comprobante en imagen** (obligatorio, máximo **3 MB**). El botón se habilita solo cuando adjuntas el archivo.
+- **Tarjeta y Nequi:** si aparecen como DEMO, no ingreses datos de tarjeta/CVV ni realices transferencias. El pedido queda marcado como no pagado, no reserva inventario y no puede despacharse. Si el demo está deshabilitado, el checkout no permite estos métodos.
 - **Efectivo** (`?method=cash`): escribe el **monto con el que pagarás**. El sistema calcula **tu cambio en vivo** y exige que el monto cubra el total.
 
 **d) Confirmación (`/payment-success`)**
 
 - Muestra la animación de éxito, el **número de pedido** asignado y el botón **"Ver mi pedido"**.
 - En efectivo, muestra lo recibido y el cambio.
+- En demo, informa que no hubo cobro y que el pedido no se despacha.
 - Incluye la línea de tiempo del estado del pedido y un aviso de posible demora en el despacho.
 
 ### 5.7 Mis compras y detalle del pedido (`/compras`, `/compras/:id`)
@@ -277,7 +275,7 @@ El panel administrativo se abre desde el enlace **"Admin"** del navbar o entrand
 - **Agregar producto:** modal con nombre, categoría, cantidad, precio e imagen. La imagen puede ser una **URL web** o un **archivo local** (con vista previa).
 - **Editar producto:** abre el mismo modal con los datos precargados.
 - **Eliminar producto:** confirmación directa (no se puede eliminar un producto que tenga pedidos asociados).
-- **Importar / Exportar inventario:** botones para descargar el inventario y para cargar cambios de forma masiva.
+- **Importar / Exportar inventario:** usa la plantilla CSV oficial para cargar cambios de forma masiva (máximo 5 MB y 5.000 filas); también puedes exportar el inventario a CSV o PDF.
 
 ### 6.4 Pedidos pendientes (`/admin/pedidos-pendientes`)
 
@@ -290,7 +288,7 @@ El panel administrativo se abre desde el enlace **"Admin"** del navbar o entrand
 - Filtra y consulta pedidos por estado, con resumen por estado, **tracker compacto** y detalle con líneas del pedido.
 - **Avanzar estado:** Pendiente → Preparando → En envío → Entregado (el cambio se guarda).
 - **Cancelar pedido:** usa motivos **operativos** propios del administrador (distintos a los del cliente). Un pedido cancelado **no se puede reanudar**.
-- En el detalle se muestra el **comprobante Nequi** cuando aplica y los avisos para pagos en efectivo.
+- En pedidos históricos puede aparecer un comprobante Nequi. El modo demo de nuevos pedidos no acredita pagos ni habilita despacho.
 
 ### 6.6 Reportes (`/admin/reportes`)
 
@@ -346,9 +344,10 @@ Puede **tomar pedidos**, **avanzar los estados** y **marcar la entrega**. **No**
 
 | Método | Cómo funciona | Datos requeridos |
 |--------|---------------|------------------|
-| **Tarjeta** | Pago simulado con validación del número, titular, vencimiento y CVV | Nº de tarjeta (16 dígitos), titular, MM/AA, CVV |
-| **Nequi** | Transferencia; se adjunta el comprobante | Imagen del comprobante (máx. 3 MB) |
-| **Efectivo** | Se paga contra entrega; la tienda lleva el cambio | Monto con el que se pagará (≥ total) |
+| **Efectivo** | Pedido contra entrega; el pago se realiza al recibirlo | Monto con el que se pagará (≥ total) |
+| **Tarjeta / Nequi demo** | Solo si el servidor activa explícitamente el modo `demo`; registra un pedido no pagado, sin inventario ni despacho | Ninguno; no ingreses datos financieros |
+
+El modo `demo` no procesa pagos reales. Para cualquier pago con dinero real se necesita una pasarela verificada; no envíes datos de tarjeta, CVV, transferencias ni comprobantes a través del sitio.
 
 ---
 
@@ -396,7 +395,7 @@ Debes acordarlo directamente con el propietario de la tienda; el sistema muestra
 Sí, solo en pedidos **Entregados**, con 1 a 5 estrellas. El comentario es opcional.
 
 **¿Olvidé mi contraseña, qué hago?**
-Usa **"¿Olvidaste tu contraseña?"** en el login. El sistema confirma la solicitud de forma neutra y el administrador te entrega una clave temporal.
+Usa **"¿Olvidaste tu contraseña?"** en el login para contactar soporte. La recuperación automática está deshabilitada hasta contar con un canal verificado.
 
 **¿Puedo usar varias cuentas al mismo tiempo?**
 Sí, con **"Cambiar de usuario"** puedes mantener más de una sesión activa y alternar entre ellas.
@@ -412,7 +411,7 @@ Sí, el diseño es adaptable a teléfonos y tabletas.
 |---------|----------------|----------|
 | No aparece el botón "Añadir" o redirige al login | No has iniciado sesión | Inicia sesión; se te devolverá a la página anterior |
 | "El correo/teléfono ya está registrado" | Ya existe una cuenta con esos datos | Usa otros datos o recupera tu cuenta |
-| No puedo subir el comprobante de Nequi | La imagen supera los 3 MB o no es una imagen | Comprime la imagen o usa otro archivo (JPG/PNG) |
+| ¿Puedo pagar con tarjeta o Nequi? | Solo puede aparecer una simulación si el servidor habilitó `PAYMENTS_MODE=demo`; no hay pagos reales | Elige efectivo contra entrega. En demo no ingreses datos, no hay cobro y el pedido no se despacha |
 | "El monto debe cubrir el total" | El efectivo ingresado es menor al total | Ingresa un monto igual o mayor |
 | El botón "Cancelar pedido" está deshabilitado | El pedido ya está en envío o entregado | El pedido ya no admite cancelación |
 | No veo la opción "Dejar una reseña" | El pedido aún no está entregado | Espera a que el pedido se marque como **Entregado** |
@@ -432,7 +431,7 @@ Sí, el diseño es adaptable a teléfonos y tabletas.
 | **Tracker** | Línea de tiempo que muestra el avance de un pedido |
 | **Rol** | Perfil de permisos: cliente, administrador o domiciliario |
 | **Domiciliario** | Persona que entrega los pedidos |
-| **Comprobante** | Imagen que acredita el pago por Nequi |
+| **Comprobante** | Imagen adjunta a algunos pedidos históricos; no se reciben comprobantes en nuevos pedidos |
 
 ---
 

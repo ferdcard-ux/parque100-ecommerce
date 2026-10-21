@@ -101,13 +101,13 @@ Base URL: `http://localhost:3001/api`
 |---------|-----------|
 | Productos | `GET/POST /products`, `GET/PUT/DELETE /products/:id` |
 | Categorías | `GET /categories` |
-| Autenticación | `POST /auth/login`, `POST /auth/register` (correo y teléfono únicos, 409 si existen), `POST /auth/recover`, `PUT /auth/password` |
+| Autenticación | `POST /auth/login`, `POST /auth/register` (correo y teléfono únicos, 409 si existen), `POST /auth/recover` (503 hasta configurar recuperación verificada), `PUT /auth/password` |
 | Usuarios | `GET /users`, `POST /users`, `PUT /users/:id/admin`, `PUT /users/:id/profile` (perfil propio), `DELETE /users/:id`, `GET/PUT /users/:id/permissions` (delegar `puede_cancelar`) |
 | Datos de entrega de usuario | `GET /users/:id`, `PUT /users/:id` |
 | Negocio | `GET /business`, `PUT /business` |
 | Pedidos | `GET /orders` (`?items=1` incluye detalles), `GET /orders/:id`, `POST /orders` (total recalculado, estado `pendiente`), `PUT /orders/:id/status` (máquina de estados), `PUT /orders/:id/cancel` (con motivo) |
 | Calificaciones | `GET /ratings`, `GET /ratings/resumen?producto=ID`, `POST /ratings`, `PUT /ratings/:id` (autor), `DELETE /ratings/:id` |
-| Pagos | `POST /payments/process` |
+| Pagos | `POST /payments/process` (503: pagos electrónicos deshabilitados hasta integrar pasarela verificada; efectivo contra entrega disponible) |
 
 > Los endpoints de escritura y los datos ajenos requieren `Authorization: Bearer <JWT>` (se obtiene en `POST /auth/login`); el rol `admin` gestiona usuarios, productos, negocio y moderación.
 

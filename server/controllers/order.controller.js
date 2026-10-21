@@ -9,6 +9,7 @@
  */
 import orderModel from '../models/order.model.js';
 import { isAdminRole, isStaffRole } from '../middleware/auth.js';
+import { isDemoPaymentMethod, isDemoPaymentsEnabled } from '../config/payment-mode.js';
 
 /** Traduce el rol almacenado al actor usado por las reglas de cancelacion. */
 function roleToActor(rol) {
@@ -157,6 +158,19 @@ export const orderController = {
    */
   async create(req, res) {
     try {
+      const paymentMethod = req.body?.Metodo_Pago;
+      const demoPayment = isDemoPaymentMethod(paymentMethod);
+      if (demoPayment && !isDemoPaymentsEnabled()) {
+        return res.status(503).json({ error: 'La simulacion de pagos no esta habilitada.' });
+      }
+      if (paymentMethod && paymentMethod !== 'Efectivo' && !demoPayment) {
+        return res.status(400).json({
+          error: 'El metodo requiere una pasarela de pago verificada o una simulacion demo habilitada.',
+        });
+      }
+      if (demoPayment && (req.body?.Monto_Recibido != null || req.body?.Comprobante != null)) {
+        return res.status(400).json({ error: 'Un pedido demo no admite efectivo ni comprobantes de pago.' });
+      }
       const id = await orderModel.createWithDetails({
         ...req.body,
         ID_Usuario: Number(req.user?.id),

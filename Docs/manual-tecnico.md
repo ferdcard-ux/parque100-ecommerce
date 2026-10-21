@@ -144,7 +144,7 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `GET /api/categories` | Listar todas las categorías |
 | `POST /api/auth/login` | Iniciar sesión (emite JWT) |
 | `POST /api/auth/register` | Registrar usuario (nombre, correo y teléfono únicos; 409 si existen) |
-| `POST /api/auth/recover` | Respuesta neutra 200 (no revela si el correo existe ni devuelve la clave) |
+| `POST /api/auth/recover` | 503 hasta configurar un canal verificado de recuperacion; no modifica ni registra contrasenas temporales |
 | `PUT /api/auth/password` | Cambiar contraseña (valida la actual) |
 | `GET /api/users` | Listar usuarios registrados (admin) |
 | `POST /api/users` | Crear usuario desde el panel admin (admin) |
@@ -167,7 +167,7 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `POST /api/ratings` | Calificar (sesión; compra/propiedad verificada, 409 duplicada) |
 | `PUT /api/ratings/:id` | Editar reseña (solo el autor) |
 | `DELETE /api/ratings/:id` | Eliminar calificación (admin) |
-| `POST /api/payments/process` | Procesar pago simulado (sesión; tarjeta validada) |
+| `POST /api/payments/process` | 503 hasta integrar una pasarela real con verificacion server-to-server |
 
 > Salvo lectura pública (catálogo, negocio, reseñas), los endpoints exigen `Authorization: Bearer <JWT>`; la escritura sensible y los datos ajenos exigen rol `admin` o staff según la ruta.
 

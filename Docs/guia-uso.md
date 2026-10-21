@@ -22,7 +22,7 @@
 - Validaciones visibles: correo inválido, contraseña vacía y credenciales incorrectas
 - Botón **X** en la esquina superior derecha para cerrar y volver al inicio
 - Opción "Recuérdame": persiste la sesión entre cierres (localStorage) o solo la pestaña (sessionStorage)
-- "¿Olvidaste tu contraseña?": solicita clave temporal con respuesta neutra (no revela si el correo existe; la entrega de la clave es manual)
+- "¿Olvidaste tu contraseña?": muestra el canal de soporte; la recuperación automática está deshabilitada hasta configurar entrega verificada
 - Retorno post-login con `?next=`: tras ingresar vuelve a la página solicitada
 - Modo multisesión con `?mode=switch`: agrega otra cuenta sin cerrar la actual
 - Enlace a registro de cuenta
@@ -84,23 +84,20 @@
 - Resumen del pedido y tiempo estimado de entrega
 
 ### Método de pago (`/payment-method`)
-- Selección entre Tarjeta de crédito/débito (Visa, Mastercard, Amex), Nequi o Efectivo contra entrega
-- Indicador de pago seguro SSL
-- Resumen del pedido con total a pagar
+- Efectivo contra entrega está disponible.
+- Tarjeta y Nequi solo aparecen habilitados cuando el servidor configura `PAYMENTS_MODE=demo`; la pantalla indica que es una simulación sin cobro ni datos financieros.
+- Los pedidos demo quedan marcados como no pagados, no reservan inventario y no se pueden despachar. En `disabled` (predeterminado), los pagos electrónicos no se pueden seleccionar.
+- Resumen del pedido con el total
 
-### Pago con tarjeta (`/payment-card`)
-- Preview visual de la tarjeta bancaria (actualiza en tiempo real)
-- Campos: número de tarjeta, titular, fecha de vencimiento, CVV
-- Detección automática del tipo de tarjeta (Visa/Mastercard)
-- Indicador de procesamiento con spinner
-- Confirmación de pago seguro
-- Variante Nequi (`/payment-card?method=nequi`): adjuntar comprobante en imagen (obligatorio, máx. 3 MB); el botón se habilita al adjuntarlo y el archivo llega al admin
+### Confirmación del pedido (`/payment-card`)
+- Tarjeta y Nequi no solicitan datos de tarjeta, CVV, transferencias ni comprobantes. En modo demo, el botón registra un pedido no pagado que no se despacha.
 - Variante efectivo (`/payment-card?method=cash`): monto recibido obligatorio con cálculo del cambio en vivo
 
 ### Confirmación (`/payment-success`)
 - Animación de éxito con icono de check
 - Número de pedido real (asignado por el backend) con botón "Ver mi pedido"
 - Efectivo: muestra recibido y cambio
+- Demo: confirma que no hubo cobro y muestra la referencia de simulación, sin presentarla como transacción financiera
 - Advertencia de posible demora en el despacho
 - Timeline del estado del pedido
 - Botón para volver a la tienda
@@ -113,13 +110,14 @@
 - Estadísticas: total productos, en stock, bajo stock, sin stock
 - Tabla de productos con búsqueda, filtro por estado y paginación
 - **CRUD completo**: agregar (modal con nombre, categoría, cantidad, precio e imagen por URL web o archivo local con vista previa), editar (modal precargado), eliminar (confirmación directa)
-- Botones de importar/exportar inventario
+- Importación desde la plantilla CSV oficial y exportación en CSV o PDF
 
 ### Pedidos admin (`/admin/pedidos-pendientes`, `/admin/pedidos`, `/admin/pedidos/:id`)
 - Pendientes con botón "Tomar pedido" (pendiente → preparando)
+- Los pedidos de simulación se identifican claramente y no se pueden tomar ni avanzar a despacho
 - Cancelación con motivos operativos propios del admin (distintos a los del cliente); el pedido cancelado no se puede reanudar (select deshabilitado y 409 en backend); tarjeta Cancelados y aviso de devolución
 - Efectivo prioritario: banner "llevar cambio", insignia en gestión y aviso en la campana
-- Comprobante Nequi visible en el detalle
+- Los comprobantes de pagos Nequi solo se muestran en pedidos históricos; los nuevos pedidos electrónicos están bloqueados.
 - Resumen por estado, tracker compacto, cambio de estado persistente y detalle con líneas
 
 ### Reportes (`/admin/reportes`)
@@ -144,9 +142,8 @@ Carrito → Dirección de entrega → Método de pago → Confirmación
 Inicio → Agregar productos al carrito (sin sesión: redirige al login)
   → Carrito → Revisar y continuar
   → Dirección de entrega → Guardar
-  → Método de pago → Elegir (tarjeta, Nequi o efectivo)
-  → Datos de pago → Pagar (crea el pedido con usuario y snapshot)
-  → Confirmación de pago
+  → Método de pago → Elegir efectivo contra entrega
+  → Confirmación del pedido (el pago se realiza al recibirlo)
 ```
 
 ## Rutas del proyecto

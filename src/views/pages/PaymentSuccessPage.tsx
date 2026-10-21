@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import type { ReactNode } from 'react';
 import { CheckCircle2, Package, Clock, MapPin, Store, TriangleAlert } from 'lucide-react';
 import { useApp } from '../../App';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
@@ -7,8 +8,20 @@ import { formatPrice } from '../../utils';
 
 export function PaymentSuccessPage() {
   const { lastOrder } = useApp();
+  const isDemo = lastOrder?.simulatedPayment === true;
   const orderLabel = lastOrder?.backendId ? `#${lastOrder.backendId}` : lastOrder ? lastOrder.id : null;
   const detailTo = lastOrder?.backendId ? `/compras/${lastOrder.backendId}` : '/compras';
+  const statusSteps: Array<{ icon: ReactNode; label: string; sub: string; done?: boolean; active?: boolean; pending?: boolean }> = isDemo
+    ? [
+        { icon: <CheckCircle2 size={18} />, label: 'Pedido demo registrado', sub: 'Simulación sin cobro', done: true },
+        { icon: <Package size={18} />, label: 'No se despacha', sub: 'No afecta el inventario', pending: true },
+      ]
+    : [
+        { icon: <CheckCircle2 size={18} />, label: 'Pedido registrado', sub: 'Pago pendiente contra entrega', done: true },
+        { icon: <Package size={18} />, label: 'Preparación pendiente', sub: 'Te avisaremos cuando avance', active: true },
+        { icon: <Clock size={18} />, label: 'En camino', sub: 'Aprox. 30 minutos', pending: true },
+        { icon: <MapPin size={18} />, label: 'Entregado', sub: 'Tu apartamento', pending: true },
+      ];
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden">
@@ -33,10 +46,10 @@ export function PaymentSuccessPage() {
         </div>
 
         <h1 className="text-[#212121] mb-2" style={{ fontSize: '1.8rem', fontWeight: 800 }}>
-          ¡Pago exitoso!
+          {isDemo ? '¡Simulación registrada!' : '¡Pedido confirmado!'}
         </h1>
         <p className="text-gray-500 mb-2" style={{ fontSize: '1rem' }}>
-          Tu pedido ha sido confirmado
+          {isDemo ? 'No se realizó un cobro ni se confirmó un pago real.' : 'El pago se realizará en efectivo al recibirlo'}
         </p>
         <div className="inline-block bg-[#FBC02D]/10 border border-[#FBC02D]/30 rounded-full px-4 py-1 mb-6">
           <span className="text-[#212121] font-semibold" style={{ fontSize: '0.875rem' }}>
@@ -50,35 +63,40 @@ export function PaymentSuccessPage() {
           </dl>
         )}
 
+        {isDemo && lastOrder.paymentSimulationId && (
+          <p className="mb-4 text-gray-500" style={{ fontSize: '0.8rem' }}>
+            Referencia de simulación (no financiera): <strong>{lastOrder.paymentSimulationId}</strong>
+          </p>
+        )}
+
         <div role="alert" className="flex gap-3 text-left bg-amber-50 border border-amber-200 rounded-2xl p-4 mb-6">
           <TriangleAlert size={20} className="text-amber-600 shrink-0 mt-0.5" />
-          <p className="text-amber-800" style={{ fontSize: '0.85rem' }}>{DISPATCH_DELAY_WARNING}</p>
+          <p className="text-amber-800" style={{ fontSize: '0.85rem' }}>
+            {isDemo
+              ? 'Este pedido de demostración queda marcado como no pagado, no reserva inventario y no puede avanzar a preparación o despacho.'
+              : DISPATCH_DELAY_WARNING}
+          </p>
         </div>
 
-        <div className="w-full h-44 rounded-2xl overflow-hidden mb-6 shadow-md relative">
+        {!isDemo && <div className="w-full h-44 rounded-2xl overflow-hidden mb-6 shadow-md relative">
           <ImageWithFallback
             src="https://images.unsplash.com/photo-1685640206182-c51b8aa9b686?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=600"
             alt="Entrega a domicilio"
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/20" />
-        </div>
+        </div>}
 
         <div className="bg-[#F5F5F5] rounded-2xl p-5 mb-6 text-left">
-          <h3 className="text-[#212121] font-semibold mb-4" style={{ fontSize: '0.95rem' }}>Estado de tu pedido</h3>
+          <h3 className="text-[#212121] font-semibold mb-4" style={{ fontSize: '0.95rem' }}>{isDemo ? 'Estado de la simulación' : 'Estado de tu pedido'}</h3>
           <div className="flex flex-col gap-0">
-            {[
-              { icon: <CheckCircle2 size={18} />, label: 'Pago confirmado', sub: 'Hace un momento', done: true },
-              { icon: <Package size={18} />, label: 'Preparando tu pedido', sub: 'En proceso', active: true },
-              { icon: <Clock size={18} />, label: 'En camino', sub: 'Aprox. 30 minutos', pending: true },
-              { icon: <MapPin size={18} />, label: 'Entregado', sub: 'Tu apartamento', pending: true },
-            ].map((step, i) => (
+            {statusSteps.map((step, i) => (
               <div key={i} className="flex items-start gap-3">
                 <div className="flex flex-col items-center">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step.done ? 'bg-green-500 text-white' : step.active ? 'bg-[#FBC02D] text-[#212121]' : 'bg-gray-200 text-gray-400'}`}>
                     {step.icon}
                   </div>
-                  {i < 3 && <div className={`w-0.5 h-5 ${step.done || step.active ? 'bg-gray-300' : 'bg-gray-200'}`} />}
+                  {i < statusSteps.length - 1 && <div className={`w-0.5 h-5 ${step.done || step.active ? 'bg-gray-300' : 'bg-gray-200'}`} />}
                 </div>
                 <div className="pt-1.5">
                   <p className={`font-medium ${step.done ? 'text-green-600' : step.active ? 'text-[#212121]' : 'text-gray-400'}`} style={{ fontSize: '0.875rem' }}>

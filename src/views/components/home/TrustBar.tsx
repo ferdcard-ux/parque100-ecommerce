@@ -1,8 +1,8 @@
-import { Clock, ShieldCheck, Star } from 'lucide-react';
+import { Clock, Banknote, Star } from 'lucide-react';
 
 const TRUST_ITEMS = [
   { icon: <Clock size={18} />, text: 'Entrega en el día' },
-  { icon: <ShieldCheck size={18} />, text: 'Pago 100% seguro' },
+  { icon: <Banknote size={18} />, text: 'Efectivo contra entrega' },
   { icon: <Star size={18} />, text: 'Calidad garantizada' },
 ];
 

@@ -13,8 +13,6 @@ export interface OrderExtras {
   tendered?: number;
   /** Cambio a devolver (pago contra entrega). */
   change?: number;
-  /** Comprobante de pago Nequi (imagen dataURL). */
-  receipt?: string | null;
 }
 
 /** Evita crear el mismo pedido dos veces ante doble clic. */
@@ -77,10 +75,13 @@ export const orderService = {
           Torre: address.tower,
           Piso: address.floor,
           Apartamento: address.apartment,
-          Metodo_Pago: paymentMethod === 'nequi' ? 'Nequi' : paymentMethod === 'cash' ? 'Efectivo' : 'Tarjeta',
+          Metodo_Pago: paymentMethod === 'nequi'
+            ? 'Nequi (DEMO)'
+            : paymentMethod === 'card'
+              ? 'Tarjeta (DEMO)'
+              : 'Efectivo',
           Monto_Recibido: extras.tendered ?? null,
           Cambio: extras.change ?? null,
-          Comprobante: extras.receipt ?? null,
           Notas: address.notes?.trim() ? address.notes.trim() : null,
           productos: items.map((item) => ({
             ID_Producto: item.id,
@@ -101,7 +102,6 @@ export const orderService = {
     order.backendId = typeof responseData?.id === 'number' ? responseData.id : null;
     order.cashTendered = extras.tendered ?? null;
     order.cashChange = extras.change ?? null;
-    order.receiptDataUrl = extras.receipt ?? null;
     return order;
     } finally {
       createInFlight = false;

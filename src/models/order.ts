@@ -31,8 +31,10 @@ export interface Order {
   cashTendered?: number | null;
   /** Cambio a devolver (solo pago contra entrega). */
   cashChange?: number | null;
-  /** Comprobante de pago Nequi (imagen dataURL). */
-  receiptDataUrl?: string | null;
+  /** Indica que este checkout fue una simulacion sin cobro. */
+  simulatedPayment?: boolean;
+  /** Referencia visual de simulacion; no es una referencia financiera. */
+  paymentSimulationId?: string;
   /** Lineas de producto incluidas. */
   items: CartItem[];
   /** Subtotal sin envio. */

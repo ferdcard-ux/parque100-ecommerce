@@ -5,6 +5,7 @@
  * pedido con sus lineas de detalle (patron MVC - Model).
  */
 import pool from '../config/db.js';
+import { isDemoPaymentMethod, isDemoPaymentsEnabled } from '../config/payment-mode.js';
 
 function createOrderError(message, statusCode) {
   const error = new Error(message);
@@ -23,10 +24,7 @@ const NEXT_STATUS = {
 const VALID_DELIVERY = ['domicilio', 'recogida'];
 
 /** Metodos de pago admitidos. */
-const VALID_PAYMENT = ['Efectivo', 'Nequi', 'Tarjeta'];
-
-/** Tamano maximo aceptado para el comprobante en dataURL (~7 MB). */
-const MAX_RECEIPT_LENGTH = 7000000;
+const VALID_PAYMENT = ['Efectivo', 'Tarjeta (DEMO)', 'Nequi (DEMO)'];
 
 /** Longitud maxima de las notas del cliente. */
 const MAX_NOTES_LENGTH = 500;
@@ -106,13 +104,19 @@ export const orderModel = {
    * @throws {Error} 409 si la transicion no esta permitida.
    */
   async updateStatus(id, estado) {
-    const [rows] = await pool.query('SELECT Estado FROM pedidos WHERE ID_Pedido = ?', [id]);
+    const [rows] = await pool.query(
+      'SELECT Estado, Metodo_Pago FROM pedidos WHERE ID_Pedido = ?',
+      [id],
+    );
     if (rows.length === 0) return false;
     const current = rows[0].Estado;
     if (current === 'cancelado' || current === 'entregado') {
       throw createOrderError(`Un pedido ${current} no admite cambios de estado`, 409);
     }
     if (current === estado) return true;
+    if (isDemoPaymentMethod(rows[0].Metodo_Pago)) {
+      throw createOrderError('Los pedidos de simulacion no se pueden despachar.', 409);
+    }
     if (!(NEXT_STATUS[current] || []).includes(estado)) {
       throw createOrderError(`No se puede pasar de '${current}' a '${estado}'`, 409);
     }
@@ -143,7 +147,7 @@ export const orderModel = {
       await connection.beginTransaction();
 
       const [orders] = await connection.query(
-        'SELECT Estado FROM pedidos WHERE ID_Pedido = ? FOR UPDATE',
+        'SELECT Estado, Metodo_Pago FROM pedidos WHERE ID_Pedido = ? FOR UPDATE',
         [id],
       );
       if (orders.length === 0) {
@@ -181,11 +185,13 @@ export const orderModel = {
         'SELECT ID_Producto, Cantidad FROM detalle_pedido WHERE ID_Pedido = ?',
         [id],
       );
-      for (const item of details) {
-        await connection.query(
-          'UPDATE productos SET Stock_Minimo = Stock_Minimo + ? WHERE ID_Producto = ?',
-          [item.Cantidad, item.ID_Producto],
-        );
+      if (!isDemoPaymentMethod(orders[0].Metodo_Pago)) {
+        for (const item of details) {
+          await connection.query(
+            'UPDATE productos SET Stock_Minimo = Stock_Minimo + ? WHERE ID_Producto = ?',
+            [item.Cantidad, item.ID_Producto],
+          );
+        }
       }
 
       const [result] = await connection.query(
@@ -261,6 +267,13 @@ export const orderModel = {
     if (!VALID_PAYMENT.includes(payMethod)) {
       throw createOrderError(`Metodo de pago invalido. Usa: ${VALID_PAYMENT.join(', ')}`, 400);
     }
+    const demoPayment = isDemoPaymentMethod(payMethod);
+    if (demoPayment && !isDemoPaymentsEnabled()) {
+      throw createOrderError('La simulacion de pagos no esta habilitada.', 503);
+    }
+    if (demoPayment && (Monto_Recibido != null || Comprobante != null)) {
+      throw createOrderError('Un pedido demo no admite efectivo ni comprobantes de pago.', 400);
+    }
     const orderText = (value, max, name) => {
       if (value === undefined || value === null || value === '') return null;
       if (typeof value !== 'string' || value.length > max) {
@@ -273,13 +286,7 @@ export const orderModel = {
       throw createOrderError('Telefono invalido', 400);
     }
     if (Comprobante !== undefined && Comprobante !== null && Comprobante !== '') {
-      if (
-        typeof Comprobante !== 'string' ||
-        Comprobante.length > MAX_RECEIPT_LENGTH ||
-        !Comprobante.startsWith('data:image/')
-      ) {
-        throw createOrderError('Comprobante invalido: debe ser una imagen', 400);
-      }
+      throw createOrderError('Los comprobantes de pago electronico no estan habilitados.', 400);
     }
     const orderNumberOrNull = (value, name) => {
       if (value === undefined || value === null || value === '') return null;
@@ -366,13 +373,15 @@ export const orderModel = {
         }
       }
 
-      for (const item of stockPorProducto.values()) {
-        const [result] = await connection.query(
-          'UPDATE productos SET Stock_Minimo = Stock_Minimo - ? WHERE ID_Producto = ? AND Stock_Minimo >= ?',
-          [item.Cantidad, item.ID_Producto, item.Cantidad],
-        );
-        if (result.affectedRows !== 1) {
-          throw createOrderError(`No se pudo actualizar el stock del producto ${item.ID_Producto}`, 409);
+      if (!demoPayment) {
+        for (const item of stockPorProducto.values()) {
+          const [result] = await connection.query(
+            'UPDATE productos SET Stock_Minimo = Stock_Minimo - ? WHERE ID_Producto = ? AND Stock_Minimo >= ?',
+            [item.Cantidad, item.ID_Producto, item.Cantidad],
+          );
+          if (result.affectedRows !== 1) {
+            throw createOrderError(`No se pudo actualizar el stock del producto ${item.ID_Producto}`, 409);
+          }
         }
       }
 

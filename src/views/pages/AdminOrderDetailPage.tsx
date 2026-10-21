@@ -14,7 +14,7 @@ import { SectionTitle } from '../components/shared/section-title';
 import { StarRating } from '../components/shared/star-rating';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
-import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice, ratingLabel } from '../../utils';
+import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice, ratingLabel, isDemoPaymentMethod } from '../../utils';
 
 /** Extension del comprobante segun su dataURL (png por defecto). */
 function receiptExtension(comprobante: string): string {
@@ -105,6 +105,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
   };
 
   const subtotal = (order?.detalles ?? []).reduce((sum, d) => sum + Number(d.Subtotal), 0);
+  const isDemoOrder = isDemoPaymentMethod(order?.Metodo_Pago);
 
   return (
     <AdminPageShell active="pedidos" title={`Pedido #${id ?? ''}`} subtitle="Detalle y gestion del pedido" backTo="/admin/pedidos">
@@ -114,6 +115,14 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
         <p className="text-center text-[#C62828] py-16">{error ?? 'Pedido no encontrado.'}</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {isDemoOrder && (
+            <div role="alert" className="lg:col-span-2 flex gap-3 bg-amber-50 border-2 border-amber-300 rounded-2xl p-4">
+              <TriangleAlert size={22} className="text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-amber-900" style={{ fontSize: '0.9rem', fontWeight: 700 }}>
+                SIMULACIÓN: no hay pago confirmado ni reserva de inventario. Este pedido no puede prepararse ni despacharse.
+              </p>
+            </div>
+          )}
           {order.Metodo_Pago === 'Efectivo' && (
             <div role="alert" className="lg:col-span-2 flex gap-3 bg-amber-50 border-2 border-amber-300 rounded-2xl p-4">
               <TriangleAlert size={22} className="text-amber-600 shrink-0 mt-0.5" />
@@ -130,12 +139,13 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
               <select
                 value={order.Estado}
                 disabled={order.Estado === 'cancelado'}
-                title={order.Estado === 'cancelado' ? 'Un pedido cancelado no se puede reanudar' : undefined}
+                title={order.Estado === 'cancelado' ? 'Un pedido cancelado no se puede reanudar' : isDemoOrder ? 'Solo se puede cancelar un pedido demo; no se puede despachar' : undefined}
                 onChange={(e) => changeStatus(e.target.value as OrderEstado)}
                 className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828] disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ fontSize: '0.8rem' }}
               >
-                {ORDER_ESTADOS.filter((estado) => canCancel || estado !== 'cancelado').map((estado) => (
+                {ORDER_ESTADOS.filter((estado) => (canCancel || estado !== 'cancelado')
+                  && (!isDemoOrder || estado === 'pendiente' || estado === 'cancelado')).map((estado) => (
                   <option key={estado} value={estado}>{estado === 'cancelado' ? 'cancelado (con motivo)' : estado}</option>
                 ))}
               </select>

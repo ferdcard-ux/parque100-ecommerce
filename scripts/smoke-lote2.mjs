@@ -107,9 +107,9 @@ await test('Login con clave erronea es 401', async () => {
   assert(status === 401, `status ${status}`);
 });
 
-await test('Recover es neutro y no expone la clave', async () => {
+await test('Recover permanece deshabilitado hasta configurar un canal verificado', async () => {
   const { status, data } = await call('POST', '/auth/recover', { Correo: 'nadie@ejemplo.com' });
-  assert(status === 200, `status ${status}`);
+  assert(status === 503, `status ${status}`);
   assert(data && !('tempPassword' in data), 'expone clave temporal');
 });
 
@@ -553,14 +553,52 @@ await test('Maquina de estados: sin saltos ni retrocesos', async () => {
   assert(back.status === 409, `retroceso status ${back.status}`);
 });
 
-await test('POST /payments/process valida tarjeta y monto', async () => {
-  const base = { cardNumber: '4111111111111111', expiryDate: '12/30', cvv: '123', amount: 1000 };
-  const badCard = await call('POST', '/payments/process', { ...base, cardNumber: '123' }, clientToken);
-  assert(badCard.status === 400, `tarjeta status ${badCard.status}`);
-  const expired = await call('POST', '/payments/process', { ...base, expiryDate: '01/20' }, clientToken);
-  assert(expired.status === 400, `vencida status ${expired.status}`);
-  const badAmount = await call('POST', '/payments/process', { ...base, amount: -5 }, clientToken);
-  assert(badAmount.status === 400, `monto status ${badAmount.status}`);
+await test('GET /payments/mode solo informa el modo configurado', async () => {
+  const { status, data } = await call('GET', '/payments/mode');
+  assert(status === 200, `status ${status}`);
+  assert(data.mode === 'demo' || data.mode === 'disabled', `modo inesperado ${data.mode}`);
+});
+
+await test('POST /payments/process rechaza datos financieros', async () => {
+  const { status, data } = await call('POST', '/payments/process', {
+    method: 'card',
+    cardNumber: '4111111111111111',
+    expiryDate: '12/30',
+    cvv: '123',
+  }, clientToken);
+  assert(status === 400, `status ${status}`);
+  assert(data && data.success === false, 'respuesta de pago inesperada');
+});
+
+await test('POST /payments/process solo confirma una simulacion no pagada', async () => {
+  const { data: mode } = await call('GET', '/payments/mode');
+  const { status, data } = await call('POST', '/payments/process', { method: 'nequi' }, clientToken);
+  if (mode.mode === 'demo') {
+    assert(status === 200, `status ${status}`);
+    assert(data.simulated === true && data.paid === false, 'la simulacion no debe representar un cobro');
+    assert(typeof data.simulationId === 'string', 'falta referencia de simulacion');
+  } else {
+    assert(status === 503, `status ${status}`);
+    assert(data.paid === false, 'el modo deshabilitado no debe informar pago');
+  }
+});
+
+await test('POST /orders rechaza metodos electronicos sin verificacion', async () => {
+  const { status } = await call('POST', '/orders', {
+    Metodo_Pago: 'Tarjeta',
+    Tipo_Entrega: 'domicilio',
+    productos: [{ ID_Producto: 'P010', Cantidad: 1 }],
+  }, clientToken);
+  assert(status === 400, `status ${status}`);
+});
+
+await test('POST /orders rechaza comprobantes electronicos no verificados', async () => {
+  const { status } = await call('POST', '/orders', {
+    Metodo_Pago: 'Efectivo',
+    Comprobante: 'data:image/png;base64,AA==',
+    productos: [{ ID_Producto: 'P010', Cantidad: 1 }],
+  }, clientToken);
+  assert(status === 400, `status ${status}`);
 });
 
 await test('POST /products valida precio no negativo', async () => {

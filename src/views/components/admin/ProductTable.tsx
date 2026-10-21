@@ -76,12 +76,73 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function parseCsvRows(text: string): string[][] {
+  const rows: string[][] = [];
+  let row: string[] = [];
+  let field = '';
+  let quoted = false;
+  let closedQuote = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    if (quoted) {
+      if (char === '"' && text[i + 1] === '"') {
+        field += '"';
+        i += 1;
+      } else if (char === '"') {
+        quoted = false;
+        closedQuote = true;
+      } else {
+        field += char;
+      }
+      continue;
+    }
+
+    if (char === '"') {
+      if (field.length > 0 || closedQuote) throw new Error('El archivo CSV tiene comillas invalidas.');
+      quoted = true;
+    } else if (char === ',') {
+      row.push(field);
+      field = '';
+      closedQuote = false;
+    } else if (char === '\n' || char === '\r') {
+      row.push(field);
+      if (row.some((value) => value.length > 0)) rows.push(row);
+      row = [];
+      field = '';
+      closedQuote = false;
+      if (char === '\r' && text[i + 1] === '\n') i += 1;
+    } else {
+      if (closedQuote) throw new Error('El archivo CSV tiene contenido despues de una comilla de cierre.');
+      field += char;
+    }
+  }
+
+  if (quoted) throw new Error('El archivo CSV contiene una celda sin cerrar.');
+  row.push(field);
+  if (row.some((value) => value.length > 0)) rows.push(row);
+  return rows;
+}
+
+function createCsv(rows: Record<string, unknown>[]): string {
+  const escape = (value: unknown) => {
+    let text = String(value ?? '');
+    if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`;
+    return `"${text.replace(/"/g, '""')}"`;
+  };
+  const lines = [
+    TEMPLATE_HEADERS.map(escape).join(','),
+    ...rows.map((row) => TEMPLATE_HEADERS.map((header) => escape(row[header])).join(',')),
+  ];
+  return `\uFEFF${lines.join('\r\n')}`;
+}
+
 export function ProductTable({ products, onDelete, onAddClick, onEditClick, statusFilter, onStatusFilterChange, onImported, onFetchRows, onCreateProduct, onUpdateProduct }: ProductTableProps) {
   const [search, setSearch] = useState('');
   const [innerFilter, setInnerFilter] = useState<'all' | InventoryStatus>('all');
   const [page, setPage] = useState(1);
   const [exportOpen, setExportOpen] = useState(false);
-  const [busy, setBusy] = useState<'excel' | 'pdf' | 'template' | 'import' | null>(null);
+  const [busy, setBusy] = useState<'csv' | 'pdf' | 'template' | 'import' | null>(null);
   const [notice, setNotice] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const perPage = 8;
@@ -107,19 +168,14 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
     return onFetchRows();
   };
 
-  const handleExportExcel = async () => {
-    setBusy('excel');
+  const handleExportCsv = async () => {
+    setBusy('csv');
     setNotice(null);
     try {
-      const XLSX = await import('xlsx');
       const rows = await fetchRawRows();
-      const ws = XLSX.utils.json_to_sheet(rows.map(toTemplateRow), { header: [...TEMPLATE_HEADERS] });
-      ws['!cols'] = TEMPLATE_HEADERS.map(() => ({ wch: 18 }));
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Inventario');
-      const buf: ArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      downloadBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'inventario-parque100.xlsx');
-      setNotice({ kind: 'ok', text: `Excel exportado (${rows.length} productos) con formato de la BD.` });
+      const csv = createCsv(rows.map(toTemplateRow));
+      downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'inventario-parque100.csv');
+      setNotice({ kind: 'ok', text: `CSV exportado (${rows.length} productos) con formato de la BD.` });
     } catch (e) {
       setNotice({ kind: 'err', text: e instanceof Error ? e.message : 'No fue posible exportar.' });
     } finally {
@@ -132,20 +188,15 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
     setBusy('template');
     setNotice(null);
     try {
-      const XLSX = await import('xlsx');
       const example = {
         ID_Producto: 'P011', Nombre: 'Ejemplo Café 500g', Descripcion: 'Descripción corta',
         Precio_Venta: 8500, Precio_Anterior: '', Marca: 'Parque100',
         Contenido_Cantidad: 500, Contenido_Unidad: 'g', Embalaje: '', Ingredientes: '', Conservacion: '',
         Promo_Desde: '', Promo_Hasta: '', Stock_Minimo: 20, ID_Categoria: 4,
       };
-      const ws = XLSX.utils.json_to_sheet([example], { header: [...TEMPLATE_HEADERS] });
-      ws['!cols'] = TEMPLATE_HEADERS.map(() => ({ wch: 18 }));
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, 'Plantilla');
-      const buf: ArrayBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      downloadBlob(new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'plantilla-inventario-parque100.xlsx');
-      setNotice({ kind: 'ok', text: 'Plantilla descargada. Úsala para importar sin errores.' });
+      const csv = createCsv([example]);
+      downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'plantilla-inventario-parque100.csv');
+      setNotice({ kind: 'ok', text: 'Plantilla CSV descargada. Úsala para importar sin errores.' });
     } catch (e) {
       setNotice({ kind: 'err', text: e instanceof Error ? e.message : 'No fue posible generar la plantilla.' });
     } finally {
@@ -186,13 +237,18 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
     setBusy('import');
     setNotice(null);
     try {
-      const XLSX = await import('xlsx');
-      const buf = await file.arrayBuffer();
-      const wb = XLSX.read(buf, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const json = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' });
+      if (file.size > 5 * 1024 * 1024) throw new Error('El archivo CSV no puede superar los 5 MB.');
+      const rows = parseCsvRows((await file.text()).replace(/^\uFEFF/, ''));
+      const headers = rows.shift() || [];
+      if (rows.length > 5000) throw new Error('El archivo CSV no puede superar las 5.000 filas.');
+      if (headers.length !== TEMPLATE_HEADERS.length || new Set(headers).size !== headers.length) {
+        throw new Error('La plantilla debe tener las 15 columnas oficiales, sin encabezados duplicados.');
+      }
+      const json = rows.map((values) => {
+        if (values.length !== headers.length) throw new Error('Todas las filas deben tener la misma cantidad de columnas.');
+        return Object.fromEntries(headers.map((header, index) => [header, values[index]])) as Record<string, unknown>;
+      });
       if (json.length === 0) throw new Error('El archivo no tiene filas para importar.');
-      const headers = Object.keys(json[0]);
       const missing = TEMPLATE_HEADERS.filter((h) => !headers.includes(h));
       const extra = headers.filter((h) => !(TEMPLATE_HEADERS as readonly string[]).includes(h));
       if (missing.length > 0 || extra.length > 0) {
@@ -292,29 +348,29 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
         </div>
 
         <div className="flex gap-2">
-          <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImportFile(f); }} />
+          <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImportFile(f); }} />
           <button onClick={() => fileRef.current?.click()} disabled={busy === 'import'}
-            title="Importar Excel con la plantilla oficial"
+            title="Importar CSV con la plantilla oficial"
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-[#212121] hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
             {busy === 'import' ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Importar
           </button>
           <div className="relative">
             <button onClick={() => setExportOpen((v) => !v)} disabled={busy !== null}
-              title="Exportar inventario en PDF o Excel"
+              title="Exportar inventario en PDF o CSV"
               aria-expanded={exportOpen}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-[#212121] hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
-              {busy === 'excel' || busy === 'pdf' || busy === 'template' ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Exportar
+              {busy === 'csv' || busy === 'pdf' || busy === 'template' ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Exportar
             </button>
             {exportOpen && (
               <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-30">
-                <button onClick={handleExportExcel} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors">
+                <button onClick={handleExportCsv} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors">
                   <FileSpreadsheet size={16} className="text-green-600 shrink-0" />
-                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>Excel (.xlsx)</span>
+                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>CSV (.csv)</span>
                   <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Columnas exactas de la BD</span></span>
                 </button>
                 <button onClick={handleExportTemplate} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors border-t border-gray-50">
                   <FileSpreadsheet size={16} className="text-blue-500 shrink-0" />
-                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>Plantilla Excel</span>
+                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>Plantilla CSV</span>
                   <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Formato oficial para importar</span></span>
                 </button>
                 <button onClick={handleExportPdf} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors border-t border-gray-50">

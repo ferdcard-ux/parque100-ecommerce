@@ -9,7 +9,6 @@ import { RootLayout } from './views/components/layout/RootLayout';
 import { HomePage } from './views/pages/HomePage';
 import { CartPage } from './views/pages/CartPage';
 import { LoginPage } from './views/pages/LoginPage';
-import { RegisterPage } from './views/pages/RegisterPage';
 import { AddressPage } from './views/pages/AddressPage';
 import { PaymentMethodPage } from './views/pages/PaymentMethodPage';
 import { CardPaymentPage } from './views/pages/CardPaymentPage';
@@ -33,7 +32,8 @@ import { HelpPage } from './views/pages/HelpPage';
 import { PrivacyPage } from './views/pages/PrivacyPage';
 import { TermsPage } from './views/pages/TermsPage';
 import { SitemapPage } from './views/pages/SitemapPage';
-import type { CardPaymentData, User, UserRole, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, Product, CartItem, AdminProduct, Order, ProductCreate, ProductUpsert } from './models';
+import { SiteDisclaimerGate } from './views/components/auth/SiteDisclaimerGate';
+import type { User, UserRole, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, PaymentModeState, Product, CartItem, AdminProduct, Order, ProductCreate, ProductUpsert } from './models';
 
 /* ── Context Definition ── */
 interface AppContextValue {
@@ -46,9 +46,8 @@ interface AppContextValue {
   isDomiciliario: boolean;
   login: (credentials: LoginCredentials) => Promise<User>;
   register: (data: RegisterData) => Promise<User>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateProfile: (data: { firstName: string; lastName: string; email: string; phone: string; photo?: string | null }) => Promise<User>;  cartItems: CartItem[];
-  recoverPassword: (email: string) => Promise<string>;
   changePassword: (email: string, currentPassword: string, newPassword: string) => Promise<void>;
   addToCart: (product: Product) => void;
   removeFromCart: (id: number) => void;
@@ -66,13 +65,13 @@ interface AppContextValue {
   reloadProducts: () => Promise<void>;
   fetchInventoryRows: () => Promise<any[]>;
   paymentMethod: PaymentMethodType | null;
+  paymentMode: PaymentModeState;
   selectPaymentMethod: (m: PaymentMethodType) => void;
   saveAddress: (addr: DeliveryAddress) => void;
   isPaymentProcessing: boolean;
   lastOrder: Order | null;
-  payWithCard: (data: CardPaymentData) => Promise<void>;
-  payWithNequi: (receiptDataUrl: string) => Promise<void>;
   payWithCash: (tendered: number) => Promise<void>;
+  payWithDemo: (method: Exclude<PaymentMethodType, 'cash'>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -178,8 +177,8 @@ function AccountAddressWrapper() {
     /></Protected>
   );
 }
-function PaymentMethodWrapper() { const ctx = useApp(); return <Protected><PaymentMethodPage selectedMethod={ctx.paymentMethod} onSelectMethod={ctx.selectPaymentMethod} itemCount={ctx.cartCount} total={ctx.cartTotal} /></Protected>; }
-function CardPaymentWrapper() { const ctx = useApp(); return <Protected><CardPaymentPage total={ctx.cartTotal} itemCount={ctx.cartCount} isProcessing={ctx.isPaymentProcessing} onPay={ctx.payWithCard} onPayNequi={ctx.payWithNequi} onPayCash={ctx.payWithCash} /></Protected>; }
+function PaymentMethodWrapper() { const ctx = useApp(); return <Protected><PaymentMethodPage selectedMethod={ctx.paymentMethod} paymentMode={ctx.paymentMode} onSelectMethod={ctx.selectPaymentMethod} itemCount={ctx.cartCount} total={ctx.cartTotal} /></Protected>; }
+function CardPaymentWrapper() { const ctx = useApp(); return <Protected><CardPaymentPage total={ctx.cartTotal} itemCount={ctx.cartCount} isProcessing={ctx.isPaymentProcessing} paymentMode={ctx.paymentMode} onPayCash={ctx.payWithCash} onPayDemo={ctx.payWithDemo} /></Protected>; }
 function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} onImported={ctx.reloadProducts} onFetchRows={ctx.fetchInventoryRows} />; }
 function AccountWrapper() { return <Protected><AccountPage /></Protected>; }
 function ProfileWrapper() { return <Protected><ProfilePage /></Protected>; }
@@ -195,23 +194,17 @@ export default function App() {
   const payment = usePaymentController();
   const productCtrl = useProductController();
 
-  const handlePayWithCard = async (data: CardPaymentData) => {
-    await payment.processPayment(data, cart.total, cart.items, auth.user?.id ?? null);
-    cart.clearItems();
-    payment.reset();
-  };
-
-  const handlePayWithNequi = async (receiptDataUrl: string) => {
-    await payment.processNequi(receiptDataUrl, cart.total, cart.items, auth.user?.id ?? null);
-    cart.clearItems();
-    payment.reset();
-  };
-
   const handlePayWithCash = async (tendered: number) => {
     await payment.processCash(tendered, cart.total, cart.items, auth.user?.id ?? null);
     cart.clearItems();
     payment.reset();
   };
+
+  const handlePayWithDemo = useCallback(async (method: Exclude<PaymentMethodType, 'cash'>) => {
+    await payment.processDemo(method, cart.items, auth.user?.id ?? null);
+    cart.clearItems();
+    payment.reset();
+  }, [payment.processDemo, payment.reset, cart.items, cart.clearItems, auth.user?.id]);
 
   /** Agrega al carrito solo con sesion; si no, redirige al login con retorno. */
   const handleAddToCart = useCallback((product: Product) => {
@@ -235,7 +228,6 @@ export default function App() {
     register: auth.register,
     logout: auth.logout,
     updateProfile: auth.updateProfile,
-    recoverPassword: auth.recoverPassword,
     changePassword: auth.changePassword,
     cartItems: cart.items,
     addToCart: handleAddToCart,
@@ -254,22 +246,24 @@ export default function App() {
     reloadProducts: productCtrl.reload,
     fetchInventoryRows: productCtrl.getInventoryRows,
     paymentMethod: payment.method,
+    paymentMode: payment.paymentMode,
     selectPaymentMethod: payment.selectMethod,
     saveAddress: payment.saveAddress,
     isPaymentProcessing: payment.isProcessing,
     lastOrder: payment.lastOrder,
-    payWithCard: handlePayWithCard,
-    payWithNequi: handlePayWithNequi,
     payWithCash: handlePayWithCash,
+    payWithDemo: handlePayWithDemo,
   }), [
     auth.user, auth.sessions, auth.switchSession, auth.isLoggedIn, auth.isAdmin, auth.updateProfile,
-    auth.recoverPassword, auth.changePassword,
+    auth.changePassword,
     cart.items, cart.itemCount, cart.subtotal, cart.shipping, cart.total, handleAddToCart,
     productCtrl.products, productCtrl.adminProducts,
-    payment.method, payment.isProcessing,
+    payment.method, payment.paymentMode, payment.isProcessing, handlePayWithDemo,
   ]);
 
-  const router = useMemo(() => createBrowserRouter([
+  const router = useMemo(() => createBrowserRouter([{
+    Component: SiteDisclaimerGate,
+    children: [
     {
       path: '/',
       Component: LayoutWrapper,
@@ -294,7 +288,7 @@ export default function App() {
       ],
     },
     { path: '/login', Component: LoginPage },
-    { path: '/register', Component: RegisterPage },
+    { path: '/register', Component: () => <Navigate to="/access.html" replace /> },
     { path: '/payment-success', Component: PaymentSuccessWrapper },
     { path: '/admin', Component: () => <RequireStaff><AdminDashboardPage /></RequireStaff> },
     { path: '/admin/inventario', Component: () => <RequireAdmin><AdminWrapper /></RequireAdmin> },
@@ -304,7 +298,8 @@ export default function App() {
     { path: '/admin/reportes', Component: () => <RequireAdmin><AdminReportsPage /></RequireAdmin> },
     { path: '/admin/clientes', Component: () => <RequireAdmin><AdminClientsPage /></RequireAdmin> },
     { path: '/admin/configuracion', Component: () => <RequireAdmin><AdminSettingsPage /></RequireAdmin> },
-  ]), []);
+    ],
+  }]), []);
 
   return (
     <AppContext.Provider value={contextValue}>

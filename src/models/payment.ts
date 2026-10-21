@@ -3,24 +3,21 @@
  * Contratos intercambiados con el servicio/backend de pagos.
  */
 
-/** Datos sensibles capturados en el formulario de tarjeta. */
-export interface CardPaymentData {
-  /** Numero de tarjeta (16 digitos). */
-  cardNumber: string;
-  /** Nombre del titular. */
-  holder: string;
-  /** Vencimiento MM/AA. */
-  expiry: string;
-  /** Codigo de seguridad (3-4 digitos). */
-  cvv: string;
-}
-
-/** Resultado devuelto por la pasarela de pago. */
+/** Estado de la accion de checkout y referencia de pasarela opcional. */
 export interface PaymentResult {
-  /** true si el pago fue aprobado. */
+  /** Indica si se completó la acción del flujo, no que se haya liquidado un pago contra entrega. */
   success: boolean;
-  /** Identificador de la transaccion generada. */
-  transactionId: string;
+  /** Identificador emitido por una pasarela verificada, si existe. */
+  transactionId?: string;
+  /** Identificador de simulacion que no representa una transaccion ni un cobro. */
+  simulationId?: string;
+  /** Indica que el flujo fue simulado. */
+  simulated?: boolean;
+  /** Indica si el proveedor confirmo un pago real. */
+  paid?: boolean;
   /** Mensaje legible del resultado. */
   message: string;
 }
+
+export type PaymentMode = 'demo' | 'disabled';
+export type PaymentModeState = PaymentMode | 'loading' | 'error';

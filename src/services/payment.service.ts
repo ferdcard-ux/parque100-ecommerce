@@ -1,65 +1,39 @@
 /**
- * @fileoverview Servicio de pagos.
- * Comunica la aplicacion con la pasarela de pagos del backend
- * (simulada en el servidor) y con el flujo Nequi (tambien simulado).
+ * @fileoverview Consulta del modo y simulacion de pagos demo.
  */
-import type { CardPaymentData, PaymentResult, PaymentMethodType } from '../models';
+import type { PaymentMode, PaymentMethodType, PaymentResult } from '../models';
 import { API_BASE as API, authHeaders } from './api';
 
-/**
- * Servicio de pagos.
- * @namespace paymentService
- */
 export const paymentService = {
-  /**
-   * Procesa un pago con tarjeta a traves del endpoint /payments/process.
-   *
-   * @param {CardPaymentData} data - Datos de la tarjeta capturados en el form.
-   * @param {number} amount - Monto total a cobrar en COP.
-   * @returns {Promise<PaymentResult>} Resultado aprobado o rechazado.
-   */
-  async processCardPayment(data: CardPaymentData, amount: number): Promise<PaymentResult> {
-    const res = await fetch(`${API}/payments/process`, {
+  async getMode(): Promise<PaymentMode> {
+    const response = await fetch(`${API}/payments/mode`, { cache: 'no-store' });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || (data?.mode !== 'demo' && data?.mode !== 'disabled')) {
+      throw new Error('No fue posible verificar el modo de pagos.');
+    }
+    return data.mode;
+  },
+
+  async simulate(method: Exclude<PaymentMethodType, 'cash'>): Promise<PaymentResult> {
+    const response = await fetch(`${API}/payments/process`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify({
-        cardNumber: data.cardNumber,
-        expiryDate: data.expiry,
-        cvv: data.cvv,
-        amount,
-      }),
+      body: JSON.stringify({ method }),
     });
-
-    const result = await res.json();
-    return result;
-  },
-
-  /**
-   * Simula un cobro Nequi con comprobante: espera 1.5 s y aprueba
-   * siempre, generando una referencia NEQ-<timestamp>.
-   *
-   * @param {string} _receipt - Comprobante en imagen (se persiste en el pedido).
-   * @param {number} amount - Monto a solicitar.
-   * @returns {Promise<PaymentResult>} Aprobacion simulada.
-   */
-  async processNequiPayment(_receipt: string, amount: number): Promise<PaymentResult> {
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    const data = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(data?.error || 'No fue posible ejecutar la simulacion.');
+    }
+    if (data?.mode !== 'demo' || data?.simulated !== true || data?.paid !== false
+      || typeof data?.simulationId !== 'string') {
+      throw new Error('El servidor devolvio un resultado de pago inesperado.');
+    }
     return {
       success: true,
-      transactionId: `NEQ-${Date.now()}`,
-      message: `Pago Nequi por $${amount.toLocaleString('es-CO')} confirmado con comprobante`,
+      simulated: true,
+      paid: false,
+      simulationId: data.simulationId,
+      message: typeof data.message === 'string' ? data.message : 'Simulacion completada; no hubo cobro.',
     };
-  },
-
-  /**
-   * Etiqueta legible para mostrar un metodo de pago en la interfaz.
-   *
-   * @param {PaymentMethodType} method - Metodo elegido.
-   * @returns {string} 'Tarjeta', 'Nequi' o 'Efectivo'.
-   */
-  getMethodLabel(method: PaymentMethodType): string {
-    if (method === 'card') return 'Tarjeta';
-    if (method === 'nequi') return 'Nequi';
-    return 'Efectivo';
   },
 };

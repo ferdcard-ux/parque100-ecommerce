@@ -15,7 +15,7 @@ import { CancelOrderModal } from '../components/shared/cancel-order-modal';
 import { ReviewProductModal } from '../components/ratings/review-product-modal';
 import { ReviewFormModal } from '../components/ratings/review-form-modal';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { CANCEL_REFUND_NOTICE, canReviewOrder, formatPrice } from '../../utils';
+import { CANCEL_REFUND_NOTICE, canReviewOrder, formatPrice, isDemoPaymentMethod } from '../../utils';
 
 /** Formatea la fecha ISO a estilo legible (ej. 10 de diciembre de 2024). */
 function formatDate(value: string): string {
@@ -153,6 +153,7 @@ export function OrdersPage() {
         ) : (
           <div className="flex flex-col gap-4">
             {orders.map((order) => {
+              const isDemoOrder = isDemoPaymentMethod(order.Metodo_Pago);
               const cancellable = order.Estado === 'pendiente' || order.Estado === 'preparando';
               const locked = order.Estado === 'enviando';
               const items = order.detalles ?? [];
@@ -176,6 +177,11 @@ export function OrdersPage() {
                   <span className="text-[#212121] font-bold">Pedido #{order.ID_Pedido}</span>
                   <StatusBadge estado={order.Estado} />
                 </div>
+                {isDemoOrder && (
+                  <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900" style={{ fontSize: '0.78rem', fontWeight: 600 }}>
+                    SIMULACIÓN — no pagado, sin reserva de inventario ni despacho
+                  </p>
+                )}
                 <div className="flex items-center justify-between text-gray-400 mb-3" style={{ fontSize: '0.8rem' }}>
                   <span>{formatDate(order.Fecha)}</span>
                   <span className="text-[#C62828] font-bold" style={{ fontSize: '1rem' }}>{formatPrice(order.Total)}</span>

@@ -1,0 +1,1 @@
+export const DISCLAIMER_VERSION = process.env.SITE_DISCLAIMER_VERSION || '2026-10-21-v1';

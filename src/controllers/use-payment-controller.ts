@@ -1,19 +1,19 @@
 /**
  * @fileoverview Controlador del flujo de pago.
  * Hook React que orquesta el checkout: metodo de pago, direccion de
- * entrega, procesamiento del cobro y creacion del pedido resultante.
- * Coordina `paymentService` (pasarela) y `orderService` (persistencia).
+ * entrega y creacion del pedido contra entrega. Los pagos electronicos
+ * permanecen deshabilitados hasta contar con una pasarela verificada.
  */
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
   PaymentMethodType,
-  CardPaymentData,
   DeliveryAddress,
   CartItem,
   Order,
   PaymentResult,
+  PaymentModeState,
 } from '../models';
-import { paymentService, orderService } from '../services';
+import { orderService, paymentService } from '../services';
 
 /**
  * Controlador del proceso de pago.
@@ -24,9 +24,8 @@ import { paymentService, orderService } from '../services';
  * @property {DeliveryAddress|null} address - Direccion guardada.
  * @property {Function} saveAddress - Guarda la direccion de entrega.
  * @property {boolean} isProcessing - true mientras se procesa el cobro.
- * @property {PaymentResult|null} result - Resultado del ultimo cobro.
+ * @property {PaymentResult|null} result - Resultado de la ultima accion del checkout.
  * @property {Order|null} lastOrder - Ultimo pedido creado (para la confirmacion).
- * @property {Function} processPayment - Cobra y crea el pedido.
  * @property {Function} reset - Reinicia todo el estado del checkout.
  */
 export function usePaymentController() {
@@ -35,8 +34,17 @@ export function usePaymentController() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [result, setResult] = useState<PaymentResult | null>(null);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
+  const [paymentMode, setPaymentMode] = useState<PaymentModeState>('loading');
   /** Evita procesar dos pagos a la vez (doble clic antes del re-render). */
   const busyRef = useRef(false);
+
+  useEffect(() => {
+    let active = true;
+    paymentService.getMode()
+      .then((mode) => active && setPaymentMode(mode))
+      .catch(() => active && setPaymentMode('error'));
+    return () => { active = false; };
+  }, []);
 
   /** Guarda el metodo de pago elegido en el estado del checkout. */
   const selectMethod = useCallback((m: PaymentMethodType) => {
@@ -49,45 +57,6 @@ export function usePaymentController() {
   }, []);
 
   /**
-   * Procesa el pago con tarjeta y, si hay direccion y metodo definidos,
-   * crea el pedido correspondiente mediante orderService.
-   *
-   * @param {CardPaymentData} cardData - Datos de la tarjeta.
-   * @param {number} amount - Monto total a cobrar.
-   * @param {CartItem[]} items - Lineas del carrito para el pedido.
-   * @returns {Promise<PaymentResult>} Resultado devuelto por la pasarela.
-   */
-  const processPayment = useCallback(
-    async (
-      cardData: CardPaymentData,
-      amount: number,
-      items: CartItem[],
-      userId: number | null = null,
-    ) => {
-      if (busyRef.current) throw new Error('El pago ya se esta procesando.');
-      busyRef.current = true;
-      setIsProcessing(true);
-      try {
-        const paymentResult = await paymentService.processCardPayment(
-          cardData,
-          amount,
-        );
-        setResult(paymentResult);
-
-        if (address && method) {
-          setLastOrder(await orderService.create(items, address, method, userId));
-        }
-
-        return paymentResult;
-      } finally {
-        busyRef.current = false;
-        setIsProcessing(false);
-      }
-    },
-    [address, method],
-  );
-
-  /**
    * Limpia metodo, direccion y resultado para un nuevo checkout.
    * Conserva `lastOrder` para que la confirmacion muestre el pedido real. */
   const reset = useCallback(() => {
@@ -96,36 +65,6 @@ export function usePaymentController() {
     setResult(null);
     setIsProcessing(false);
   }, []);
-
-  /**
-   * Procesa un pago por Nequi con comprobante adjunto y, si hay
-   * direccion y metodo, crea el pedido correspondiente.
-   *
-   * @param {string} receiptDataUrl - Comprobante en imagen (dataURL).
-   * @param {number} amount - Monto total a cobrar.
-   * @param {CartItem[]} items - Lineas del carrito.
-   * @param {number|null} userId - Id del usuario autenticado.
-   * @returns {Promise<PaymentResult>} Resultado devuelto por la pasarela.
-   */
-  const processNequi = useCallback(
-    async (receiptDataUrl: string, amount: number, items: CartItem[], userId: number | null = null) => {
-      if (busyRef.current) throw new Error('El pago ya se esta procesando.');
-      busyRef.current = true;
-      setIsProcessing(true);
-      try {
-        const paymentResult = await paymentService.processNequiPayment(receiptDataUrl, amount);
-        setResult(paymentResult);
-        if (address && method) {
-          setLastOrder(await orderService.create(items, address, method, userId, { receipt: receiptDataUrl }));
-        }
-        return paymentResult;
-      } finally {
-        busyRef.current = false;
-        setIsProcessing(false);
-      }
-    },
-    [address, method],
-  );
 
   /**
    * Registra un pago en efectivo contra entrega (sin pasarela):
@@ -152,7 +91,7 @@ export function usePaymentController() {
           ? await orderService.create(items, address, method, userId, { tendered: Math.round(tendered), change })
           : null;
         if (created) setLastOrder(created);
-        const paymentResult = { success: true, transactionId: `EFE-${Date.now()}`, message: 'Pago en efectivo registrado' };
+        const paymentResult = { success: true, message: 'Pedido confirmado; el pago se realizará al recibirlo.' };
         setResult(paymentResult);
         return created;
       } finally {
@@ -163,6 +102,30 @@ export function usePaymentController() {
     [address, method],
   );
 
+  const processDemo = useCallback(
+    async (paymentMethod: Exclude<PaymentMethodType, 'cash'>, items: CartItem[], userId: number | null = null) => {
+      if (!address) throw new Error('Guarda la direccion antes de continuar con la simulacion.');
+      if (paymentMode !== 'demo') throw new Error('El modo de simulacion no esta habilitado.');
+      if (busyRef.current) throw new Error('El pago ya se esta procesando.');
+      busyRef.current = true;
+      setIsProcessing(true);
+      try {
+        const paymentResult = await paymentService.simulate(paymentMethod);
+        const created = await orderService.create(items, address, paymentMethod, userId);
+        created.simulatedPayment = true;
+        created.paymentSimulationId = paymentResult.simulationId;
+        setMethod(paymentMethod);
+        setLastOrder(created);
+        setResult(paymentResult);
+        return created;
+      } finally {
+        busyRef.current = false;
+        setIsProcessing(false);
+      }
+    },
+    [address, paymentMode],
+  );
+
   return {
     method,
     selectMethod,
@@ -171,9 +134,9 @@ export function usePaymentController() {
     isProcessing,
     result,
     lastOrder,
-    processPayment,
-    processNequi,
+    paymentMode,
     processCash,
+    processDemo,
     reset,
   };
 }

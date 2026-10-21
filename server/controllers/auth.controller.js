@@ -8,9 +8,9 @@
  * en el encabezado `Authorization: Bearer`.
  */
 import bcrypt from 'bcryptjs';
-import crypto from 'node:crypto';
 import userModel from '../models/user.model.js';
 import { signToken } from '../middleware/auth.js';
+import siteAccessModel from '../models/site-access.model.js';
 
 /** Coste del hash bcrypt. */
 const BCRYPT_ROUNDS = 10;
@@ -63,7 +63,19 @@ export const authController = {
       const user = await userModel.findByEmail(Correo.trim());
       const ok = user ? await verifyPassword(Contrasena, user.Contrasena) : false;
       if (!ok) return res.status(401).json({ error: 'Credenciales invalidas' });
-      res.json({ ...userModel.toPublicUser(user), token: signToken(user) });
+      if (!(await siteAccessModel.isAuthorized(user.ID_Usuario))) {
+        return res.status(403).json({ error: 'Esta cuenta no esta autorizada para acceder al sitio.' });
+      }
+      const token = signToken(user);
+      res.cookie('p100_access', token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 8 * 60 * 60 * 1000,
+      });
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ ...userModel.toPublicUser(user), token });
     } catch {
       res.status(500).json({ error: 'Error al iniciar sesion' });
     }
@@ -71,10 +83,8 @@ export const authController = {
 
   /**
    * POST /api/auth/recover
-   * Genera una clave temporal, la almacena hasheada y responde de
-   * forma neutra (no revela si el correo existe ni devuelve la clave).
-   * La clave temporal queda registrada en el log del servidor para su
-   * entrega manual (no hay servicio de correo en esta version).
+   * La recuperacion se mantiene deshabilitada hasta que exista un
+   * canal de entrega verificado para tokens de un solo uso.
    *
    * @async
    * @param {import('express').Request} req - Cuerpo con `{ Correo }`.
@@ -82,21 +92,9 @@ export const authController = {
    * @returns {Promise<void>}
    */
   async recover(req, res) {
-    try {
-      const { Correo } = req.body || {};
-      if (typeof Correo !== 'string' || !Correo.includes('@')) {
-        return res.status(400).json({ error: 'Correo invalido' });
-      }
-      const email = Correo.trim();
-      const tempPassword = `TEMP-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
-      const updated = await userModel.updatePasswordByEmail(email, await hashPassword(tempPassword));
-      if (updated) {
-        console.log(`[recover] Clave temporal para ${email}: ${tempPassword}`);
-      }
-      res.json({ message: 'Si el correo existe, se genero una clave temporal.' });
-    } catch {
-      res.status(500).json({ error: 'Error al recuperar la contrasena' });
-    }
+    return res.status(503).json({
+      error: 'La recuperacion de contrasena no esta disponible. Contacta al soporte.',
+    });
   },
 
   /**
@@ -139,45 +137,9 @@ export const authController = {
    * @returns {Promise<void>} 201 con `{ id, token }`, 409 si correo o telefono ya existen.
    */
   async register(req, res) {
-    const { Nombre, Correo, Contrasena, Telefono, Direccion } = req.body || {};
-    if (typeof Nombre !== 'string' || Nombre.trim().length === 0 || Nombre.trim().length > 30) {
-      return res.status(400).json({ error: 'Nombre invalido' });
-    }
-    if (typeof Correo !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Correo) || Correo.length > 50) {
-      return res.status(400).json({ error: 'Correo electronico invalido' });
-    }
-    if (typeof Contrasena !== 'string' || Contrasena.length < 8) {
-      return res.status(400).json({ error: 'La contrasena debe tener al menos 8 caracteres' });
-    }
-    const phone = Telefono === '' || Telefono === undefined || Telefono === null ? null : String(Telefono);
-    if (phone !== null && !/^\d{7,20}$/.test(phone)) {
-      return res.status(400).json({ error: 'Telefono invalido' });
-    }
-    try {
-      if (await userModel.existsByEmail(Correo.trim())) {
-        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
-      }
-      if (phone !== null && await userModel.existsByPhone(phone)) {
-        return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
-      }
-      const id = await userModel.create({
-        Nombre: Nombre.trim(),
-        Correo: Correo.trim(),
-        Contrasena: await hashPassword(Contrasena),
-        Telefono: phone,
-        Direccion: typeof Direccion === 'string' ? Direccion : '',
-      });
-      res.status(201).json({ id, token: signToken({ ID_Usuario: id, Rol: 'usuario' }), message: 'Usuario registrado' });
-    } catch (err) {
-      if (err.code === 'ER_DUP_ENTRY') {
-        const message = String(err.message || '');
-        if (message.includes('Telefono')) {
-          return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
-        }
-        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
-      }
-      res.status(500).json({ error: 'Error al registrar el usuario' });
-    }
+    return res.status(403).json({
+      error: 'El registro esta deshabilitado. Solicita autorizacion al responsable del sitio.',
+    });
   },
 };
 

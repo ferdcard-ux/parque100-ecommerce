@@ -6,7 +6,7 @@
  */
 import type { User, UserRole, LoginCredentials, RegisterData } from '../models';
 import { normalizeUserRole } from '../models';
-import { API_BASE as API, setAuthToken } from './api';
+import { API_BASE as API, authHeaders, setAuthToken } from './api';
 
 /**
  * Normaliza el rol crudo del backend a `UserRole`.
@@ -55,6 +55,7 @@ export const authService = {
   async login(credentials: LoginCredentials): Promise<User> {
     const res = await fetch(`${API}/auth/login`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ Correo: credentials.email, Contrasena: credentials.password }),
     });
@@ -105,27 +106,42 @@ export const authService = {
    * @returns {Promise<void>}
    */
   async logout(): Promise<void> {
-    setAuthToken(null);
+    let res: Response;
+    try {
+      res = await fetch(`${API}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: authHeaders(),
+      });
+    } finally {
+      setAuthToken(null);
+    }
+    if (!res.ok) throw new Error('No fue posible cerrar la sesión en el servidor.');
   },
 
-  /**
-   * Solicita una clave temporal para el correo indicado.
-   * El servidor responde de forma neutra (no revela si el correo
-   * existe ni devuelve la clave por HTTP).
-   *
-   * @param {string} email - Correo de la cuenta.
-   * @returns {Promise<string>} Mensaje de confirmacion.
-   * @throws {Error} Si el backend rechaza la solicitud.
-   */
-  async recoverPassword(email: string): Promise<string> {
-    const res = await fetch(`${API}/auth/recover`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ Correo: email }),
+  async getDisclaimerStatus(): Promise<{ accepted: boolean; version: string }> {
+    const res = await fetch(`${API}/auth/disclaimer/status`, {
+      credentials: 'include',
+      headers: authHeaders(),
     });
-    const data = await res.json().catch(() => null);
-    if (!res.ok) throw new Error(data?.error || 'No fue posible recuperar la clave.');
-    return data?.message || 'Si el correo existe, se generó una clave temporal.';
+    const body = await res.json().catch(() => null);
+    if (!res.ok) {
+      if (res.status === 401) throw new Error('SITE_SESSION_INVALID');
+      if (res.status === 403) throw new Error('SITE_ACCESS_DENIED');
+      throw new Error(body?.error || 'No fue posible verificar la autorización.');
+    }
+    return body;
+  },
+
+  async acceptDisclaimer(version: string): Promise<void> {
+    const res = await fetch(`${API}/auth/disclaimer/accept`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ version }),
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok) throw new Error(body?.error || 'No fue posible guardar la aceptación.');
   },
 
   /**

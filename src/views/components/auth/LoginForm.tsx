@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { useNavigate } from 'react-router';
 import { Mail, Lock, Eye, EyeOff, Store, UserCog, X } from 'lucide-react';
 import type { LoginCredentials } from '../../../models';
 import { isValidEmail } from '../../../utils';
@@ -9,7 +9,6 @@ import { useDialogBehavior } from '../../../utils/useDialog';
 interface LoginFormProps {
   onLogin: (credentials: LoginCredentials) => Promise<void>;
   onAdminLogin: (credentials: LoginCredentials) => Promise<void>;
-  onRecoverPassword: (email: string) => Promise<string>;
   error?: string | null;
   /** Ruta de retorno tras un login exitoso. */
   nextPath?: string;
@@ -19,7 +18,7 @@ interface LoginFormProps {
   currentUserName?: string | null;
 }
 
-export function LoginForm({ onLogin, onAdminLogin, onRecoverPassword, error, nextPath = '/', switchMode = false, currentUserName = null }: LoginFormProps) {
+export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switchMode = false, currentUserName = null }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -39,30 +38,6 @@ export function LoginForm({ onLogin, onAdminLogin, onRecoverPassword, error, nex
   useDialogBehavior(recoverOpen, () => setRecoverOpen(false), recoverPanelRef);
   const adminPanelRef = useRef<HTMLDivElement>(null);
   useDialogBehavior(adminModalOpen, () => setAdminModalOpen(false), adminPanelRef);
-  const [recoverEmail, setRecoverEmail] = useState('');
-  const [recoverResult, setRecoverResult] = useState<string | null>(null);
-  const [recoverError, setRecoverError] = useState<string | null>(null);
-  const [recoverLoading, setRecoverLoading] = useState(false);
-
-  const handleRecover = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setRecoverError(null);
-    setRecoverResult(null);
-    if (!isValidEmail(recoverEmail)) {
-      setRecoverError('Ingresa un correo electrónico válido.');
-      return;
-    }
-    setRecoverLoading(true);
-    try {
-      const message = await onRecoverPassword(recoverEmail);
-      setRecoverResult(message);
-    } catch (err) {
-      setRecoverError(err instanceof Error ? err.message : 'No fue posible recuperar.');
-    } finally {
-      setRecoverLoading(false);
-    }
-  };
-
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -175,18 +150,6 @@ export function LoginForm({ onLogin, onAdminLogin, onRecoverPassword, error, nex
               </button>
             </form>
 
-            <div className="relative my-6 flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-gray-400" style={{ fontSize: '0.8rem' }}>o</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
-
-            <Link to="/register">
-              <button type="button" className="w-full py-3 rounded-xl font-semibold bg-[#FBC02D] hover:bg-[#f9a825] text-[#212121] transition-all shadow-sm hover:shadow-md active:scale-[0.98]" style={{ fontSize: '1rem' }}>
-                Crear cuenta nueva
-              </button>
-            </Link>
-
             <div className="mt-5 flex justify-center">
               <button type="button" onClick={() => setAdminModalOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-500 hover:text-[#C62828] hover:bg-[#F5F5F5] transition-all"
@@ -215,26 +178,14 @@ export function LoginForm({ onLogin, onAdminLogin, onRecoverPassword, error, nex
                 <X size={15} />
               </button>
             </div>
-            <form onSubmit={handleRecover} className="px-6 py-6 flex flex-col gap-4">
-              {recoverError && (
-                <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{recoverError}</div>
-              )}
-              {recoverResult && (
-                <div role="status" className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>
-                  {recoverResult}
-                </div>
-              )}
-              <div>
-                <label htmlFor="recover-email" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Correo de la cuenta</label>
-                <input id="recover-email" type="email" value={recoverEmail} onChange={(e) => setRecoverEmail(e.target.value)} placeholder="correo@ejemplo.com"
-                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121]"
-                  style={{ fontSize: '0.875rem' }}
-                />
-              </div>
-              <button type="submit" disabled={recoverLoading} className="w-full py-3 rounded-xl text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 transition-all shadow-md" style={{ fontSize: '0.95rem' }}>
-                {recoverLoading ? 'Generando...' : 'Generar clave temporal'}
-              </button>
-            </form>
+            <div className="px-6 py-6 flex flex-col gap-4">
+              <p className="text-gray-600" style={{ fontSize: '0.9rem' }}>
+                La recuperación automática está temporalmente deshabilitada para proteger tu cuenta.
+              </p>
+              <a href="mailto:info@parque100.com" className="w-full py-3 rounded-xl text-center text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] transition-all shadow-md" style={{ fontSize: '0.95rem' }}>
+                Contactar soporte
+              </a>
+            </div>
           </div>
         </div>
       )}

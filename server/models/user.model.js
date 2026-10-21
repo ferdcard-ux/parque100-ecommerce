@@ -174,6 +174,21 @@ export const userModel = {
   },
 
   /**
+   * Lee la identidad y el rol actuales para validar sesiones y revocar
+   * inmediatamente tokens de cuentas eliminadas o con rol cambiado.
+   *
+   * @param {number} id - Identificador del usuario.
+   * @returns {Promise<Object|null>} Identidad minima o null si no existe.
+   */
+  async findAuthById(id) {
+    const [rows] = await pool.query(
+      'SELECT ID_Usuario, Rol FROM usuario WHERE ID_Usuario = ?',
+      [id],
+    );
+    return rows[0] || null;
+  },
+
+  /**
    * Elimina un usuario por su identificador.
    *
    * @async

@@ -9,7 +9,7 @@ import { LoginForm } from '../components/auth/LoginForm';
 import { isValidEmail, isSafeRedirectPath } from '../../utils';
 
 export function LoginPage() {
-  const { login, recoverPassword, isLoggedIn, user } = useApp();
+  const { login, isLoggedIn, user } = useApp();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +47,6 @@ export function LoginPage() {
     <LoginForm
       onLogin={handleLogin}
       onAdminLogin={handleAdminLogin}
-      onRecoverPassword={recoverPassword}
       error={error}
       nextPath={nextPath}
       switchMode={switchMode && isLoggedIn}

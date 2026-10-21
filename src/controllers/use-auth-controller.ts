@@ -140,11 +140,6 @@ export function useAuthController() {
     setActiveId(id);
   }, []);
 
-  /** Solicita una clave temporal (respuesta neutra del servidor). */
-  const recoverPassword = useCallback(async (email: string): Promise<string> => {
-    return authService.recoverPassword(email);
-  }, []);
-
   /** Cambia la contrasena validando la actual. */
   const changePassword = useCallback(
     async (email: string, currentPassword: string, newPassword: string): Promise<void> => {
@@ -194,8 +189,11 @@ export function useAuthController() {
 
   /** Cierra la sesion activa (las demas siguen disponibles). */
   const logout = useCallback(async () => {
-    await authService.logout();
-    closeSession();
+    try {
+      await authService.logout();
+    } finally {
+      closeSession();
+    }
   }, [closeSession]);
 
   /** Indicadores derivados del estado del usuario. */
@@ -212,7 +210,6 @@ export function useAuthController() {
     login,
     register,
     logout,
-    recoverPassword,
     changePassword,
     switchSession,
     closeSession,

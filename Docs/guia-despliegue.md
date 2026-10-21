@@ -142,14 +142,29 @@ DB_USER=root
 DB_PASSWORD=
 DB_NAME=parque100
 
-JWT_SECRET=<cadena-larga-y-aleatoria>
+JWT_SECRET=<minimo-32-caracteres-aleatorios>
 JWT_EXPIRES_IN=8h
+PAYMENTS_MODE=disabled
 
 CORS_ORIGIN=https://<subdominio>.duckdns.org,http://localhost:5173,http://127.0.0.1:5173
 ```
 
-> Genera el `JWT_SECRET` con, p. ej.:
-> `-join ((1..48) | % { '{0:x}' -f (Get-Random -Max 16) })`
+`PAYMENTS_MODE` acepta `disabled` (predeterminado si se omite) o `demo`.
+Usa `demo` solo en un entorno de demostración: la interfaz no solicita datos
+financieros, los pedidos quedan marcados como simulados/no pagados, no reservan
+inventario y el panel impide despacharlos. Para cualquier despliegue productivo,
+mantén `PAYMENTS_MODE=disabled` hasta integrar una pasarela real y verificar el
+pago en el servidor.
+
+MySQL debe escuchar solo en `127.0.0.1` para los protocolos clásico y X
+(`--bind-address=127.0.0.1 --mysqlx-bind-address=127.0.0.1`). No habilites
+reglas de entrada del firewall para `mysqld` ni publiques los puertos 3306/33060.
+El panel de servicios aplica estos límites tanto al arranque local como al
+servicio del servidor en red. Para producción, sustituye `root` y la contraseña
+vacía por una cuenta exclusiva de la aplicación con privilegios mínimos.
+
+> Genera el `JWT_SECRET` con un generador criptografico, por ejemplo:
+> `node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"`
 
 ### Paso 8 — Caddyfile
 
@@ -163,6 +178,14 @@ Crear `Caddyfile` (fuera del repo, p. ej. `C:\parque100-server\Caddyfile`):
 
 <subdominio>.duckdns.org {
 	encode gzip
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
 
 	handle /api/* {
 		reverse_proxy 127.0.0.1:3001
@@ -308,7 +331,9 @@ npm run build      # Caddy sirve dist/ directamente; no hay que reiniciar Caddy
 ## 7. Seguridad y mantenimiento
 
 - **Mantén cerrados** `3001` (API) y `3306` (MySQL); solo Caddy habla con ellos.
-- Usa un **`JWT_SECRET`** fuerte y **no** lo subas al repositorio.
+- Usa un **`JWT_SECRET`** aleatorio de al menos 32 caracteres y **no** lo subas al repositorio. El backend no inicia si falta o es demasiado corto.
+- Express escucha unicamente en `127.0.0.1`; Caddy debe ejecutarse en el mismo servidor y ser el unico punto de entrada publico.
+- Express confia unicamente en proxies de loopback para obtener la IP cliente de Caddy; no amplíes `trust proxy` a redes no confiables.
 - El **token de DuckDNS** y los `.env` son **secretos**: nunca al control de versiones.
 - **Windows Update** puede reiniciar el equipo: programa las actualizaciones fuera de las horas de demo.
 - Considera una capa de acceso (Cloudflare Access, *basic-auth*) si el sitio no debe ser de acceso público.

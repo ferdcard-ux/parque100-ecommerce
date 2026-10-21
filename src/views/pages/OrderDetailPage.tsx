@@ -12,7 +12,7 @@ import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { StarRating } from '../components/shared/star-rating';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { DISPATCH_DELAY_WARNING, CANCEL_REFUND_NOTICE, formatPrice, ratingLabel } from '../../utils';
+import { DISPATCH_DELAY_WARNING, CANCEL_REFUND_NOTICE, formatPrice, ratingLabel, isDemoPaymentMethod } from '../../utils';
 
 /** Formatea fecha y hora legibles. */
 function formatDateTime(value: string): string {
@@ -55,6 +55,7 @@ export function OrderDetailPage() {
   };
 
   const subtotal = (order?.detalles ?? []).reduce((sum, d) => sum + Number(d.Subtotal), 0);
+  const isDemoOrder = isDemoPaymentMethod(order?.Metodo_Pago);
 
   return (
     <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
@@ -67,7 +68,14 @@ export function OrderDetailPage() {
           <p className="text-center text-[#C62828] py-16">{error ?? 'Pedido no encontrado.'}</p>
         ) : (
           <div className="flex flex-col gap-4">
-            {order.Estado !== 'entregado' && (
+            {isDemoOrder ? (
+              <div role="alert" className="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <TriangleAlert size={20} className="text-amber-600 shrink-0 mt-0.5" />
+                <p className="text-amber-800" style={{ fontSize: '0.85rem' }}>
+                  SIMULACIÓN: no se cobró, no se reservó inventario y este pedido no puede ser despachado.
+                </p>
+              </div>
+            ) : order.Estado !== 'entregado' && (
               <div role="alert" className="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
                 <TriangleAlert size={20} className="text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-amber-800" style={{ fontSize: '0.85rem' }}>{DISPATCH_DELAY_WARNING}</p>

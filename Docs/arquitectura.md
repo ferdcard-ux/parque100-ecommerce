@@ -46,7 +46,7 @@ src/
 │   ├── cart.ts               # Item del carrito
 │   ├── user.ts               # Usuario, autenticación y roles
 │   ├── order.ts              # Pedido, dirección de entrega
-│   ├── payment.ts            # Datos de pago
+│   ├── payment.ts            # Resultado del flujo contra entrega
 │   ├── business.ts           # Ficha del negocio
 │   └── rating.ts             # Calificaciones y resenas
 │
@@ -54,8 +54,7 @@ src/
 │   ├── index.ts              # Re-exportaciones
 │   ├── api.ts                # URL base (`VITE_API_URL`) + token JWT (`Bearer`)
 │   ├── product.service.ts    # CRUD de productos
-│   ├── auth.service.ts       # Autenticación (login/register/recover)
-│   ├── payment.service.ts    # Procesamiento de pagos
+│   ├── auth.service.ts       # Autenticación (login/register/cambio de clave)
 │   ├── order.service.ts      # Gestión de pedidos
 │   ├── user.service.ts       # Usuarios, perfiles y permisos
 │   ├── business.service.ts   # Ficha del negocio
@@ -93,7 +92,7 @@ src/
 │       ├── home/             # HeroBanner, CategoryGrid, CategoryModal, AllCategoriesModal, etc.
 │       ├── shop/             # product-card
 │       ├── cart/             # CartItemCard, RecommendedList
-│       ├── checkout/         # AddressForm, PaymentOptions, CardForm, checkout-steps/summary
+│       ├── checkout/         # AddressForm, PaymentOptions, checkout-steps/summary
 │       ├── admin/            # AdminPageShell/Sidebar/Stats, ProductTable, Add/EditProductModal
 │       ├── auth/             # LoginForm, RegisterForm
 │       ├── ratings/          # review-card, review-form/product-modal
@@ -139,7 +138,7 @@ server/
 ├── controllers/                # Capa Controlador — lógica de negocio y HTTP
 │   ├── product.controller.js   # Listar, crear, editar, eliminar productos (validado)
 │   ├── category.controller.js  # Listar categorías
-│   ├── auth.controller.js      # Login / registro / recover neutro / cambio de clave (JWT + bcrypt)
+│   ├── auth.controller.js      # Login / registro / recuperación deshabilitada / cambio de clave (JWT + bcrypt)
 │   ├── users.controller.js     # Gestión admin, perfil propio y datos de entrega
 │   ├── order.controller.js     # Listado por rol, detalle, creación y cancelación (identidad del token)
 │   ├── business.controller.js  # Ficha del negocio
