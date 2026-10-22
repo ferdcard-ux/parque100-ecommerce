@@ -77,17 +77,23 @@ app.use(
 /** Permite interpretar cuerpos JSON (limite ampliado para imagenes en dataURL). */
 app.use(express.json({ limit: '10mb' }));
 
-/**
- * Limita los intentos contra los endpoints de autenticacion para
- * mitigar ataques de fuerza bruta.
- */
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Demasiados intentos. Intenta de nuevo en unos minutos.' },
-});
+function createLoginLimiter() {
+  return rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+    requestWasSuccessful: (_req, res) => res.statusCode !== 401,
+    message: {
+      error: 'Se superó el límite de intentos fallidos. Espera a que finalice '
+        + 'la ventana de 15 minutos para volver a intentarlo.',
+    },
+  });
+}
+
+const storeLoginLimiter = createLoginLimiter();
+const siteAccessLoginLimiter = createLoginLimiter();
 
 /**
  * Website access has an identity store separate from the demo-shop users.
@@ -111,8 +117,8 @@ app.use('/api', activityLogMiddleware);
 app.use('/api', activityRouter);
 
 /** Registro de routers por modulo. */
-app.use('/api/auth', authLimiter);
-app.use('/api/site-access/login', authLimiter);
+app.post('/api/auth/login', storeLoginLimiter);
+app.post('/api/site-access/login', siteAccessLoginLimiter);
 app.use('/api', siteAccessRouter);
 app.use('/api', productsRouter);
 app.use('/api', categoriesRouter);

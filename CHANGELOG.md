@@ -2,6 +2,14 @@
 
 > Todos los cambios notables del proyecto se documentan aquí.
 
+## [Sin publicar]
+
+### Seguridad y acceso
+- Se separan los limitadores de login de tienda y acceso académico; cada flujo permite hasta 30 fallos HTTP 401 por IP en una ventana de 15 minutos. Los accesos exitosos no consumen intentos.
+- El login de tienda conserva y presenta el mensaje HTTP del backend, distinguiendo credenciales incorrectas del límite 429 y de errores del servidor.
+- La pantalla académica es autocontenida y mantiene contraste legible con el modo oscuro del dispositivo; incorpora el control accesible de mostrar/ocultar contraseña mediante iconos de ojo.
+- Guía de despliegue y README aclaran el uso de HTTPS en el servidor remoto y que el entorno local HTTP no ofrece cifrado TLS.
+
 ## [1.6.0] — 2026-10-14
 
 ### Seguridad

@@ -59,8 +59,14 @@ export const authService = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ Correo: credentials.email, Contrasena: credentials.password }),
     });
-    if (!res.ok) throw new Error('Credenciales inválidas');
-    const data = await res.json();
+    const data = await res.json().catch(() => null);
+    if (!res.ok) {
+      const message = typeof data?.error === 'string' ? data.error : '';
+      if (res.status === 401 && message === 'Credenciales invalidas') {
+        throw new Error('Credenciales inválidas');
+      }
+      throw new Error(message || 'No fue posible iniciar sesión. Inténtalo de nuevo.');
+    }
     const user = mapUser(data);
     setAuthToken(user.token ?? null);
     return user;

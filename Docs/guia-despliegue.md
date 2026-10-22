@@ -392,6 +392,13 @@ npm run build      # Caddy sirve dist/ directamente; no hay que reiniciar Caddy
 ## 7. Seguridad y mantenimiento
 
 - **Mantén cerrados** `3001` (API) y `3306` (MySQL); solo Caddy habla con ellos.
+- Usa el dominio HTTPS con un certificado válido para todo acceso remoto. El
+  modo local (`http://localhost`) es solo para desarrollo y no cifra con TLS;
+  no expongas Vite ni Express directamente a redes públicas.
+- Los logins de tienda y de acceso académico tienen límites independientes:
+  hasta 30 respuestas HTTP 401 por IP en 15 minutos. Las autenticaciones
+  exitosas no consumen intentos. Un 429 indica que se alcanzó el límite de ese
+  flujo; espera a que termine la ventana para volver a probar.
 - Usa un **`JWT_SECRET`** aleatorio de al menos 32 caracteres y **no** lo subas al repositorio. El backend no inicia si falta o es demasiado corto.
 - Express escucha unicamente en `127.0.0.1`; Caddy debe ejecutarse en el mismo servidor y ser el unico punto de entrada publico.
 - Express confia unicamente en proxies de loopback para obtener la IP cliente de Caddy; no amplíes `trust proxy` a redes no confiables.

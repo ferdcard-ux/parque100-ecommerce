@@ -69,6 +69,11 @@ hay registro público. La base privada `parque100_acceso` no se comparte en el
 repositorio ni en los dumps de `parque100`. La administración de cuentas se
 documenta internamente en el equipo.
 
+En el servidor remoto, usa el dominio HTTPS y comprueba que el navegador valide
+el certificado. El acceso local de desarrollo (`http://localhost`) no usa TLS;
+no lo expongas como sustituto del sitio HTTPS para conexiones a través de una
+red.
+
 ### Sincronizar la base de datos entre equipos
 
 Los datos del proyecto son ficticios y se comparten con los commits mediante el dump `.BD/parque100.sql`:
