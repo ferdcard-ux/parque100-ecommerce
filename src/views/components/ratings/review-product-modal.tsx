@@ -45,7 +45,7 @@ export function ReviewProductModal({
     >
       <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Dejar una reseña" className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-1">
-          <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>
+          <h3 className="text-brand-ink font-bold" style={{ fontSize: '1rem' }}>
             Dejar una reseña
           </h3>
           <button
@@ -81,7 +81,7 @@ export function ReviewProductModal({
                       className="w-12 h-12 object-cover rounded-xl shrink-0"
                     />
                     <span className="flex-1 min-w-0">
-                      <span className="block text-[#212121] truncate" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                      <span className="block text-brand-ink truncate" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                         {item.Producto_Nombre ?? catalog?.name ?? String(item.ID_Producto)}
                       </span>
                       {catalog?.description && (

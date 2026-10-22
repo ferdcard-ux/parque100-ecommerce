@@ -50,8 +50,8 @@ export interface Category {
   id: number;
   /** Nombre normalizado (sin tildes). */
   name: string;
-  /** Emoji representativo. */
-  emoji: string;
+  /** Clave para la ilustracion vectorial propia de la categoria. */
+  icon: string;
   /** Clases Tailwind para el fondo/color del chip. */
   color: string;
   /** Clases Tailwind para el borde de la tarjeta. */

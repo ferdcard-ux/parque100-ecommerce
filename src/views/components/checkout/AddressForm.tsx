@@ -52,12 +52,12 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
       <div className="bg-white rounded-2xl p-6 mb-4 border border-gray-100 shadow-sm flex items-center gap-5">
         <div
           className="w-20 h-20 rounded-2xl flex items-center justify-center shrink-0"
-          style={{ background: 'linear-gradient(135deg, #FBC02D22, #C6282822)' }}
+          style={{ background: 'linear-gradient(135deg, var(--brand-yellow-soft), var(--brand-red-soft))' }}
         >
-          <span style={{ fontSize: '2.5rem' }}>📍</span>
+          <MapPin size={38} strokeWidth={1.6} className="text-brand-red" aria-hidden="true" />
         </div>
         <div>
-          <h3 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Ingresa tu dirección</h3>
+          <h3 className="text-brand-ink font-semibold" style={{ fontSize: '1rem' }}>Ingresa tu dirección</h3>
           <p className="text-gray-500 mt-1" style={{ fontSize: '0.875rem' }}>
             Ingresa la torre, piso y apartamento donde deseas recibir tu pedido.
           </p>
@@ -66,67 +66,67 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
 
       <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
         <div className="flex items-center gap-2 mb-5">
-          <div className="w-1 h-6 rounded-full bg-[#FBC02D]" />
-          <h2 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Datos del destinatario</h2>
+          <div className="w-1 h-6 rounded-full bg-brand-yellow" />
+          <h2 className="text-brand-ink font-semibold" style={{ fontSize: '1rem' }}>Datos del destinatario</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Nombre *</label>
+            <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Nombre *</label>
             <div className="relative">
               <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="firstName" required maxLength={50} autoComplete="given-name" readOnly={lockRecipient} value={form.firstName} onChange={handleChange} placeholder="Tu nombre" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="firstName" required maxLength={50} autoComplete="given-name" readOnly={lockRecipient} value={form.firstName} onChange={handleChange} placeholder="Tu nombre" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
           <div>
-            <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Apellido *</label>
+            <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Apellido *</label>
             <div className="relative">
               <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="lastName" required maxLength={50} autoComplete="family-name" readOnly={lockRecipient} value={form.lastName} onChange={handleChange} placeholder="Tu apellido" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="lastName" required maxLength={50} autoComplete="family-name" readOnly={lockRecipient} value={form.lastName} onChange={handleChange} placeholder="Tu apellido" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
         </div>
 
         <div className="mb-4">
-          <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Teléfono *</label>
+          <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Teléfono *</label>
           <div className="relative">
             <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input type="tel" name="phone" autoComplete="tel" inputMode="numeric" required minLength={10} maxLength={10} pattern="[0-9]{10}" title="Ingresa un número de 10 dígitos" aria-invalid={validationError !== null} aria-describedby={validationError ? 'address-validation-error' : undefined} value={form.phone} onChange={handleChange} placeholder="300 000 0000" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+            <input type="tel" name="phone" autoComplete="tel" inputMode="numeric" required minLength={10} maxLength={10} pattern="[0-9]{10}" title="Ingresa un número de 10 dígitos" aria-invalid={validationError !== null} aria-describedby={validationError ? 'address-validation-error' : undefined} value={form.phone} onChange={handleChange} placeholder="300 000 0000" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink" style={{ fontSize: '0.9rem' }} />
           </div>
-          {validationError && <p id="address-validation-error" role="alert" className="text-[#C62828] mt-1.5" style={{ fontSize: '0.8rem' }}>{validationError}</p>}
+          {validationError && <p id="address-validation-error" role="alert" className="text-brand-red mt-1.5" style={{ fontSize: '0.8rem' }}>{validationError}</p>}
         </div>
 
         <div className="flex items-center gap-2 mb-4 mt-6">
-          <div className="w-1 h-6 rounded-full bg-[#FBC02D]" />
-          <h2 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Ubicación en el conjunto</h2>
+          <div className="w-1 h-6 rounded-full bg-brand-yellow" />
+          <h2 className="text-brand-ink font-semibold" style={{ fontSize: '1rem' }}>Ubicación en el conjunto</h2>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
           <div>
-            <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Torre / Bloque *</label>
+            <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Torre / Bloque *</label>
             <div className="relative">
               <Building size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="tower" required maxLength={20} inputMode="numeric" pattern="[0-9]{1,20}" title="Ingresa solo números (máximo 20 dígitos)" value={form.tower} onChange={handleChange} placeholder="1" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="tower" required maxLength={20} inputMode="numeric" pattern="[0-9]{1,20}" title="Ingresa solo números (máximo 20 dígitos)" value={form.tower} onChange={handleChange} placeholder="1" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
           <div>
-            <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Piso *</label>
+            <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Piso *</label>
             <div className="relative">
               <Hash size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="floor" required maxLength={20} inputMode="numeric" pattern="[0-9]{1,20}" title="Ingresa solo números (máximo 20 dígitos)" value={form.floor} onChange={handleChange} placeholder="4" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="floor" required maxLength={20} inputMode="numeric" pattern="[0-9]{1,20}" title="Ingresa solo números (máximo 20 dígitos)" value={form.floor} onChange={handleChange} placeholder="4" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
           <div>
-            <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Apartamento *</label>
+            <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Apartamento *</label>
             <div className="relative">
               <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="apartment" required maxLength={20} inputMode="numeric" pattern="[0-9]{1,20}" title="Ingresa solo números (máximo 20 dígitos)" value={form.apartment} onChange={handleChange} placeholder="401" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="apartment" required maxLength={20} inputMode="numeric" pattern="[0-9]{1,20}" title="Ingresa solo números (máximo 20 dígitos)" value={form.apartment} onChange={handleChange} placeholder="401" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
         </div>
 
         <div className="mb-6">
-          <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Notas adicionales (opcional)</label>
+          <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Notas adicionales (opcional)</label>
           <textarea
             name="notes"
             value={form.notes}
@@ -134,7 +134,7 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
             maxLength={500}
             rows={2}
             placeholder="Indicaciones especiales para el domiciliario..."
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] resize-none"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink resize-none"
             style={{ fontSize: '0.9rem' }}
           />
         </div>
@@ -143,7 +143,7 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
           type="submit"
           disabled={isSaving}
           aria-busy={isSaving}
-          className="w-full py-3.5 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
+          className="w-full py-3.5 rounded-xl bg-brand-red text-white font-semibold hover:bg-brand-red-dark transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
           style={{ fontSize: '1rem' }}
         >
           {submitLabel}

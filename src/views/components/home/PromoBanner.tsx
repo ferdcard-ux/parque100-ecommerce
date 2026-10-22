@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { Tag } from 'lucide-react';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 
 export function PromoBanner() {
@@ -7,7 +8,7 @@ export function PromoBanner() {
       <div className="max-w-7xl mx-auto">
         <div
           className="rounded-2xl overflow-hidden relative"
-          style={{ background: 'linear-gradient(135deg, #212121 0%, #424242 100%)' }}
+          style={{ background: 'linear-gradient(135deg, var(--brand-ink) 0%, #424242 100%)' }}
         >
           <div className="absolute inset-0 opacity-10">
             <ImageWithFallback
@@ -19,8 +20,8 @@ export function PromoBanner() {
           </div>
           <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6 px-8 py-10">
             <div>
-              <span className="inline-block bg-[#FBC02D] text-[#212121] px-3 py-1 rounded-full font-bold mb-3" style={{ fontSize: '0.75rem' }}>
-                🎉 OFERTA ESPECIAL
+              <span className="inline-flex items-center gap-1.5 bg-brand-yellow text-brand-ink px-3 py-1 rounded-full font-bold mb-3" style={{ fontSize: '0.75rem' }}>
+                <Tag size={13} aria-hidden="true" /> OFERTA ESPECIAL
               </span>
               <h2 className="text-white mb-2" style={{ fontSize: '1.6rem', fontWeight: 800 }}>
                 Canasta familiar completa
@@ -33,10 +34,10 @@ export function PromoBanner() {
             <div className="flex flex-col items-center gap-3 shrink-0">
               <div className="text-center">
                 <span className="text-white/60 line-through" style={{ fontSize: '0.9rem' }}>$65.000</span>
-                <p className="text-[#FBC02D] font-black" style={{ fontSize: '2rem' }}>$48.750</p>
+                <p className="text-brand-yellow font-black" style={{ fontSize: '2rem' }}>$48.750</p>
               </div>
               <Link to="/catalogo">
-                <button className="px-8 py-3 rounded-xl bg-[#C62828] text-white font-bold hover:bg-[#b71c1c] transition-all shadow-lg" style={{ fontSize: '1rem' }}>
+                <button className="px-8 py-3 rounded-xl bg-brand-red text-white font-bold hover:bg-brand-red-dark transition-all shadow-lg" style={{ fontSize: '1rem' }}>
                   Aprovechar oferta
                 </button>
               </Link>

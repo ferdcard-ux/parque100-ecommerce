@@ -104,6 +104,6 @@ export const APP_EMAIL = 'info@parque100.com';
  */
 export const STATUS_LABELS = {
   in_stock: { label: 'En stock', class: 'bg-green-100 text-green-700 border-green-200' },
-  low_stock: { label: 'Bajo stock', class: 'bg-[#FBC02D]/20 text-[#f57f17] border-[#FBC02D]/40' },
-  out_of_stock: { label: 'Sin stock', class: 'bg-[#C62828]/10 text-[#C62828] border-[#C62828]/20' },
+  low_stock: { label: 'Bajo stock', class: 'bg-brand-yellow/20 text-brand-orange border-brand-yellow/40' },
+  out_of_stock: { label: 'Sin stock', class: 'bg-brand-red/10 text-brand-red border-brand-red/20' },
 } as const;

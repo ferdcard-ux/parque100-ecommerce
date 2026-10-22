@@ -40,7 +40,7 @@ export function CancelOrderModal({ orderId, saving, error, onClose, onConfirm, r
     >
       <div ref={panelRef} role="dialog" aria-modal="true" aria-label={`Cancelar pedido ${orderId}`} className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>Cancelar pedido #{orderId}</h3>
+          <h3 className="text-brand-ink font-bold" style={{ fontSize: '1rem' }}>Cancelar pedido #{orderId}</h3>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500" aria-label="Cerrar">
             <X size={15} />
           </button>
@@ -49,15 +49,15 @@ export function CancelOrderModal({ orderId, saving, error, onClose, onConfirm, r
         <p className="text-gray-500 mb-3" style={{ fontSize: '0.85rem' }}>Indica el motivo de la cancelación (obligatorio):</p>
         <div role="radiogroup" aria-label="Motivo de cancelación" className="flex flex-col gap-2 mb-3">
           {[...reasons, CUSTOM_OPTION].map((r) => (
-            <label key={r} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border cursor-pointer transition-colors ${reason === r ? 'border-[#C62828] bg-[#C62828]/5' : 'border-gray-200 hover:border-gray-300'}`}>
+            <label key={r} className={`flex items-center gap-3 px-4 py-2.5 rounded-xl border cursor-pointer transition-colors ${reason === r ? 'border-brand-red bg-brand-red/5' : 'border-gray-200 hover:border-gray-300'}`}>
               <input
                 type="radio"
                 name="cancel-reason"
                 checked={reason === r}
                 onChange={() => setReason(r)}
-                className="w-4 h-4 accent-[#C62828]"
+                className="w-4 h-4 accent-brand-red"
               />
-              <span className="text-[#212121]" style={{ fontSize: '0.85rem' }}>{r}</span>
+              <span className="text-brand-ink" style={{ fontSize: '0.85rem' }}>{r}</span>
             </label>
           ))}
         </div>
@@ -68,7 +68,7 @@ export function CancelOrderModal({ orderId, saving, error, onClose, onConfirm, r
             maxLength={255}
             placeholder="Describe el motivo"
             aria-label="Describe el motivo"
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#C62828] mb-3"
+            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-red mb-3"
             style={{ fontSize: '0.9rem' }}
           />
         )}
@@ -77,7 +77,7 @@ export function CancelOrderModal({ orderId, saving, error, onClose, onConfirm, r
         </p>
         <div className="flex gap-2">
           <button onClick={onClose} className="flex-1 border border-gray-200 rounded-full py-2.5 hover:bg-gray-50 transition-colors" style={{ fontWeight: 600 }}>Volver</button>
-          <button onClick={() => valid && onConfirm(motivo)} disabled={!valid || saving} className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2.5 disabled:opacity-40 transition-colors" style={{ fontWeight: 600 }}>
+          <button onClick={() => valid && onConfirm(motivo)} disabled={!valid || saving} className="flex-1 bg-brand-red hover:bg-brand-red-dark text-white rounded-full py-2.5 disabled:opacity-40 transition-colors" style={{ fontWeight: 600 }}>
             {saving ? 'Cancelando...' : 'Confirmar'}
           </button>
         </div>

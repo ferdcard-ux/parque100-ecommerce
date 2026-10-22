@@ -212,9 +212,9 @@ function AppErrorBoundary() {
   const error = useRouteError();
   const notFound = isRouteErrorResponse(error) && error.status === 404;
   return (
-    <main className="grid min-h-screen place-items-center bg-[#F5F5F5] px-4">
+    <main className="grid min-h-screen place-items-center bg-brand-surface px-4">
       <section className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow">
-        <h1 className="text-2xl font-bold text-[#212121]">
+        <h1 className="text-2xl font-bold text-brand-ink">
           {notFound ? 'Página no encontrada' : 'No fue posible cargar el sitio'}
         </h1>
         <p className="mt-3 text-sm leading-6 text-gray-600">
@@ -224,7 +224,7 @@ function AppErrorBoundary() {
         </p>
         <Link
           to="/"
-          className="mt-6 inline-flex rounded-xl bg-[#C62828] px-5 py-3 font-semibold text-white"
+          className="mt-6 inline-flex rounded-xl bg-brand-red px-5 py-3 font-semibold text-white"
         >
           Volver al inicio
         </Link>

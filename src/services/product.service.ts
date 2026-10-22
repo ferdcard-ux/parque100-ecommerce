@@ -44,15 +44,15 @@ const CATEGORY_IMAGES: Record<string, string> = {
   Limpieza: 'https://images.unsplash.com/photo-1585421514284-efb74c2b69ba?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=400',
 };
 
-const CATEGORY_MAP: Record<string, { emoji: string; color: string; border: string }> = {
-  Verduras: { emoji: '🥦', color: 'bg-green-100 text-green-700', border: 'border-green-200' },
-  Frutas: { emoji: '🍎', color: 'bg-red-100 text-red-700', border: 'border-red-200' },
-  Carnes: { emoji: '🥩', color: 'bg-orange-100 text-orange-700', border: 'border-orange-200' },
-  Granos: { emoji: '🌾', color: 'bg-yellow-100 text-yellow-700', border: 'border-yellow-200' },
-  Lacteos: { emoji: '🥛', color: 'bg-blue-100 text-blue-700', border: 'border-blue-200' },
-  Panaderia: { emoji: '🍞', color: 'bg-amber-100 text-amber-700', border: 'border-amber-200' },
-  Bebidas: { emoji: '🥤', color: 'bg-purple-100 text-purple-700', border: 'border-purple-200' },
-  Limpieza: { emoji: '🧹', color: 'bg-cyan-100 text-cyan-700', border: 'border-cyan-200' },
+const CATEGORY_MAP: Record<string, Pick<Category, 'icon' | 'color' | 'border'>> = {
+  Verduras: { icon: 'vegetables', color: 'bg-brand-yellow-soft text-brand-red', border: 'border-brand-yellow/40' },
+  Frutas: { icon: 'fruit', color: 'bg-brand-red-soft text-brand-red', border: 'border-brand-red/20' },
+  Carnes: { icon: 'meat', color: 'bg-brand-red-soft text-brand-red', border: 'border-brand-red/20' },
+  Granos: { icon: 'grains', color: 'bg-brand-yellow-soft text-brand-ink', border: 'border-brand-yellow/40' },
+  Lacteos: { icon: 'dairy', color: 'bg-brand-yellow-soft text-brand-red', border: 'border-brand-yellow/40' },
+  Panaderia: { icon: 'bakery', color: 'bg-brand-yellow-soft text-brand-ink', border: 'border-brand-yellow/40' },
+  Bebidas: { icon: 'drink', color: 'bg-brand-red-soft text-brand-red', border: 'border-brand-red/20' },
+  Limpieza: { icon: 'cleaning', color: 'bg-brand-yellow-soft text-brand-ink', border: 'border-brand-yellow/40' },
 };
 
 function normalizeCategory(name: string): string {
@@ -154,7 +154,7 @@ export const productService = {
     const uniqueCategories = new Map<string, Category>();
     data.forEach((row: any) => {
       const name = normalizeCategory(row.Nombre_Categoria);
-      const style = CATEGORY_MAP[name] || { emoji: '📦', color: 'bg-gray-100 text-gray-700', border: 'border-gray-200' };
+      const style = CATEGORY_MAP[name] || { icon: 'market', color: 'bg-brand-yellow-soft text-brand-red', border: 'border-brand-yellow/40' };
       const key = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
       if (!uniqueCategories.has(key)) {
         uniqueCategories.set(key, { id: Number(row.ID_Categoria), name, ...style });

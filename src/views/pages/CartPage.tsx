@@ -24,13 +24,15 @@ export function CartPage({ items, products, subtotal, shipping, total, onRemove,
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-brand-surface flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="text-8xl mb-6">🛒</div>
-          <h2 className="text-[#212121] mb-2" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Carrito vacío</h2>
+          <div className="mx-auto mb-6 flex h-24 w-24 items-center justify-center rounded-3xl border border-brand-yellow/40 bg-brand-yellow-soft text-brand-red">
+            <ShoppingBag size={44} strokeWidth={1.6} aria-hidden="true" />
+          </div>
+          <h2 className="text-brand-ink mb-2" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Carrito vacío</h2>
           <p className="text-gray-500 mb-6">Agrega productos desde la tienda para continuar</p>
           <Link to="/">
-            <button className="px-8 py-3 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-all shadow-md">
+            <button className="px-8 py-3 rounded-xl bg-brand-red text-white font-semibold hover:bg-brand-red-dark transition-all shadow-md">
               Ir a la tienda
             </button>
           </Link>
@@ -40,16 +42,16 @@ export function CartPage({ items, products, subtotal, shipping, total, onRemove,
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] pb-12">
+    <div className="min-h-screen bg-brand-surface pb-12">
       <div className="max-w-7xl mx-auto px-4 py-8">
         <CheckoutSteps current={1} />
         <CheckoutSummary itemCount={itemCount} total={total} />
         <div className="flex items-center gap-3 mb-8">
           <Link to="/" className="p-2 rounded-full bg-white shadow-sm hover:shadow-md transition-all">
-            <ArrowLeft size={18} className="text-[#212121]" />
+            <ArrowLeft size={18} className="text-brand-ink" />
           </Link>
           <div>
-            <h1 className="text-[#212121]" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Mi Carrito</h1>
+            <h1 className="text-brand-ink" style={{ fontSize: '1.5rem', fontWeight: 700 }}>Mi Carrito</h1>
             <p className="text-gray-500" style={{ fontSize: '0.875rem' }}>{items.length} {items.length === 1 ? 'producto' : 'productos'}</p>
           </div>
         </div>
@@ -64,30 +66,30 @@ export function CartPage({ items, products, subtotal, shipping, total, onRemove,
 
           <div className="lg:col-span-1">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-20">
-              <h3 className="text-[#212121] font-bold mb-5 pb-4 border-b border-gray-100" style={{ fontSize: '1.1rem' }}>
-                <ShoppingBag size={18} className="inline mr-2 text-[#C62828]" />
+              <h3 className="text-brand-ink font-bold mb-5 pb-4 border-b border-gray-100" style={{ fontSize: '1.1rem' }}>
+                <ShoppingBag size={18} className="inline mr-2 text-brand-red" />
                 Resumen del pedido
               </h3>
 
               <div className="border-t border-gray-100 pt-4 flex flex-col gap-2.5 mb-6">
-                <div className="flex justify-between text-[#212121]">
+                <div className="flex justify-between text-brand-ink">
                   <span style={{ fontSize: '0.9rem' }}>Subtotal</span>
                   <span style={{ fontSize: '0.9rem' }}>{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-500" style={{ fontSize: '0.9rem' }}>Envío</span>
-                  <span className={`font-medium ${shipping === 0 ? 'text-green-600' : 'text-[#212121]'}`} style={{ fontSize: '0.9rem' }}>
+                  <span className={`font-medium ${shipping === 0 ? 'text-green-600' : 'text-brand-ink'}`} style={{ fontSize: '0.9rem' }}>
                     {shipping === 0 ? 'Gratis' : formatPrice(shipping)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-                  <span className="text-[#212121] font-bold" style={{ fontSize: '1.05rem' }}>Total</span>
-                  <span className="text-[#C62828] font-black" style={{ fontSize: '1.3rem' }}>{formatPrice(total)}</span>
+                  <span className="text-brand-ink font-bold" style={{ fontSize: '1.05rem' }}>Total</span>
+                  <span className="text-brand-red font-black" style={{ fontSize: '1.3rem' }}>{formatPrice(total)}</span>
                 </div>
               </div>
 
               <button onClick={() => navigate('/address')}
-                className="w-full py-3.5 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
+                className="w-full py-3.5 rounded-xl bg-brand-red text-white font-semibold hover:bg-brand-red-dark transition-all shadow-md hover:shadow-lg active:scale-[0.98] flex items-center justify-center gap-2"
                 style={{ fontSize: '1rem' }}
               >
                 Continuar <ChevronRight size={18} />

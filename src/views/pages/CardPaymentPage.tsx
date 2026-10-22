@@ -100,7 +100,7 @@ export function CardPaymentPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] pb-12">
+    <div className="min-h-screen bg-brand-surface pb-12">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <CheckoutSteps current={3} />
         <CheckoutSummary itemCount={itemCount} total={total} />
@@ -117,14 +117,14 @@ export function CardPaymentPage({
         {isCash ? (
           <form onSubmit={handleCashSubmit} className="bg-white rounded-2xl border border-gray-100 p-8 max-w-md mx-auto">
             <div className="flex items-center gap-3 mb-4">
-              <span className="w-11 h-11 rounded-xl bg-[#FBC02D]/20 text-[#f57f17] flex items-center justify-center">
+              <span className="w-11 h-11 rounded-xl bg-brand-yellow/20 text-brand-orange flex items-center justify-center">
                 <ReceiptText size={20} />
               </span>
               <p className="text-gray-500" style={{ fontSize: '0.85rem' }}>
                 Pagas al recibir el pedido. Indica con que billete pagaras.
               </p>
             </div>
-            <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Monto en efectivo *</label>
+            <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Monto en efectivo *</label>
             <input
               type="text"
               inputMode="numeric"
@@ -134,14 +134,14 @@ export function CardPaymentPage({
               maxLength={6}
               title="Maximo 6 digitos"
               placeholder="Ej. 500000"
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] mb-4"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red mb-4"
             />
             <dl className="border-t border-gray-100 pt-3 mb-6 flex flex-col gap-1" style={{ fontSize: '0.9rem' }}>
               <div className="flex justify-between text-gray-500"><dt>Total compra</dt><dd>{formatPrice(total)}</dd></div>
               <div className="flex justify-between text-gray-500"><dt>Recibido</dt><dd>{formatPrice(tenderedValue)}</dd></div>
               <div className="flex justify-between text-green-700 font-bold"><dt>Tu cambio</dt><dd>{formatPrice(change)}</dd></div>
             </dl>
-            <button type="submit" disabled={isProcessing} className="w-full py-3 rounded-xl text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 transition-all" style={{ fontSize: '1rem' }}>
+            <button type="submit" disabled={isProcessing} className="w-full py-3 rounded-xl text-white font-semibold bg-brand-red hover:bg-brand-red-dark disabled:opacity-60 transition-all" style={{ fontSize: '1rem' }}>
               {isProcessing ? 'Procesando...' : 'Confirmar pedido'}
             </button>
           </form>
@@ -158,7 +158,7 @@ export function CardPaymentPage({
 
             <ol className="flex flex-col gap-3 mb-5">
               <li className="flex items-start gap-3 rounded-xl bg-white/80 p-3">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#C62828] text-white text-sm font-bold">1</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-red text-white text-sm font-bold">1</span>
                 <span><strong>Inicia el flujo.</strong> Se registra un intento DEMO sin importe cobrado ni datos financieros.</span>
               </li>
               <li className="flex items-start gap-3 rounded-xl bg-white/80 p-3">
@@ -178,14 +178,14 @@ export function CardPaymentPage({
                 type="button"
                 onClick={() => void handleStartDemo()}
                 disabled={isProcessing}
-                className="w-full py-3 rounded-xl text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 transition-all"
+                className="w-full py-3 rounded-xl text-white font-semibold bg-brand-red hover:bg-brand-red-dark disabled:opacity-60 transition-all"
               >
                 {isProcessing ? 'Iniciando...' : `1. Iniciar ${isNequi ? 'Nequi' : 'tarjeta'} DEMO`}
               </button>
             ) : (
               <div className="rounded-xl border border-amber-300 bg-white p-4">
-                <p className="text-sm font-semibold text-[#212121]">Referencia ficticia</p>
-                <p className="mt-1 break-all font-mono text-sm text-[#C62828]">{simulationId}</p>
+                <p className="text-sm font-semibold text-brand-ink">Referencia ficticia</p>
+                <p className="mt-1 break-all font-mono text-sm text-brand-red">{simulationId}</p>
                 <p className="mt-3 text-sm">
                   {isNequi
                     ? 'Destino de prueba: CUENTA-NEQUI-DEMO. No uses un telefono real ni hagas una transferencia.'
@@ -196,7 +196,7 @@ export function CardPaymentPage({
                   type="button"
                   onClick={() => void handleConfirmDemo()}
                   disabled={isProcessing}
-                  className="mt-4 w-full py-3 rounded-xl text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 transition-all"
+                  className="mt-4 w-full py-3 rounded-xl text-white font-semibold bg-brand-red hover:bg-brand-red-dark disabled:opacity-60 transition-all"
                 >
                   {isProcessing ? 'Confirmando...' : `3. Simular ${isNequi ? 'transferencia' : 'autorizacion'} y crear pedido`}
                 </button>

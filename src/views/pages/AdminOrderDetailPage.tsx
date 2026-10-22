@@ -118,7 +118,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
       {isLoading ? (
         <p className="text-center text-gray-400 py-16">Cargando...</p>
       ) : error || !order ? (
-        <p className="text-center text-[#C62828] py-16">{error ?? 'Pedido no encontrado.'}</p>
+        <p className="text-center text-brand-red py-16">{error ?? 'Pedido no encontrado.'}</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {isDemoOrder && (
@@ -149,7 +149,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
                 disabled={order.Estado === 'cancelado'}
                 title={order.Estado === 'cancelado' ? 'Un pedido cancelado no se puede reanudar' : isDemoOrder && !isApprovedDemo ? 'La transaccion demo no esta aprobada' : undefined}
                 onChange={(e) => changeStatus(e.target.value as OrderEstado)}
-                className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-brand-red disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ fontSize: '0.8rem' }}
               >
                 {ORDER_ESTADOS.filter((estado) => (canCancel || estado !== 'cancelado')
@@ -193,9 +193,9 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
               )}
             </dl>
             {order.Notas && order.Notas.trim() && (
-              <div className="mt-4 bg-[#F5F5F5] rounded-xl px-4 py-3">
+              <div className="mt-4 bg-brand-surface rounded-xl px-4 py-3">
                 <p className="text-gray-400 mb-1" style={{ fontSize: '0.7rem' }}>Notas para el domiciliario</p>
-                <p className="text-[#212121]" style={{ fontSize: '0.85rem' }}>{order.Notas}</p>
+                <p className="text-brand-ink" style={{ fontSize: '0.85rem' }}>{order.Notas}</p>
               </div>
             )}
             {order.Comprobante && (
@@ -205,13 +205,13 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
                   <a
                     href={order.Comprobante}
                     download={`comprobante-pedido-${order.ID_Pedido}.${receiptExtension(order.Comprobante)}`}
-                    className="bg-[#212121] hover:bg-black text-white rounded-full px-4 py-1.5 transition-colors"
+                    className="bg-brand-ink hover:bg-black text-white rounded-full px-4 py-1.5 transition-colors"
                     style={{ fontSize: '0.75rem', fontWeight: 600 }}
                   >
                     Descargar imagen
                   </a>
                 </div>
-                <img src={order.Comprobante} alt="Comprobante de pago Nequi" className="w-full max-h-72 object-contain rounded-xl border border-gray-100 bg-[#F5F5F5]" />
+                <img src={order.Comprobante} alt="Comprobante de pago Nequi" className="w-full max-h-72 object-contain rounded-xl border border-gray-100 bg-brand-surface" />
               </div>
             )}
           </div>
@@ -232,7 +232,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
                       className="w-12 h-12 object-cover rounded-xl shrink-0"
                     />
                     <div className="flex-1 min-w-0">
-                      <p className="text-[#212121] font-medium truncate" style={{ fontSize: '0.9rem' }}>{name}</p>
+                      <p className="text-brand-ink font-medium truncate" style={{ fontSize: '0.9rem' }}>{name}</p>
                       <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>x{qty} - {formatPrice(unit)} c/u</p>
                     </div>
                     <span className="font-semibold shrink-0">{formatPrice(Number(item.Subtotal))}</span>
@@ -243,7 +243,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
             <dl className="border-t border-gray-100 pt-3" style={{ fontSize: '0.85rem' }}>
               <div className="flex justify-between text-gray-500"><dt>Subtotal</dt><dd>{formatPrice(subtotal)}</dd></div>
               <div className="flex justify-between text-gray-500"><dt>Envio</dt><dd className="text-green-600">Gratis</dd></div>
-              <div className="flex justify-between text-[#C62828] font-bold mt-1" style={{ fontSize: '1rem' }}><dt>Total</dt><dd>{formatPrice(order.Total)}</dd></div>
+              <div className="flex justify-between text-brand-red font-bold mt-1" style={{ fontSize: '1rem' }}><dt>Total</dt><dd>{formatPrice(order.Total)}</dd></div>
             </dl>
           </div>
 
@@ -253,13 +253,13 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
               <ul className="flex flex-col divide-y divide-gray-50">
                 {envioReviews.map((r) => (
                   <li key={r.ID_Calificacion} className="py-3">
-                    <p className="text-[#212121]" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                    <p className="text-brand-ink" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                       {r.Usuario_Nombre?.trim() || 'Usuario'}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
                       <StarRating value={r.Estrellas} size={14} />
                       {ratingLabel(r.Estrellas) && (
-                        <span className="text-[#f57f17]" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                        <span className="text-brand-orange" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
                           {ratingLabel(r.Estrellas)}
                         </span>
                       )}

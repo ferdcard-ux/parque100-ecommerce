@@ -79,7 +79,7 @@ export function AddressPage({
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] pb-12">
+    <div className="min-h-screen bg-brand-surface pb-12">
       <div className="max-w-4xl mx-auto px-4 py-8">
         {mode === 'checkout' && (
           <>
@@ -95,7 +95,7 @@ export function AddressPage({
         {isLoadingProfile ? (
           <p role="status" className="text-center text-gray-600">Cargando datos de entrega...</p>
         ) : loadError && user ? (
-          <div role="alert" className="text-center text-[#C62828]">
+          <div role="alert" className="text-center text-brand-red">
             <p>{loadError}</p>
             <button type="button" onClick={() => void onRetryLoad()} className="mt-3 underline">
               Reintentar
@@ -111,7 +111,7 @@ export function AddressPage({
               onSubmit={handleSubmit}
             />
             {isSaving && <p role="status" className="mt-3 text-center text-gray-600">Guardando datos de entrega...</p>}
-            {saveError && user && <p role="alert" className="mt-3 text-center text-[#C62828]">{saveError}</p>}
+            {saveError && user && <p role="alert" className="mt-3 text-center text-brand-red">{saveError}</p>}
             {saved && (
               <p role="status" className="mt-3 p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-center" style={{ fontSize: '0.85rem' }}>
                 Cambios guardados correctamente. Volviendo a Mi cuenta…

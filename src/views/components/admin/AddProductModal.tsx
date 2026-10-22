@@ -92,29 +92,29 @@ export function AddProductModal({ isOpen, onClose, onCreate, categories, units, 
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4 py-6 overflow-y-auto">
       <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Agregar producto" className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl my-auto max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
-          <h2 className="text-[#212121] font-bold" style={{ fontSize: '1.1rem' }}>Agregar Producto</h2>
+          <h2 className="text-brand-ink font-bold" style={{ fontSize: '1.1rem' }}>Agregar Producto</h2>
           <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
             <X size={18} className="text-gray-500" />
           </button>
         </div>
         <div className="flex flex-col gap-4">
           <div>
-            <label htmlFor="prod-nombre" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Nombre del producto</label>
+            <label htmlFor="prod-nombre" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Nombre del producto</label>
             <input id="prod-nombre" type="text" maxLength={50} placeholder="Ej: Manzanas x5" value={nombre} onChange={(e) => setNombre(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div>
-            <label htmlFor="prod-descripcion" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Descripción</label>
+            <label htmlFor="prod-descripcion" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Descripción</label>
             <textarea id="prod-descripcion" rows={2} maxLength={255} placeholder="Describe el producto (ej: frescas, unidad por libra)" value={descripcion} onChange={(e) => setDescripcion(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] resize-none"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink resize-none"
               style={{ fontSize: '0.9rem' }}
             />
             <p className="text-gray-400 mt-1" style={{ fontSize: '0.72rem' }}>Máximo 255 caracteres.</p>
           </div>
           <div>
-            <label htmlFor="prod-categoria" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Categoría</label>
+            <label htmlFor="prod-categoria" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Categoría</label>
             <select id="prod-categoria" value={categoria} onChange={(e) => {
               if (e.target.value === '__add_category__') {
                 setCategoria('');
@@ -123,7 +123,7 @@ export function AddProductModal({ isOpen, onClose, onCreate, categories, units, 
                 setCategoria(e.target.value);
               }
             }}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
               style={{ fontSize: '0.9rem' }}
             >
               <option value="">Selecciona una categoría</option>
@@ -134,47 +134,47 @@ export function AddProductModal({ isOpen, onClose, onCreate, categories, units, 
             </select>
           </div>
           <div>
-            <label htmlFor="prod-cantidad" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Cantidad inicial</label>
+            <label htmlFor="prod-cantidad" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Cantidad inicial</label>
             <input id="prod-cantidad" type="text" inputMode="numeric" pattern={INTEGER_PATTERN} maxLength={10} title="Ingresa un entero entre 0 y 2147483647" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(limitNumericInput(e.target.value, 10))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div>
-            <label htmlFor="prod-precio" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio (COP)</label>
+            <label htmlFor="prod-precio" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Precio (COP)</label>
             <input id="prod-precio" type="text" inputMode="numeric" pattern={INTEGER_PATTERN} maxLength={10} title="Ingresa un precio entero entre 0 y 2147483647" placeholder="Ej: 4800" value={precio} onChange={(e) => setPrecio(limitNumericInput(e.target.value, 10))}
-              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="prod-precio-ant" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio anterior (opcional)</label>
+              <label htmlFor="prod-precio-ant" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Precio anterior (opcional)</label>
               <input id="prod-precio-ant" type="text" inputMode="numeric" pattern="[0-9]{0,10}" maxLength={10} title="Ingresa un precio entero entre 0 y 2147483647" placeholder="Ej: 5200" value={precioAnterior} onChange={(e) => setPrecioAnterior(limitNumericInput(e.target.value, 10))}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
                 style={{ fontSize: '0.9rem' }}
               />
             </div>
             <div>
-              <label htmlFor="prod-marca" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Marca (opcional)</label>
+              <label htmlFor="prod-marca" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Marca (opcional)</label>
               <input id="prod-marca" type="text" maxLength={50} placeholder="Ej: Colanta" value={marca} onChange={(e) => setMarca(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
                 style={{ fontSize: '0.9rem' }}
               />
             </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="prod-contenido" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Contenido (opcional)</label>
+              <label htmlFor="prod-contenido" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Contenido (opcional)</label>
               <input id="prod-contenido" type="text" inputMode="decimal" pattern={DECIMAL_PATTERN} maxLength={13} title="Hasta 10 enteros y 2 decimales" placeholder="Ej: 500" value={contQty} onChange={(e) => setContQty(limitNumericInput(e.target.value, 10, 2))}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
                 style={{ fontSize: '0.9rem' }}
               />
             </div>
             <div>
-              <label htmlFor="prod-unidad" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Unidad</label>
+              <label htmlFor="prod-unidad" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Unidad</label>
               <select id="prod-unidad" value={contUnit} onChange={(e) => setContUnit(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121]"
+                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red text-brand-ink"
                 style={{ fontSize: '0.9rem' }}>
                 {[...new Map(units.map((item) => [item.name.trim().toLocaleLowerCase(), item])).values()].map((item) => (
                   <option key={item.id} value={item.name}>{item.name}</option>
@@ -185,13 +185,13 @@ export function AddProductModal({ isOpen, onClose, onCreate, categories, units, 
           <ProductImageInput value={imagen} onChange={setImagen} />
           <div className="flex gap-3 mt-2">
             <button onClick={onClose} disabled={saving}
-              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-[#212121] font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-brand-ink font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
               style={{ fontSize: '0.9rem' }}
             >
               Cancelar
             </button>
             <button onClick={handleSubmit} disabled={saving || !nombre.trim() || !descripcion.trim() || !categoria || !cantidad || !precio || !Number.isInteger(Number(cantidad)) || Number(cantidad) > MAX_INT || !Number.isInteger(Number(precio)) || Number(precio) > MAX_INT || (precioAnterior !== '' && (!Number.isInteger(Number(precioAnterior)) || Number(precioAnterior) > MAX_INT)) || (contQty !== '' && (!Number.isFinite(Number(contQty)) || Number(contQty) > MAX_CONTENT_QTY)) || (imagen !== '' && !imagen.startsWith('data:') && !isValidHttpUrl(imagen))}
-              className="flex-1 py-2.5 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-colors shadow-sm disabled:opacity-50"
+              className="flex-1 py-2.5 rounded-xl bg-brand-red text-white font-semibold hover:bg-brand-red-dark transition-colors shadow-sm disabled:opacity-50"
               style={{ fontSize: '0.9rem' }}
             >
               {saving ? 'Guardando...' : 'Guardar'}

@@ -96,16 +96,16 @@ export function CatalogPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+    <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
       <div className="max-w-7xl mx-auto">
         <p className="text-gray-400 mb-4" style={{ fontSize: '0.8rem' }}>
-          <Link to="/" className="hover:text-[#C62828]">Inicio</Link> / {category === 'Todos' ? 'Catalogo' : category}
+          <Link to="/" className="hover:text-brand-red">Inicio</Link> / {category === 'Todos' ? 'Catalogo' : category}
         </p>
         <PageHeader title={title} subtitle={`${products.length} productos encontrados`} />
 
         {query && (
-          <div className="mb-6 rounded-2xl overflow-hidden border border-[#FBC02D]/40 bg-[#FBC02D]/10 px-5 py-4">
-            <p className="text-[#212121] font-semibold" style={{ fontSize: '0.9rem' }}>Ofertas relacionadas con “{query}”</p>
+          <div className="mb-6 rounded-2xl overflow-hidden border border-brand-yellow/40 bg-brand-yellow/10 px-5 py-4">
+            <p className="text-brand-ink font-semibold" style={{ fontSize: '0.9rem' }}>Ofertas relacionadas con “{query}”</p>
             <p className="text-gray-500" style={{ fontSize: '0.8rem' }}>Activa “Solo promociones” en los filtros para ver precios felices.</p>
           </div>
         )}
@@ -117,8 +117,8 @@ export function CatalogPage() {
               onClick={() => setCategory(cat)}
               className={`px-4 py-1.5 rounded-full border transition-colors ${
                 category === cat
-                  ? 'bg-[#C62828] text-white border-[#C62828]'
-                  : 'bg-white text-gray-600 border-gray-200 hover:border-[#C62828] hover:text-[#C62828]'
+                  ? 'bg-brand-red text-white border-brand-red'
+                  : 'bg-white text-gray-600 border-gray-200 hover:border-brand-red hover:text-brand-red'
               }`}
               style={{ fontSize: '0.8rem', fontWeight: 500 }}
             >
@@ -130,19 +130,19 @@ export function CatalogPage() {
         <div className="grid grid-cols-1 lg:grid-cols-[240px_1fr] gap-6 items-start">
           <aside className="bg-white rounded-2xl border border-gray-100 p-4 flex flex-col gap-4">
             <div>
-              <p className="text-[#212121] font-semibold mb-2" style={{ fontSize: '0.85rem' }}>Precio</p>
+              <p className="text-brand-ink font-semibold mb-2" style={{ fontSize: '0.85rem' }}>Precio</p>
               <div className="flex items-center gap-2">
                 <input type="text" inputMode="numeric" pattern="[0-9]{0,10}" maxLength={10} title="Hasta 10 dígitos" placeholder="Min" value={draftMin} onChange={(e) => setDraftMin(limitNumericInput(e.target.value, 10))}
-                  className="w-full px-3 py-1.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828]" style={{ fontSize: '0.8rem' }} />
+                  className="w-full px-3 py-1.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red" style={{ fontSize: '0.8rem' }} />
                 <span className="text-gray-400">-</span>
                 <input type="text" inputMode="numeric" pattern="[0-9]{0,10}" maxLength={10} title="Hasta 10 dígitos" placeholder="Max" value={draftMax} onChange={(e) => setDraftMax(limitNumericInput(e.target.value, 10))}
-                  className="w-full px-3 py-1.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828]" style={{ fontSize: '0.8rem' }} />
+                  className="w-full px-3 py-1.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red" style={{ fontSize: '0.8rem' }} />
               </div>
             </div>
             <div>
-              <p className="text-[#212121] font-semibold mb-2" style={{ fontSize: '0.85rem' }}>Marca</p>
+              <p className="text-brand-ink font-semibold mb-2" style={{ fontSize: '0.85rem' }}>Marca</p>
               <select value={draftBrand} onChange={(e) => setDraftBrand(e.target.value)}
-                className="w-full border border-gray-200 rounded-xl px-2 py-1.5 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828]" style={{ fontSize: '0.8rem' }}>
+                className="w-full border border-gray-200 rounded-xl px-2 py-1.5 bg-brand-surface focus:outline-none focus:border-brand-red" style={{ fontSize: '0.8rem' }}>
                 <option value="">Todas</option>
                 {brands.map((b) => (
                   <option key={b} value={b}>{b}</option>
@@ -150,16 +150,16 @@ export function CatalogPage() {
               </select>
             </div>
             <label className="flex items-center gap-2 text-gray-600" style={{ fontSize: '0.85rem' }}>
-              <input type="checkbox" checked={draftPromo} onChange={(e) => setDraftPromo(e.target.checked)} className="accent-[#C62828] w-4 h-4" />
+              <input type="checkbox" checked={draftPromo} onChange={(e) => setDraftPromo(e.target.checked)} className="accent-brand-red w-4 h-4" />
               Solo promociones
             </label>
             <div className="flex gap-2">
               <button onClick={clearFilters}
-                className="flex-1 py-2 rounded-xl border border-gray-200 text-[#212121] font-medium hover:bg-gray-50 transition-colors" style={{ fontSize: '0.8rem' }}>
+                className="flex-1 py-2 rounded-xl border border-gray-200 text-brand-ink font-medium hover:bg-gray-50 transition-colors" style={{ fontSize: '0.8rem' }}>
                 Limpiar
               </button>
               <button onClick={applyFilters}
-                className="flex-1 py-2 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-colors" style={{ fontSize: '0.8rem' }}>
+                className="flex-1 py-2 rounded-xl bg-brand-red text-white font-semibold hover:bg-brand-red-dark transition-colors" style={{ fontSize: '0.8rem' }}>
                 Aplicar
               </button>
             </div>
@@ -174,7 +174,7 @@ export function CatalogPage() {
                 <select
                   value={sort}
                   onChange={(e) => setSort(e.target.value as CatalogSort)}
-                  className="border border-gray-200 rounded-xl px-2 py-1.5 focus:outline-none focus:border-[#C62828]"
+                  className="border border-gray-200 rounded-xl px-2 py-1.5 focus:outline-none focus:border-brand-red"
                 >
                   {CATALOG_SORT_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -204,7 +204,7 @@ export function CatalogPage() {
                 action={
                   <button
                     onClick={reload}
-                    className="bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full px-6 py-2.5 transition-colors"
+                    className="bg-brand-red hover:bg-brand-red-dark text-white rounded-full px-6 py-2.5 transition-colors"
                     style={{ fontSize: '0.875rem', fontWeight: 600 }}
                   >
                     Reintentar
@@ -219,7 +219,7 @@ export function CatalogPage() {
                 action={
                   <button
                     onClick={clearFilters}
-                    className="bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full px-6 py-2.5 transition-colors"
+                    className="bg-brand-red hover:bg-brand-red-dark text-white rounded-full px-6 py-2.5 transition-colors"
                     style={{ fontSize: '0.875rem', fontWeight: 600 }}
                   >
                     Limpiar filtros
@@ -244,7 +244,7 @@ export function CatalogPage() {
                     <button
                       onClick={() => goToPage(safePage - 1)}
                       disabled={safePage <= 1}
-                      className="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 disabled:opacity-40 hover:border-[#C62828] hover:text-[#C62828] transition-colors"
+                      className="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 disabled:opacity-40 hover:border-brand-red hover:text-brand-red transition-colors"
                       style={{ fontSize: '0.8rem', fontWeight: 600 }}
                     >
                       Anterior
@@ -253,7 +253,7 @@ export function CatalogPage() {
                     <button
                       onClick={() => goToPage(safePage + 1)}
                       disabled={safePage >= totalPages}
-                      className="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 disabled:opacity-40 hover:border-[#C62828] hover:text-[#C62828] transition-colors"
+                      className="px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-600 disabled:opacity-40 hover:border-brand-red hover:text-brand-red transition-colors"
                       style={{ fontSize: '0.8rem', fontWeight: 600 }}
                     >
                       Siguiente

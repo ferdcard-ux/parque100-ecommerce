@@ -61,7 +61,7 @@ export function ProductImageInput({
 
   return (
     <div>
-      <label className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>
+      <label className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>
         {label} <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>{hint}</span>
       </label>
       <input
@@ -77,7 +77,7 @@ export function ProductImageInput({
             ? 'Ingresa una URL válida que comience con http:// o https://.'
             : null);
         }}
-        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
         style={{ fontSize: '0.9rem' }}
       />
       <div className="flex items-center gap-3 mt-2">
@@ -92,7 +92,7 @@ export function ProductImageInput({
           type="button"
           disabled={reading}
           onClick={() => fileRef.current?.click()}
-          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 hover:border-[#C62828] hover:text-[#C62828] transition-colors disabled:opacity-50"
+          className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 hover:border-brand-red hover:text-brand-red transition-colors disabled:opacity-50"
           style={{ fontSize: '0.8rem', fontWeight: 600 }}
         >
           <ImagePlus size={15} /> {reading ? 'Leyendo...' : 'Subir archivo'}
@@ -101,7 +101,7 @@ export function ProductImageInput({
           <button
             type="button"
             onClick={() => { setError(null); onChange(''); }}
-            className="flex items-center gap-1 px-3 py-2 rounded-xl border border-gray-200 text-gray-500 hover:text-[#C62828] transition-colors"
+            className="flex items-center gap-1 px-3 py-2 rounded-xl border border-gray-200 text-gray-500 hover:text-brand-red transition-colors"
             style={{ fontSize: '0.8rem' }}
           >
             <Trash2 size={14} /> Quitar
@@ -112,10 +112,10 @@ export function ProductImageInput({
         <img
           src={value}
           alt={previewAlt}
-          className={`mt-3 w-full h-36 ${previewClassName} rounded-xl border border-gray-100 bg-[#F5F5F5]`}
+          className={`mt-3 w-full h-36 ${previewClassName} rounded-xl border border-gray-100 bg-brand-surface`}
         />
       )}
-      {error && <p role="alert" className="text-[#C62828] mt-1.5" style={{ fontSize: '0.8rem' }}>{error}</p>}
+      {error && <p role="alert" className="text-brand-red mt-1.5" style={{ fontSize: '0.8rem' }}>{error}</p>}
     </div>
   );
 }

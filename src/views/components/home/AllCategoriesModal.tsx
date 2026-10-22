@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import type { Category } from '../../../models';
 import { useScrollLock } from '../../../utils/useScrollLock';
 import { useDialogBehavior } from '../../../utils/useDialog';
+import { CategoryIllustration } from '../shared/CategoryIllustration';
 
 interface AllCategoriesModalProps {
   categories: Category[];
@@ -19,7 +20,7 @@ export function AllCategoriesModal({ categories, onCategoryClick, onClose }: All
       <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Todas las categorías" className="bg-white rounded-2xl w-full max-w-lg shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
-            <h2 className="text-[#212121] font-bold" style={{ fontSize: '1.1rem' }}>Todas las Categorías</h2>
+            <h2 className="text-brand-ink font-bold" style={{ fontSize: '1.1rem' }}>Todas las Categorías</h2>
             <p className="text-gray-400" style={{ fontSize: '0.8rem' }}>{categories.length} categorías disponibles</p>
           </div>
           <button onClick={onClose} aria-label="Cerrar" className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors">
@@ -30,12 +31,12 @@ export function AllCategoriesModal({ categories, onCategoryClick, onClose }: All
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {categories.map((cat) => (
               <button key={cat.id} onClick={() => { onCategoryClick(cat); onClose(); }}
-                className="flex flex-col items-center gap-2 p-4 rounded-2xl hover:bg-[#F5F5F5] transition-colors group"
+                className="flex flex-col items-center gap-2 p-4 rounded-2xl hover:bg-brand-surface transition-colors group"
               >
-                <div className={`w-14 h-14 rounded-full flex items-center justify-center border-2 ${cat.color} ${cat.border} group-hover:scale-110 transition-transform shadow-sm`}>
-                  <span style={{ fontSize: '1.5rem' }}>{cat.emoji}</span>
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border ${cat.color} ${cat.border} group-hover:-translate-y-1 group-hover:shadow-md transition-all shadow-sm`}>
+                  <CategoryIllustration icon={cat.icon} className="w-8 h-8" />
                 </div>
-                <span className="text-[#212121] text-center font-medium" style={{ fontSize: '0.8rem' }}>{cat.name}</span>
+                <span className="text-brand-ink text-center font-medium" style={{ fontSize: '0.8rem' }}>{cat.name}</span>
               </button>
             ))}
           </div>

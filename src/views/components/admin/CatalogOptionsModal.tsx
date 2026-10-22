@@ -90,7 +90,7 @@ export function CatalogOptionsModal({
         <section ref={panelRef} role="dialog" aria-modal="true" aria-label={title} className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl bg-white shadow-2xl">
           <header className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
             <div>
-              <h2 className="font-bold text-[#212121]">{title}</h2>
+              <h2 className="font-bold text-brand-ink">{title}</h2>
               <p className="mt-1 text-sm text-gray-500">Los nombres repetidos no están permitidos.</p>
             </div>
             <button onClick={onClose} disabled={busy} aria-label="Cerrar" className="rounded-lg p-1.5 hover:bg-gray-100 disabled:opacity-50">
@@ -106,9 +106,9 @@ export function CatalogOptionsModal({
                 maxLength={30}
                 aria-label={`Nueva ${label}`}
                 placeholder={`Nombre de ${label}`}
-                className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-[#F5F5F5] px-4 py-2.5 text-sm focus:border-[#C62828] focus:outline-none"
+                className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-brand-surface px-4 py-2.5 text-sm focus:border-brand-red focus:outline-none"
               />
-              <button type="submit" disabled={busy || !newName.trim()} className="flex items-center gap-1 rounded-xl bg-[#C62828] px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
+              <button type="submit" disabled={busy || !newName.trim()} className="flex items-center gap-1 rounded-xl bg-brand-red px-3 py-2 text-sm font-semibold text-white disabled:opacity-50">
                 <Plus size={16} /> Agregar
               </button>
             </form>
@@ -125,7 +125,7 @@ export function CatalogOptionsModal({
                         onChange={(event) => setEditingName(event.target.value)}
                         maxLength={30}
                         aria-label={`Editar ${label}`}
-                        className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-[#C62828] focus:outline-none"
+                        className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-brand-red focus:outline-none"
                       />
                       <button onClick={() => void saveEdit(item)} disabled={busy || !editingName.trim()} aria-label={`Guardar ${label}`} className="rounded-lg p-2 text-green-700 hover:bg-green-50 disabled:opacity-50">
                         <Save size={16} />
@@ -136,7 +136,7 @@ export function CatalogOptionsModal({
                     </>
                   ) : (
                     <>
-                      <span className="min-w-0 flex-1 truncate text-sm text-[#212121]">{item.name}</span>
+                      <span className="min-w-0 flex-1 truncate text-sm text-brand-ink">{item.name}</span>
                       <button onClick={() => {
                         setError(null);
                         setEditingId(item.id);

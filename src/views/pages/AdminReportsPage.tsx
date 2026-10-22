@@ -66,9 +66,9 @@ export function AdminReportsPage() {
   const maxStatus = Math.max(1, ...byStatus.map((b) => b.count));
 
   const kpis = [
-    { icon: DollarSign, label: 'Ventas no DEMO', value: formatPrice(totalSales), tile: 'bg-[#C62828]/10 text-[#C62828]' },
+    { icon: DollarSign, label: 'Ventas no DEMO', value: formatPrice(totalSales), tile: 'bg-brand-red/10 text-brand-red' },
     { icon: ShoppingCart, label: 'Pedidos (incluye DEMO)', value: String(filtered.length), tile: 'bg-blue-100 text-blue-600' },
-    { icon: Receipt, label: 'Ticket promedio', value: formatPrice(avgTicket), tile: 'bg-[#FBC02D]/20 text-[#f57f17]' },
+    { icon: Receipt, label: 'Ticket promedio', value: formatPrice(avgTicket), tile: 'bg-brand-yellow/20 text-brand-orange' },
     { icon: Package, label: 'Pedidos entregados', value: String(byStatus.find((b) => b.estado === 'entregado')?.count ?? 0), tile: 'bg-green-100 text-green-700' },
     { icon: Receipt, label: 'Pedidos DEMO', value: String(demoOrders), tile: 'bg-amber-100 text-amber-700' },
   ];
@@ -81,7 +81,7 @@ export function AdminReportsPage() {
             key={p}
             onClick={() => setPeriod(p)}
             className={`px-4 py-1.5 rounded-full border transition-colors ${
-              period === p ? 'bg-[#C62828] text-white border-[#C62828]' : 'bg-white text-gray-600 border-gray-200 hover:border-[#C62828]'
+              period === p ? 'bg-brand-red text-white border-brand-red' : 'bg-white text-gray-600 border-gray-200 hover:border-brand-red'
             }`}
             style={{ fontSize: '0.8rem', fontWeight: 500 }}
           >
@@ -104,19 +104,19 @@ export function AdminReportsPage() {
             {kpis.map(({ icon: Icon, label, value, tile }) => (
               <div key={label} className="bg-white rounded-2xl border border-gray-100 p-4">
                 <span className={`w-9 h-9 rounded-xl flex items-center justify-center mb-2 ${tile}`}><Icon size={17} /></span>
-                <p className="text-[#212121] truncate" style={{ fontSize: '1.15rem', fontWeight: 700 }}>{value}</p>
+                <p className="text-brand-ink truncate" style={{ fontSize: '1.15rem', fontWeight: 700 }}>{value}</p>
                 <p className="text-gray-400 truncate" style={{ fontSize: '0.72rem' }}>{label}</p>
               </div>
             ))}
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5 overflow-x-auto">
-            <h2 className="text-[#212121] mb-6" style={{ fontSize: '1rem', fontWeight: 700 }}>Pedidos por estado (incluye DEMO)</h2>
+            <h2 className="text-brand-ink mb-6" style={{ fontSize: '1rem', fontWeight: 700 }}>Pedidos por estado (incluye DEMO)</h2>
             <div className="flex items-end gap-6 h-48 min-w-[420px]">
               {byStatus.map(({ estado, count }) => (
                 <div key={estado} className="flex-1 flex flex-col items-center justify-end gap-2">
                   <span className="text-gray-500" style={{ fontSize: '0.75rem', fontWeight: 600 }}>{count}</span>
-                  <div className="w-full max-w-14 rounded-t-lg bg-[#C62828]" style={{ height: `${(count / maxStatus) * 100}%`, minHeight: count > 0 ? 8 : 2, opacity: 0.85 }} />
+                  <div className="w-full max-w-14 rounded-t-lg bg-brand-red" style={{ height: `${(count / maxStatus) * 100}%`, minHeight: count > 0 ? 8 : 2, opacity: 0.85 }} />
                   <span className="text-gray-400 text-center" style={{ fontSize: '0.7rem' }}>{estado}</span>
                 </div>
               ))}

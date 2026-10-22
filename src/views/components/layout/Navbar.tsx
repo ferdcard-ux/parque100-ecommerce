@@ -119,22 +119,22 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
           <Link to="/" className="flex items-center gap-2 shrink-0">
             <div
               className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, #FBC02D, #C62828)' }}
+              style={{ background: 'linear-gradient(135deg, var(--brand-yellow), var(--brand-red))' }}
             >
               <Store className="text-white" size={20} />
             </div>
             <div className="hidden sm:block">
-              <span className="text-[#C62828] font-bold leading-none block" style={{ fontSize: '1rem' }}>Tienda</span>
-              <span className="text-[#FBC02D] font-bold leading-none block" style={{ fontSize: '0.85rem' }}>Parque 100</span>
+              <span className="text-brand-red font-bold leading-none block" style={{ fontSize: '1rem' }}>Tienda</span>
+              <span className="text-brand-yellow font-bold leading-none block" style={{ fontSize: '0.85rem' }}>Parque 100</span>
             </div>
           </Link>
 
           <div className="hidden md:flex items-center gap-6">
-            <Link to="/" className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Inicio</Link>
-            <button onClick={handleCategoriesClick} className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Categorías</button>
-            <Link to="/catalogo" className="text-[#212121] hover:text-[#C62828] transition-colors font-medium">Catálogo</Link>
+            <Link to="/" className="text-brand-ink hover:text-brand-red transition-colors font-medium">Inicio</Link>
+            <button onClick={handleCategoriesClick} className="text-brand-ink hover:text-brand-red transition-colors font-medium">Categorías</button>
+            <Link to="/catalogo" className="text-brand-ink hover:text-brand-red transition-colors font-medium">Catálogo</Link>
             {isAdmin && (
-              <Link to={userRole === 'domiciliario' ? '/admin/pedidos-pendientes' : '/admin'} className="flex items-center gap-1.5 text-[#C62828] hover:text-[#b71c1c] transition-colors font-medium">
+              <Link to={userRole === 'domiciliario' ? '/admin/pedidos-pendientes' : '/admin'} className="flex items-center gap-1.5 text-brand-red hover:text-brand-red-dark transition-colors font-medium">
                 <ShieldCheck size={15} />
                 {userRole === 'domiciliario' ? 'Pedidos' : 'Admin'}
               </Link>
@@ -154,21 +154,21 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') goSearch();
                 }}
-                className="w-full pl-9 pr-4 py-2 rounded-full bg-[#F5F5F5] border border-gray-200 focus:outline-none focus:border-[#C62828] focus:ring-1 focus:ring-[#C62828] text-sm text-[#212121]"
+                className="w-full pl-9 pr-4 py-2 rounded-full bg-brand-surface border border-gray-200 focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red text-sm text-brand-ink"
               />
               {suggestOpen && suggestItems.length > 0 && (
                 <div className="absolute left-0 right-0 top-full mt-2 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-50">
                   {suggestItems.map((p) => (
                     <button key={p.id} onClick={() => { setSuggestOpen(false); navigate(`/producto/${p.id}`); }}
-                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-[#F5F5F5] transition-colors text-left">
+                      className="w-full flex items-center gap-3 px-3 py-2 hover:bg-brand-surface transition-colors text-left">
                       <ImageWithFallback src={p.image} alt={p.name} className="w-10 h-10 rounded-xl object-cover shrink-0" />
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[#212121]" style={{ fontSize: '0.82rem', fontWeight: 600 }}>{p.name}</span>
-                        <span className="block text-[#C62828] font-bold" style={{ fontSize: '0.78rem' }}>{formatPrice(p.price)}</span>
+                        <span className="block truncate text-brand-ink" style={{ fontSize: '0.82rem', fontWeight: 600 }}>{p.name}</span>
+                        <span className="block text-brand-red font-bold" style={{ fontSize: '0.78rem' }}>{formatPrice(p.price)}</span>
                       </span>
                     </button>
                   ))}
-                  <button onClick={goSearch} className="w-full px-3 py-2 text-center text-[#C62828] font-semibold hover:bg-red-50 transition-colors" style={{ fontSize: '0.8rem' }}>
+                  <button onClick={goSearch} className="w-full px-3 py-2 text-center text-brand-red font-semibold hover:bg-red-50 transition-colors" style={{ fontSize: '0.8rem' }}>
                     Ver todos los resultados
                   </button>
                 </div>
@@ -179,18 +179,18 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
           <div className="flex items-center gap-2">
             {isLoggedIn && <UserNotifications userId={user?.id ?? null} />}
             <Link to="/favoritos" aria-label={`Favoritos${favoriteCount > 0 ? `, ${favoriteCount} productos` : ''}`} className="relative p-2 rounded-full hover:bg-red-50 transition-colors">
-              <Heart size={22} className="text-[#C62828]" />
+              <Heart size={22} className="text-brand-red" />
               {favoriteCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#C62828] text-white flex items-center justify-center" style={{ fontSize: '0.65rem', fontWeight: 700 }}>
+                <span className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-brand-red text-white flex items-center justify-center" style={{ fontSize: '0.65rem', fontWeight: 700 }}>
                   {favoriteCount}
                 </span>
               )}
             </Link>
             <Link to="/cart" aria-label={`Carrito${cartCount > 0 ? `, ${cartCount} productos` : ''}`} className="relative p-2 rounded-full hover:bg-red-50 transition-colors">
-              <ShoppingCart size={22} className="text-[#212121]" />
+              <ShoppingCart size={22} className="text-brand-ink" />
               {cartCount > 0 && (
                 <span
-                  className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#C62828] text-white flex items-center justify-center"
+                  className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-brand-red text-white flex items-center justify-center"
                   style={{ fontSize: '0.65rem', fontWeight: 700 }}
                 >
                   {cartCount > 99 ? '99+' : cartCount}
@@ -201,7 +201,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
             {isLoggedIn && user ? (
               <div className="relative" ref={userMenuRef}>
                 <button onClick={() => setUserMenuOpen(!userMenuOpen)} aria-expanded={userMenuOpen} aria-haspopup="menu"
-                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#C62828] text-white font-medium hover:bg-[#b71c1c] transition-colors"
+                  className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-red text-white font-medium hover:bg-brand-red-dark transition-colors"
                   style={{ fontSize: '0.875rem' }}
                 >
                   <UserAvatar
@@ -221,40 +221,40 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                         photo={sessionPhoto(user)}
                         firstName={user.firstName}
                         lastName={user.lastName}
-                        className="w-10 h-10 rounded-full bg-[#C62828]/10 text-[#C62828]"
+                        className="w-10 h-10 rounded-full bg-brand-red/10 text-brand-red"
                         textClassName="font-bold"
                         textStyle={{ fontSize: '0.85rem' }}
                       />
                       <div className="min-w-0">
-                        <p className="text-[#212121] font-semibold truncate" style={{ fontSize: '0.9rem' }}>
+                        <p className="text-brand-ink font-semibold truncate" style={{ fontSize: '0.9rem' }}>
                           {user.firstName} {user.lastName}
                         </p>
                         <p className="text-gray-400 truncate" style={{ fontSize: '0.8rem' }}>{user.email}</p>
                         {isAdmin && (
                           <span className="flex items-center gap-1 mt-1.5">
-                            <ShieldCheck size={12} className="text-[#C62828]" />
-                            <span className="text-[#C62828] font-medium" style={{ fontSize: '0.75rem' }}>{userRole === 'domiciliario' ? 'Domiciliario' : 'Administrador'}</span>
+                            <ShieldCheck size={12} className="text-brand-red" />
+                            <span className="text-brand-red font-medium" style={{ fontSize: '0.75rem' }}>{userRole === 'domiciliario' ? 'Domiciliario' : 'Administrador'}</span>
                           </span>
                         )}
                       </div>
                     </div>
                     <div className="py-1">
                       <button onClick={() => { setUserMenuOpen(false); navigate('/cuenta'); }}
-                        className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-brand-surface transition-colors"
                         style={{ fontSize: '0.875rem' }}
                       >
                         <User size={16} />
                         Mi cuenta
                       </button>
                       <button onClick={() => { setUserMenuOpen(false); navigate('/compras'); }}
-                        className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-brand-surface transition-colors"
                         style={{ fontSize: '0.875rem' }}
                       >
                         <ShoppingCart size={16} />
                         Mis compras
                       </button>
                       <button onClick={() => { setUserMenuOpen(false); navigate('/login?mode=switch'); }}
-                        className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-gray-600 hover:bg-brand-surface transition-colors"
                         style={{ fontSize: '0.875rem' }}
                       >
                         <RefreshCw size={16} />
@@ -265,14 +265,14 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                           <p className="px-5 py-1.5 text-gray-400" style={{ fontSize: '0.7rem', fontWeight: 600 }}>Otras sesiones activas</p>
                           {sessions.filter((s) => s.id !== user.id).map((s) => (
                             <button key={s.id} onClick={() => { setUserMenuOpen(false); onSwitchSession(s.id); }}
-                              className="w-full flex items-center gap-3 px-5 py-2 text-gray-600 hover:bg-[#F5F5F5] transition-colors"
+                              className="w-full flex items-center gap-3 px-5 py-2 text-gray-600 hover:bg-brand-surface transition-colors"
                               style={{ fontSize: '0.8rem' }}
                             >
                               <UserAvatar
                                 photo={sessionPhoto(s)}
                                 firstName={s.firstName}
                                 lastName={s.lastName}
-                                className="w-6 h-6 rounded-full bg-[#FBC02D]/30"
+                                className="w-6 h-6 rounded-full bg-brand-yellow/30"
                                 textClassName="font-bold"
                                 textStyle={{ fontSize: '0.6rem' }}
                               />
@@ -282,7 +282,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                         </div>
                       )}
                       <button onClick={handleLogout}
-                        className="w-full flex items-center gap-3 px-5 py-2.5 text-[#C62828] hover:bg-red-50 transition-colors"
+                        className="w-full flex items-center gap-3 px-5 py-2.5 text-brand-red hover:bg-red-50 transition-colors"
                         style={{ fontSize: '0.875rem' }}
                       >
                         <LogOut size={16} />
@@ -294,7 +294,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
               </div>
             ) : (
               <Link to="/login"
-                className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#C62828] text-white font-medium hover:bg-[#b71c1c] transition-colors"
+                className="hidden sm:flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-brand-red text-white font-medium hover:bg-brand-red-dark transition-colors"
                 style={{ fontSize: '0.875rem' }}
               >
                 <User size={15} />
@@ -325,15 +325,15 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                   navigate(`/catalogo?q=${encodeURIComponent(searchValue.trim())}`);
                 }
               }}
-              className="w-full pl-9 pr-4 py-2 rounded-full bg-[#F5F5F5] border border-gray-200 focus:outline-none focus:border-[#C62828] text-sm"
+              className="w-full pl-9 pr-4 py-2 rounded-full bg-brand-surface border border-gray-200 focus:outline-none focus:border-brand-red text-sm"
             />
           </div>
-          <Link to="/" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Inicio</Link>
-          <button onClick={() => { setMenuOpen(false); handleCategoriesClick(); }} className="text-left text-[#212121] font-medium py-2 border-b">Categorías</button>
-          <Link to="/catalogo" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Catálogo</Link>
-          <Link to="/mapa-sitio" className="text-[#212121] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Mapa del Sitio</Link>
+          <Link to="/" className="text-brand-ink font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Inicio</Link>
+          <button onClick={() => { setMenuOpen(false); handleCategoriesClick(); }} className="text-left text-brand-ink font-medium py-2 border-b">Categorías</button>
+          <Link to="/catalogo" className="text-brand-ink font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Catálogo</Link>
+          <Link to="/mapa-sitio" className="text-brand-ink font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>Mapa del Sitio</Link>
           {isAdmin && (
-            <Link to={userRole === 'domiciliario' ? '/admin/pedidos-pendientes' : '/admin'} className="flex items-center gap-1.5 text-[#C62828] font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>
+            <Link to={userRole === 'domiciliario' ? '/admin/pedidos-pendientes' : '/admin'} className="flex items-center gap-1.5 text-brand-red font-medium py-2 border-b" onClick={() => setMenuOpen(false)}>
               <ShieldCheck size={15} />
               {userRole === 'domiciliario' ? 'Pedidos' : 'Admin'}
             </Link>
@@ -345,12 +345,12 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                   photo={sessionPhoto(user)}
                   firstName={user.firstName}
                   lastName={user.lastName}
-                  className="w-8 h-8 rounded-full bg-[#C62828] text-white"
+                  className="w-8 h-8 rounded-full bg-brand-red text-white"
                   textClassName="font-bold"
                   textStyle={{ fontSize: '0.7rem' }}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="text-[#212121] font-medium truncate" style={{ fontSize: '0.85rem' }}>{user.firstName} {user.lastName}</p>
+                  <p className="text-brand-ink font-medium truncate" style={{ fontSize: '0.85rem' }}>{user.firstName} {user.lastName}</p>
                   <p className="text-gray-400 truncate" style={{ fontSize: '0.75rem' }}>{user.email}</p>
                 </div>
               </div>
@@ -373,14 +373,14 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
                 <RefreshCw size={16} /> Cambiar de usuario
               </button>
               <button onClick={() => { setMenuOpen(false); handleLogout(); }}
-                className="text-left flex items-center gap-2 text-[#C62828] font-medium py-2 border-b"
+                className="text-left flex items-center gap-2 text-brand-red font-medium py-2 border-b"
                 style={{ fontSize: '0.85rem' }}
               >
                 <LogOut size={16} /> Cerrar sesión
               </button>
             </>
           ) : (
-            <Link to="/login" className="text-center py-2 rounded-full bg-[#C62828] text-white font-medium" onClick={() => setMenuOpen(false)}>
+            <Link to="/login" className="text-center py-2 rounded-full bg-brand-red text-white font-medium" onClick={() => setMenuOpen(false)}>
               Iniciar Sesión
             </Link>
           )}

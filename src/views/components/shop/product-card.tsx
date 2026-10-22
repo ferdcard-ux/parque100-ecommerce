@@ -24,7 +24,7 @@ export function ProductCard({ product, isFavorite = false, onToggleFavorite, onA
   const unit = formatUnitPrice(product.price, product.contentQty, product.contentUnit);
   return (
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 group flex flex-col">
-      <div className="relative aspect-[4/3] overflow-hidden bg-[#F5F5F5]">
+      <div className="relative aspect-[4/3] overflow-hidden bg-brand-surface">
         <Link to={`/producto/${product.id}`}>
           <ImageWithFallback
             src={product.image}
@@ -34,7 +34,7 @@ export function ProductCard({ product, isFavorite = false, onToggleFavorite, onA
           />
         </Link>
         {promo && (
-          <span className="absolute top-2 left-2 w-7 h-7 rounded-full bg-[#FF8F01] text-white flex items-center justify-center font-bold" style={{ fontSize: '0.7rem' }} title="En promoción">
+          <span className="absolute top-2 left-2 w-7 h-7 rounded-full bg-brand-orange text-white flex items-center justify-center font-bold" style={{ fontSize: '0.7rem' }} title="En promoción">
             %
           </span>
         )}
@@ -43,13 +43,13 @@ export function ProductCard({ product, isFavorite = false, onToggleFavorite, onA
           aria-label="Favorito"
           className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center before:absolute before:-inset-2.5 before:content-['']"
         >
-          <Heart size={13} className={isFavorite ? 'fill-[#C62828] text-[#C62828]' : 'text-gray-400'} />
+          <Heart size={13} className={isFavorite ? 'fill-brand-red text-brand-red' : 'text-gray-400'} />
         </button>
       </div>
       <div className="p-3 flex flex-col flex-1">
         <p className="text-gray-400 mb-0.5" style={{ fontSize: '0.7rem' }}>{product.category}</p>
         <Link to={`/producto/${product.id}`}>
-          <h3 className="text-[#212121] font-semibold leading-tight mb-1 hover:text-[#C62828] transition-colors line-clamp-2" style={{ fontSize: '0.875rem', minHeight: '2.2em' }}>
+          <h3 className="text-brand-ink font-semibold leading-tight mb-1 hover:text-brand-red transition-colors line-clamp-2" style={{ fontSize: '0.875rem', minHeight: '2.2em' }}>
             {product.name}
           </h3>
         </Link>
@@ -59,12 +59,12 @@ export function ProductCard({ product, isFavorite = false, onToggleFavorite, onA
             {promo && (
               <span className="text-gray-400 line-through" style={{ fontSize: '0.72rem' }}>({formatPrice(product.previousPrice as number)})</span>
             )}
-            <span className="text-[#C62828] font-bold" style={{ fontSize: '1rem' }}>{formatPrice(product.price)}</span>
+            <span className="text-brand-red font-bold" style={{ fontSize: '1rem' }}>{formatPrice(product.price)}</span>
           </div>
           {onAddToCart && (
             <button
               onClick={() => onAddToCart(product)}
-              className="flex items-center gap-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full px-3 py-1.5 transition-colors"
+              className="flex items-center gap-1 bg-brand-red hover:bg-brand-red-dark text-white rounded-full px-3 py-1.5 transition-colors"
               style={{ fontSize: '0.75rem', fontWeight: 600 }}
             >
               <ShoppingCart size={13} /> Anadir

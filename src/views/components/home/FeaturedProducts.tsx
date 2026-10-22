@@ -40,17 +40,17 @@ export function FeaturedProducts({ products, onAddToCart, eyebrow = 'DESTACADOS'
   };
 
   return (
-    <section className="py-12 px-4 bg-[#F5F5F5]">
+    <section className="py-12 px-4 bg-brand-surface">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-4 h-4 rounded-full bg-[#C62828]" />
-              <span className="text-[#C62828] font-semibold" style={{ fontSize: '0.85rem' }}>{eyebrow}</span>
+              <div className="w-4 h-4 rounded-full bg-brand-red" />
+              <span className="text-brand-red font-semibold" style={{ fontSize: '0.85rem' }}>{eyebrow}</span>
             </div>
-            <h2 className="text-[#212121]" style={{ fontSize: '1.5rem', fontWeight: 700 }}>{title}{count != null ? ` (${count})` : ''}</h2>
+            <h2 className="text-brand-ink" style={{ fontSize: '1.5rem', fontWeight: 700 }}>{title}{count != null ? ` (${count})` : ''}</h2>
           </div>
-          <Link to={seeMoreTo} className="flex items-center gap-1 text-[#C62828] hover:underline font-medium" style={{ fontSize: '0.9rem' }}>
+          <Link to={seeMoreTo} className="flex items-center gap-1 text-brand-red hover:underline font-medium" style={{ fontSize: '0.9rem' }}>
             {seeMoreLabel} <ArrowRight size={16} />
           </Link>
         </div>
@@ -61,7 +61,7 @@ export function FeaturedProducts({ products, onAddToCart, eyebrow = 'DESTACADOS'
               key={product.id}
               className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all border border-gray-100 group"
             >
-              <div className="relative aspect-[4/3] overflow-hidden bg-[#F5F5F5]">
+              <div className="relative aspect-[4/3] overflow-hidden bg-brand-surface">
                 <Link to={`/producto/${product.id}`}>
                   <ImageWithFallback
                     src={product.image}
@@ -71,23 +71,23 @@ export function FeaturedProducts({ products, onAddToCart, eyebrow = 'DESTACADOS'
                   />
                 </Link>
                 {product.stock <= 8 && (
-                  <div className="absolute top-2 left-2 bg-[#FBC02D] text-[#212121] px-2 py-0.5 rounded-full font-semibold" style={{ fontSize: '0.65rem' }}>
+                  <div className="absolute top-2 left-2 bg-brand-yellow text-brand-ink px-2 py-0.5 rounded-full font-semibold" style={{ fontSize: '0.65rem' }}>
                     ¡Últimas unidades!
                   </div>
                 )}
                 {hasPromo(product.price, product.previousPrice) && (
-                  <span className="absolute bottom-2 left-2 w-7 h-7 rounded-full bg-[#FF8F01] text-white flex items-center justify-center font-bold" style={{ fontSize: '0.7rem' }} title="En promoción">
+                  <span className="absolute bottom-2 left-2 w-7 h-7 rounded-full bg-brand-orange text-white flex items-center justify-center font-bold" style={{ fontSize: '0.7rem' }} title="En promoción">
                     %
                   </span>
                 )}
                 <button onClick={() => toggleFavorite(product.id)} aria-label="Favorito" className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white shadow flex items-center justify-center opacity-100 md:opacity-0 md:group-hover:opacity-100 focus:opacity-100 transition-opacity before:absolute before:-inset-2.5 before:content-['']">
-                  <Heart size={12} className={isFavorite(product.id) ? 'fill-[#C62828] text-[#C62828]' : 'text-gray-400'} />
+                  <Heart size={12} className={isFavorite(product.id) ? 'fill-brand-red text-brand-red' : 'text-gray-400'} />
                 </button>
               </div>
               <div className="p-3">
                 <p className="text-gray-400 mb-0.5" style={{ fontSize: '0.7rem' }}>{product.category}</p>
                 <Link to={`/producto/${product.id}`}>
-                  <h3 className="text-[#212121] font-semibold leading-tight mb-1 hover:text-[#C62828] transition-colors line-clamp-2" style={{ fontSize: '0.875rem', minHeight: '2.2em' }}>{product.name}</h3>
+                  <h3 className="text-brand-ink font-semibold leading-tight mb-1 hover:text-brand-red transition-colors line-clamp-2" style={{ fontSize: '0.875rem', minHeight: '2.2em' }}>{product.name}</h3>
                 </Link>
                 {formatUnitPrice(product.price, product.contentQty, product.contentUnit) && (
                   <p className="text-gray-400 mb-1" style={{ fontSize: '0.7rem' }}>{formatUnitPrice(product.price, product.contentQty, product.contentUnit)}</p>
@@ -97,11 +97,11 @@ export function FeaturedProducts({ products, onAddToCart, eyebrow = 'DESTACADOS'
                     {hasPromo(product.price, product.previousPrice) && (
                       <span className="text-gray-400 line-through" style={{ fontSize: '0.72rem' }}>({formatPrice(product.previousPrice as number)})</span>
                     )}
-                    <span className="text-[#C62828] font-bold" style={{ fontSize: '1rem' }}>{formatPrice(product.price)}</span>
+                    <span className="text-brand-red font-bold" style={{ fontSize: '1rem' }}>{formatPrice(product.price)}</span>
                   </div>
                   <button
                     onClick={() => handleAddToCart(product)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all text-white ${addedIds.has(product.id) ? 'bg-green-500' : 'bg-[#C62828] hover:bg-[#b71c1c]'}`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-medium transition-all text-white ${addedIds.has(product.id) ? 'bg-green-500' : 'bg-brand-red hover:bg-brand-red-dark'}`}
                     style={{ fontSize: '0.75rem' }}
                   >
                     <ShoppingCart size={12} />

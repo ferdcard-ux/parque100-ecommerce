@@ -38,7 +38,7 @@ export function DeleteConfirmModal({
         aria-label={title}
         className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center"
       >
-        <h3 className="text-[#212121] font-bold mb-2">{title}</h3>
+        <h3 className="text-brand-ink font-bold mb-2">{title}</h3>
         <div className="text-gray-500 mb-6" style={{ fontSize: '0.9rem' }}>
           {description}
         </div>
@@ -60,7 +60,7 @@ export function DeleteConfirmModal({
           <button
             onClick={onConfirm}
             disabled={busy}
-            className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2.5 disabled:opacity-60 transition-colors"
+            className="flex-1 bg-brand-red hover:bg-brand-red-dark text-white rounded-full py-2.5 disabled:opacity-60 transition-colors"
             style={{ fontWeight: 600 }}
           >
             {busy ? 'Eliminando...' : 'Eliminar'}

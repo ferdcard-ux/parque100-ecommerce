@@ -359,7 +359,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
               maxLength={100}
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-              className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
+              className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
               style={{ fontSize: '0.875rem', width: '220px' }}
             />
           </div>
@@ -367,7 +367,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as typeof filter)}
-              className="appearance-none pr-8 pl-4 py-2 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121] cursor-pointer"
+              className="appearance-none pr-8 pl-4 py-2 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red text-brand-ink cursor-pointer"
               style={{ fontSize: '0.875rem' }}
             >
               <option value="all">Todos</option>
@@ -383,38 +383,38 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
           <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImportFile(f); }} />
           <button onClick={() => fileRef.current?.click()} disabled={busy === 'import'}
             title="Importar CSV con la plantilla oficial"
-            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-[#212121] hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-brand-ink hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
             {busy === 'import' ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Importar
           </button>
           <div className="relative">
             <button onClick={() => setExportOpen((v) => !v)} disabled={busy !== null}
               title="Exportar inventario en PDF o CSV"
               aria-expanded={exportOpen}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-[#212121] hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
+              className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-brand-ink hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
               {busy === 'csv' || busy === 'pdf' || busy === 'template' ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Exportar
             </button>
             {exportOpen && (
               <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-30">
-                <button onClick={handleExportCsv} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors">
+                <button onClick={handleExportCsv} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-brand-surface text-left transition-colors">
                   <FileSpreadsheet size={16} className="text-green-600 shrink-0" />
-                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>CSV (.csv)</span>
+                  <span><span className="block text-brand-ink font-semibold" style={{ fontSize: '0.82rem' }}>CSV (.csv)</span>
                   <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Columnas exactas de la BD</span></span>
                 </button>
-                <button onClick={handleExportTemplate} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors border-t border-gray-50">
+                <button onClick={handleExportTemplate} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-brand-surface text-left transition-colors border-t border-gray-50">
                   <FileSpreadsheet size={16} className="text-blue-500 shrink-0" />
-                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>Plantilla CSV</span>
+                  <span><span className="block text-brand-ink font-semibold" style={{ fontSize: '0.82rem' }}>Plantilla CSV</span>
                   <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Formato oficial para importar</span></span>
                 </button>
-                <button onClick={handleExportPdf} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-[#F5F5F5] text-left transition-colors border-t border-gray-50">
-                  <FileText size={16} className="text-[#C62828] shrink-0" />
-                  <span><span className="block text-[#212121] font-semibold" style={{ fontSize: '0.82rem' }}>PDF</span>
+                <button onClick={handleExportPdf} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-brand-surface text-left transition-colors border-t border-gray-50">
+                  <FileText size={16} className="text-brand-red shrink-0" />
+                  <span><span className="block text-brand-ink font-semibold" style={{ fontSize: '0.82rem' }}>PDF</span>
                   <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Igual que la tabla en pantalla</span></span>
                 </button>
               </div>
             )}
           </div>
           <button onClick={onAddClick}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#C62828] text-white font-medium hover:bg-[#b71c1c] transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-red text-white font-medium hover:bg-brand-red-dark transition-colors shadow-sm"
             style={{ fontSize: '0.875rem' }}
           >
             <Plus size={15} /> Agregar producto
@@ -431,7 +431,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
       <div className="overflow-x-auto rounded-xl border border-gray-100 hidden sm:block">
         <table className="w-full min-w-[640px]" style={{ fontSize: '0.875rem' }}>
           <thead>
-            <tr className="bg-[#F5F5F5]">
+            <tr className="bg-brand-surface">
               <th className="text-left px-4 py-3 text-gray-500 font-semibold" style={{ fontSize: '0.78rem' }}>PRODUCTO</th>
               <th className="text-left px-4 py-3 text-gray-500 font-semibold hidden sm:table-cell" style={{ fontSize: '0.78rem' }}>CATEGORÍA</th>
               <th className="text-center px-4 py-3 text-gray-500 font-semibold" style={{ fontSize: '0.78rem' }}>CANTIDAD</th>
@@ -442,24 +442,24 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
           </thead>
           <tbody>
             {paginated.map((product) => (
-              <tr key={product.id} className={`border-t border-gray-100 hover:bg-[#F5F5F5]/50 transition-colors`}>
+              <tr key={product.id} className={`border-t border-gray-100 hover:bg-brand-surface/50 transition-colors`}>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
                       <Package size={14} className="text-gray-400" />
                     </div>
-                    <span className="text-[#212121] font-medium">{product.name}</span>
+                    <span className="text-brand-ink font-medium">{product.name}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 hidden sm:table-cell">
                   <span className="text-gray-500">{product.category}</span>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <span className={`font-semibold ${product.quantity === 0 ? 'text-[#C62828]' : product.quantity <= 8 ? 'text-[#f57f17]' : 'text-[#212121]'}`}>
+                  <span className={`font-semibold ${product.quantity === 0 ? 'text-brand-red' : product.quantity <= 8 ? 'text-brand-orange' : 'text-brand-ink'}`}>
                     {product.quantity}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right hidden md:table-cell text-[#212121] font-medium">
+                <td className="px-4 py-3 text-right hidden md:table-cell text-brand-ink font-medium">
                   {formatPrice(product.price)}
                 </td>
                 <td className="px-4 py-3 text-center">
@@ -473,7 +473,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
                       <Edit2 size={15} />
                     </button>
                     <button onClick={() => onDelete(product.id)} aria-label={`Eliminar ${product.name}`}
-                      className="relative p-2.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-[#C62828] transition-colors before:absolute before:-inset-1 before:content-['']"
+                      className="relative p-2.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-brand-red transition-colors before:absolute before:-inset-1 before:content-['']"
                     >
                       <Trash2 size={15} />
                     </button>
@@ -500,7 +500,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
                 <Package size={15} className="text-gray-400" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[#212121] font-medium truncate" style={{ fontSize: '0.88rem' }}>{product.name}</p>
+                <p className="text-brand-ink font-medium truncate" style={{ fontSize: '0.88rem' }}>{product.name}</p>
                 <p className="text-gray-400" style={{ fontSize: '0.72rem' }}>{product.category}</p>
               </div>
               <span className={`shrink-0 px-2.5 py-1 rounded-full border text-xs font-semibold ${STATUS_LABELS[product.status].class}`}>
@@ -508,14 +508,14 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <p className="text-[#212121] font-bold" style={{ fontSize: '0.95rem' }}>
+              <p className="text-brand-ink font-bold" style={{ fontSize: '0.95rem' }}>
                 {formatPrice(product.price)} <span className="text-gray-400 font-normal" style={{ fontSize: '0.75rem' }}>· {product.quantity} disp.</span>
               </p>
               <div className="flex gap-1">
                 <button onClick={() => onEditClick(product)} aria-label={`Editar ${product.name}`} className="relative p-2.5 rounded-lg hover:bg-blue-50 text-blue-500 transition-colors before:absolute before:-inset-1 before:content-['']">
                   <Edit2 size={15} />
                 </button>
-                <button onClick={() => onDelete(product.id)} aria-label={`Eliminar ${product.name}`} className="relative p-2.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-[#C62828] transition-colors before:absolute before:-inset-1 before:content-['']">
+                <button onClick={() => onDelete(product.id)} aria-label={`Eliminar ${product.name}`} className="relative p-2.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-brand-red transition-colors before:absolute before:-inset-1 before:content-['']">
                   <Trash2 size={15} />
                 </button>
               </div>
@@ -539,7 +539,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
           </button>
           {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
             <button key={p} onClick={() => setPage(p)} aria-label={`Página ${p}`}
-              className={`relative min-w-11 min-h-11 rounded-lg text-sm font-medium transition-colors ${p === safePage ? 'bg-[#C62828] text-white' : 'border border-gray-200 text-[#212121] hover:bg-gray-50'}`}
+              className={`relative min-w-11 min-h-11 rounded-lg text-sm font-medium transition-colors ${p === safePage ? 'bg-brand-red text-white' : 'border border-gray-200 text-brand-ink hover:bg-gray-50'}`}
             >
               {p}
             </button>

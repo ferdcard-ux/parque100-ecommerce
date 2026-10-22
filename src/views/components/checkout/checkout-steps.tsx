@@ -28,9 +28,9 @@ export function CheckoutSteps({ current }: CheckoutStepsProps) {
           <span
             className={`w-9 h-9 rounded-full flex items-center justify-center border-2 shrink-0 transition-colors ${
               done
-                ? 'bg-[#22C55E] border-[#22C55E] text-white'
+                ? 'bg-brand-green border-brand-green text-white'
                 : active
-                  ? 'bg-[#C62828] border-[#C62828] text-white'
+                  ? 'bg-brand-red border-brand-red text-white'
                   : 'bg-white border-gray-200 text-gray-300'
             }`}
           >
@@ -39,7 +39,7 @@ export function CheckoutSteps({ current }: CheckoutStepsProps) {
         );
         const caption = (
           <span
-            className={`mt-1.5 text-center leading-tight ${active ? 'text-[#212121] font-semibold' : done ? 'text-gray-500' : 'text-gray-300'}`}
+            className={`mt-1.5 text-center leading-tight ${active ? 'text-brand-ink font-semibold' : done ? 'text-gray-500' : 'text-gray-300'}`}
             style={{ fontSize: '0.68rem' }}
           >
             <span className="sm:hidden">{short}</span>
@@ -62,7 +62,7 @@ export function CheckoutSteps({ current }: CheckoutStepsProps) {
               )}
             </div>
             {step < STEPS.length && (
-              <span className={`h-0.5 flex-1 mt-4 mx-1 rounded ${done ? 'bg-[#22C55E]' : 'bg-gray-200'}`} />
+              <span className={`h-0.5 flex-1 mt-4 mx-1 rounded ${done ? 'bg-brand-green' : 'bg-gray-200'}`} />
             )}
           </li>
         );

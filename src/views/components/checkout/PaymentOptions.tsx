@@ -1,4 +1,4 @@
-import { CreditCard, Smartphone, Banknote, CheckCircle2 } from 'lucide-react';
+import { CreditCard, Smartphone, Banknote, CheckCircle2, LockKeyhole } from 'lucide-react';
 import type { PaymentMethodType, PaymentModeState } from '../../../models';
 
 interface PaymentOptionsProps {
@@ -19,7 +19,7 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Selecciona un método de pago:</p>
+      <p className="text-brand-ink font-semibold" style={{ fontSize: '1rem' }}>Selecciona un método de pago:</p>
 
       <button
         type="button"
@@ -27,7 +27,7 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
         disabled={!demoEnabled}
         aria-pressed={selectedMethod === 'card'}
         className={`w-full text-left rounded-2xl p-5 border-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
-          selectedMethod === 'card' ? 'border-[#FBC02D] bg-[#FBC02D]/5 shadow-md' : 'border-gray-200 bg-white'
+          selectedMethod === 'card' ? 'border-brand-yellow bg-brand-yellow/5 shadow-md' : 'border-gray-200 bg-white'
         }`}
       >
         <div className="flex items-center justify-between">
@@ -36,11 +36,11 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
               <CreditCard size={26} className="text-gray-500" />
             </div>
             <div>
-              <h3 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Tarjeta (simulacion academica)</h3>
+              <h3 className="text-brand-ink font-semibold" style={{ fontSize: '1rem' }}>Tarjeta (simulacion academica)</h3>
               <p className={`mt-0.5 ${demoEnabled ? 'text-amber-800 font-semibold' : 'text-gray-500'}`} style={{ fontSize: '0.85rem' }}>{modeLabel}</p>
             </div>
           </div>
-          {selectedMethod === 'card' && <CheckCircle2 size={24} className="text-[#FBC02D] shrink-0" />}
+          {selectedMethod === 'card' && <CheckCircle2 size={24} className="text-brand-yellow shrink-0" />}
         </div>
       </button>
 
@@ -50,7 +50,7 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
         disabled={!demoEnabled}
         aria-pressed={selectedMethod === 'nequi'}
         className={`w-full text-left rounded-2xl p-5 border-2 transition-all disabled:opacity-60 disabled:cursor-not-allowed ${
-          selectedMethod === 'nequi' ? 'border-[#FBC02D] bg-[#FBC02D]/5 shadow-md' : 'border-gray-200 bg-white'
+          selectedMethod === 'nequi' ? 'border-brand-yellow bg-brand-yellow/5 shadow-md' : 'border-gray-200 bg-white'
         }`}
       >
         <div className="flex items-center justify-between">
@@ -59,11 +59,11 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
               <Smartphone size={26} className="text-gray-500" />
             </div>
             <div>
-              <h3 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Nequi (simulacion academica)</h3>
+              <h3 className="text-brand-ink font-semibold" style={{ fontSize: '1rem' }}>Nequi (simulacion academica)</h3>
               <p className={`mt-0.5 ${demoEnabled ? 'text-amber-800 font-semibold' : 'text-gray-500'}`} style={{ fontSize: '0.85rem' }}>{modeLabel}</p>
             </div>
           </div>
-          {selectedMethod === 'nequi' && <CheckCircle2 size={24} className="text-[#FBC02D] shrink-0" />}
+          {selectedMethod === 'nequi' && <CheckCircle2 size={24} className="text-brand-yellow shrink-0" />}
         </div>
       </button>
 
@@ -71,28 +71,28 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
         onClick={() => onSelect('cash')}
         className={`w-full text-left rounded-2xl p-5 border-2 transition-all ${
           selectedMethod === 'cash'
-            ? 'border-[#FBC02D] bg-[#FBC02D]/5 shadow-md'
+            ? 'border-brand-yellow bg-brand-yellow/5 shadow-md'
             : 'border-gray-200 bg-white hover:border-gray-300 shadow-sm'
         }`}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${selectedMethod === 'cash' ? 'bg-[#FBC02D]' : 'bg-gray-100'}`}>
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${selectedMethod === 'cash' ? 'bg-brand-yellow' : 'bg-gray-100'}`}>
               <Banknote size={26} className={selectedMethod === 'cash' ? 'text-white' : 'text-gray-500'} />
             </div>
             <div>
-              <h3 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Efectivo contra entrega</h3>
+              <h3 className="text-brand-ink font-semibold" style={{ fontSize: '1rem' }}>Efectivo contra entrega</h3>
               <p className="text-gray-400 mt-0.5" style={{ fontSize: '0.85rem' }}>Pagas al recibir; llevamos tu cambio</p>
             </div>
           </div>
-          {selectedMethod === 'cash' && <CheckCircle2 size={24} className="text-[#FBC02D] shrink-0" />}
+          {selectedMethod === 'cash' && <CheckCircle2 size={24} className="text-brand-yellow shrink-0" />}
         </div>
       </button>
 
       <div role={demoEnabled || paymentMode === 'error' ? 'alert' : undefined} className="flex items-center gap-3 p-4 bg-white rounded-xl border border-gray-100 shadow-sm">
-        <span className="text-2xl shrink-0">🔒</span>
+        <LockKeyhole size={22} className="shrink-0 text-brand-red" aria-hidden="true" />
         <div>
-          <p className="text-[#212121] font-medium" style={{ fontSize: '0.875rem' }}>
+          <p className="text-brand-ink font-medium" style={{ fontSize: '0.875rem' }}>
             {demoEnabled ? 'Pagos electronicos solo en modo DEMO' : 'Pago contra entrega'}
           </p>
           <p className="text-gray-500" style={{ fontSize: '0.8rem' }}>

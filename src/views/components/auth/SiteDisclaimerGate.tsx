@@ -70,13 +70,13 @@ export function SiteDisclaimerGate() {
       ? 'Esta cuenta de acceso no está habilitada. Contacta al responsable del sitio.'
       : 'Inicia sesión con tu cuenta del equipo para continuar.';
     return (
-      <main className="min-h-screen grid place-items-center bg-[#F5F5F5] px-4">
+      <main className="min-h-screen grid place-items-center bg-brand-surface px-4">
         <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow">
-          <p role="alert" className="text-[#212121]">{message}</p>
+          <p role="alert" className="text-brand-ink">{message}</p>
           <button
             type="button"
             onClick={() => window.location.replace(`/access.html?next=${next}`)}
-            className="mt-4 rounded-lg bg-[#C62828] px-4 py-2 text-white"
+            className="mt-4 rounded-lg bg-brand-red px-4 py-2 text-white"
           >
             Ir al acceso
           </button>
@@ -87,13 +87,13 @@ export function SiteDisclaimerGate() {
 
   if (state === 'loading' || state === 'error') {
     return (
-      <main className="min-h-screen grid place-items-center bg-[#F5F5F5] px-4">
+      <main className="min-h-screen grid place-items-center bg-brand-surface px-4">
         <section className="w-full max-w-md rounded-2xl bg-white p-6 shadow">
-          <p role={state === 'error' ? 'alert' : 'status'} className="text-[#212121]">
+          <p role={state === 'error' ? 'alert' : 'status'} className="text-brand-ink">
             {state === 'loading' ? 'Verificando autorización…' : error}
           </p>
           {state === 'error' && (
-            <button type="button" onClick={() => setRetry((attempt) => attempt + 1)} className="mt-4 rounded-lg bg-[#C62828] px-4 py-2 text-white">
+            <button type="button" onClick={() => setRetry((attempt) => attempt + 1)} className="mt-4 rounded-lg bg-brand-red px-4 py-2 text-white">
               Reintentar
             </button>
           )}
@@ -112,8 +112,8 @@ export function SiteDisclaimerGate() {
           aria-describedby="site-disclaimer-text"
           className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
         >
-          <p className="mb-2 text-sm font-bold uppercase tracking-wide text-[#C62828]">Aviso obligatorio</p>
-          <h1 id="site-disclaimer-title" className="mb-4 text-2xl font-bold text-[#212121]">
+          <p className="mb-2 text-sm font-bold uppercase tracking-wide text-brand-red">Aviso obligatorio</p>
+          <h1 id="site-disclaimer-title" className="mb-4 text-2xl font-bold text-brand-ink">
             Sitio académico de demostración
           </h1>
           <div id="site-disclaimer-text" className="max-h-[45vh] overflow-y-auto space-y-3 text-sm leading-6 text-gray-700">
@@ -137,12 +137,12 @@ export function SiteDisclaimerGate() {
             </p>
           </div>
           {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
-          <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm text-[#212121]">
+          <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm text-brand-ink">
             <input
               type="checkbox"
               checked={checked}
               onChange={(event) => setChecked(event.target.checked)}
-              className="mt-1 h-4 w-4 accent-[#C62828]"
+              className="mt-1 h-4 w-4 accent-brand-red"
             />
             <span>He leído y acepto el aviso y descargo de responsabilidad.</span>
           </label>
@@ -154,7 +154,7 @@ export function SiteDisclaimerGate() {
               type="button"
               onClick={() => void accept()}
               disabled={!checked || isSaving}
-              className="rounded-xl bg-[#C62828] px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-brand-red px-5 py-3 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSaving ? 'Guardando…' : 'Aceptar y continuar'}
             </button>

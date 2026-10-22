@@ -8,11 +8,11 @@ const TRUST_ITEMS = [
 
 export function TrustBar() {
   return (
-    <section className="bg-[#212121] py-4">
+    <section className="bg-brand-ink py-4">
       <div className="max-w-7xl mx-auto px-4 flex flex-wrap justify-center md:justify-between gap-4">
         {TRUST_ITEMS.map((item, i) => (
           <div key={i} className="flex items-center gap-2 text-white/80">
-            <span className="text-[#FBC02D]">{item.icon}</span>
+            <span className="text-brand-yellow">{item.icon}</span>
             <span style={{ fontSize: '0.85rem' }}>{item.text}</span>
           </div>
         ))}

@@ -76,23 +76,23 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] relative overflow-hidden flex items-center justify-center px-4 py-8">
-      <div className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-5" style={{ background: '#C62828', transform: 'translate(20%, -20%)' }} />
-      <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-5" style={{ background: '#FBC02D', transform: 'translate(-20%, 20%)' }} />
+    <div className="min-h-screen bg-brand-surface relative overflow-hidden flex items-center justify-center px-4 py-8">
+      <div className="absolute top-0 right-0 w-72 h-72 rounded-full opacity-5" style={{ background: 'var(--brand-red)', transform: 'translate(20%, -20%)' }} />
+      <div className="absolute bottom-0 left-0 w-64 h-64 rounded-full opacity-5" style={{ background: 'var(--brand-yellow)', transform: 'translate(-20%, 20%)' }} />
 
       <div className="w-full max-w-2xl relative z-10">
-        <Link to="/login" className="inline-flex items-center gap-2 text-[#212121] hover:text-[#C62828] mb-4 transition-colors font-medium">
+        <Link to="/login" className="inline-flex items-center gap-2 text-brand-ink hover:text-brand-red mb-4 transition-colors font-medium">
           <ArrowLeft size={18} />
           <span style={{ fontSize: '0.9rem' }}>Volver al inicio de sesión</span>
         </Link>
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="px-8 py-6 border-b border-gray-100 flex items-center gap-4">
-            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #FBC02D, #C62828)' }}>
+            <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, var(--brand-yellow), var(--brand-red))' }}>
               <Store className="text-white" size={20} />
             </div>
             <div>
-              <h1 className="text-[#212121] font-bold" style={{ fontSize: '1.3rem' }}>Crear cuenta</h1>
+              <h1 className="text-brand-ink font-bold" style={{ fontSize: '1.3rem' }}>Crear cuenta</h1>
               <p className="text-gray-500" style={{ fontSize: '0.85rem' }}>Únete a Tienda Parque 100 hoy</p>
             </div>
           </div>
@@ -106,27 +106,27 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
 
             <form onSubmit={handleSubmit}>
               <div className="flex items-center gap-2 mb-6">
-                <div className="w-1 h-6 rounded-full bg-[#FBC02D]" />
-                <h2 className="text-[#212121]" style={{ fontSize: '1rem' }}>Información personal</h2>
+                <div className="w-1 h-6 rounded-full bg-brand-yellow" />
+                <h2 className="text-brand-ink" style={{ fontSize: '1rem' }}>Información personal</h2>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Nombre *</label>
+                  <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Nombre *</label>
                   <div className="relative">
                     <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input type="text" name="firstName" required maxLength={30} autoComplete="given-name" value={form.firstName} onChange={handleChange} placeholder="Tu nombre"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
                       style={{ fontSize: '0.9rem' }}
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Apellido *</label>
+                  <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Apellido *</label>
                   <div className="relative">
                     <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input type="text" name="lastName" required maxLength={30} autoComplete="family-name" value={form.lastName} onChange={handleChange} placeholder="Tu apellido"
-                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
                       style={{ fontSize: '0.9rem' }}
                     />
                   </div>
@@ -134,39 +134,39 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
               </div>
 
               <div className="mb-4">
-                <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Correo electrónico *</label>
+                <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Correo electrónico *</label>
                 <div className="relative">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input type="email" name="email" required maxLength={50} autoComplete="email" value={form.email} onChange={handleChange} placeholder="correo@ejemplo.com"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
                     style={{ fontSize: '0.9rem' }}
                   />
                 </div>
               </div>
 
               <div className="mb-4">
-                <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Teléfono *</label>
+                <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Teléfono *</label>
                 <div className="relative">
                   <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input type="tel" name="phone" inputMode="numeric" required minLength={10} maxLength={10} pattern="[0-9]{10}" title="Ingresa un número de 10 dígitos" value={form.phone} onChange={handleChange} placeholder="300 000 0000"
-                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
+                    className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
                     style={{ fontSize: '0.9rem' }}
                   />
                 </div>
               </div>
 
               <div className="flex items-center gap-2 mb-4 mt-6">
-                <div className="w-1 h-6 rounded-full bg-[#FBC02D]" />
-                <h2 className="text-[#212121]" style={{ fontSize: '1rem' }}>Seguridad</h2>
+                <div className="w-1 h-6 rounded-full bg-brand-yellow" />
+                <h2 className="text-brand-ink" style={{ fontSize: '1rem' }}>Seguridad</h2>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
-                  <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Contraseña *</label>
+                  <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Contraseña *</label>
                   <div className="relative">
                     <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input type={showPassword ? 'text' : 'password'} name="password" required minLength={8} maxLength={72} autoComplete="new-password" value={form.password} onChange={handleChange} placeholder="Mín. 8 caracteres"
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
                       style={{ fontSize: '0.9rem' }}
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -175,11 +175,11 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Confirmar contraseña *</label>
+                  <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Confirmar contraseña *</label>
                   <div className="relative">
                     <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input type={showConfirm ? 'text' : 'password'} name="confirm" required minLength={8} maxLength={72} autoComplete="new-password" value={form.confirm} onChange={handleChange} placeholder="Repite tu contraseña"
-                      className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
+                      className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
                       style={{ fontSize: '0.9rem' }}
                     />
                     <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -190,17 +190,17 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
               </div>
 
               <label className="flex items-start gap-3 mb-6 cursor-pointer">
-                <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="w-4 h-4 mt-0.5 rounded accent-[#C62828] cursor-pointer shrink-0" />
+                <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} className="w-4 h-4 mt-0.5 rounded accent-brand-red cursor-pointer shrink-0" />
                 <span className="text-gray-500" style={{ fontSize: '0.875rem' }}>
                   Acepto los{' '}
-                  <Link to="/terminos" className="text-[#C62828] hover:underline cursor-pointer">Términos y Condiciones</Link>
+                  <Link to="/terminos" className="text-brand-red hover:underline cursor-pointer">Términos y Condiciones</Link>
                   {' '}y la{' '}
-                  <Link to="/privacidad" className="text-[#C62828] hover:underline cursor-pointer">Política de Privacidad</Link>
+                  <Link to="/privacidad" className="text-brand-red hover:underline cursor-pointer">Política de Privacidad</Link>
                 </span>
               </label>
 
               <button type="submit" disabled={!terms || isSubmitting}
-                className="w-full py-3.5 rounded-xl text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
+                className="w-full py-3.5 rounded-xl text-white font-semibold bg-brand-red hover:bg-brand-red-dark disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
                 style={{ fontSize: '1rem' }}
               >
                 {isSubmitting ? 'Registrando...' : 'Registrarse'}
@@ -209,7 +209,7 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
 
             <p className="text-center text-gray-500 mt-4" style={{ fontSize: '0.875rem' }}>
               ¿Ya tienes cuenta?{' '}
-              <Link to="/login" className="text-[#C62828] hover:underline font-medium">Iniciar sesión</Link>
+              <Link to="/login" className="text-brand-red hover:underline font-medium">Iniciar sesión</Link>
             </p>
           </div>
         </div>

@@ -59,14 +59,14 @@ export function OrderDetailPage() {
   const isApprovedDemo = isApprovedDemoPayment(order?.Metodo_Pago, order?.Estado_Pago_DEMO);
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+    <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
         <PageHeader title="Detalle del pedido" subtitle={order ? `Pedido #${order.ID_Pedido} · ${formatDateTime(order.Fecha)}` : undefined} backTo="/compras" />
 
         {isLoading ? (
           <p className="text-center text-gray-400 py-16">Cargando...</p>
         ) : error || !order ? (
-          <p className="text-center text-[#C62828] py-16">{error ?? 'Pedido no encontrado.'}</p>
+          <p className="text-center text-brand-red py-16">{error ?? 'Pedido no encontrado.'}</p>
         ) : (
           <div className="flex flex-col gap-4">
             {isDemoOrder ? (
@@ -121,10 +121,10 @@ export function OrderDetailPage() {
                         className="w-12 h-12 object-cover rounded-xl shrink-0"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-[#212121] font-medium truncate" style={{ fontSize: '0.9rem' }}>{name}</p>
+                        <p className="text-brand-ink font-medium truncate" style={{ fontSize: '0.9rem' }}>{name}</p>
                         <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>x{qty} - {formatPrice(unit)} c/u</p>
                       </div>
-                      <span className="text-[#212121] font-semibold shrink-0">{formatPrice(Number(item.Subtotal))}</span>
+                      <span className="text-brand-ink font-semibold shrink-0">{formatPrice(Number(item.Subtotal))}</span>
                     </li>
                   );
                 })}
@@ -132,7 +132,7 @@ export function OrderDetailPage() {
               <dl className="border-t border-gray-100 mt-2 pt-3 flex flex-col gap-1" style={{ fontSize: '0.85rem' }}>
                 <div className="flex justify-between text-gray-500"><dt>Subtotal</dt><dd>{formatPrice(subtotal)}</dd></div>
                 <div className="flex justify-between text-gray-500"><dt>Envio</dt><dd className="text-green-600 font-medium">Gratis</dd></div>
-                <div className="flex justify-between text-[#C62828] font-bold mt-1" style={{ fontSize: '1rem' }}><dt>Total</dt><dd>{formatPrice(order.Total)}</dd></div>
+                <div className="flex justify-between text-brand-red font-bold mt-1" style={{ fontSize: '1rem' }}><dt>Total</dt><dd>{formatPrice(order.Total)}</dd></div>
               </dl>
             </div>
 
@@ -154,15 +154,15 @@ export function OrderDetailPage() {
                 )}
               </dl>
               {order.Notas && order.Notas.trim() && (
-                <div className="mt-4 bg-[#F5F5F5] rounded-xl px-4 py-3">
+                <div className="mt-4 bg-brand-surface rounded-xl px-4 py-3">
                   <p className="text-gray-400 mb-1" style={{ fontSize: '0.7rem' }}>Notas para el domiciliario</p>
-                  <p className="text-[#212121]" style={{ fontSize: '0.85rem' }}>{order.Notas}</p>
+                  <p className="text-brand-ink" style={{ fontSize: '0.85rem' }}>{order.Notas}</p>
                 </div>
               )}
               {order.Comprobante && (
                 <div className="mt-4">
                   <p className="text-gray-400 mb-2" style={{ fontSize: '0.7rem' }}>Comprobante Nequi</p>
-                  <img src={order.Comprobante} alt="Comprobante de pago Nequi" className="w-full max-h-72 object-contain rounded-xl border border-gray-100 bg-[#F5F5F5]" />
+                  <img src={order.Comprobante} alt="Comprobante de pago Nequi" className="w-full max-h-72 object-contain rounded-xl border border-gray-100 bg-brand-surface" />
                 </div>
               )}
             </div>
@@ -177,15 +177,15 @@ export function OrderDetailPage() {
                     onChange={(e) => setComment(e.target.value.slice(0, 255))}
                     maxLength={255}
                     placeholder="Comentario opcional"
-                    className="border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#C62828]"
+                    className="border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-brand-red"
                     style={{ fontSize: '0.85rem' }}
                   />
-                  {rateError && <p className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{rateError}</p>}
+                  {rateError && <p className="text-brand-red" style={{ fontSize: '0.8rem' }}>{rateError}</p>}
                   {rateOk && <p className="text-green-600" style={{ fontSize: '0.8rem' }}>Calificacion guardada.</p>}
                   <button
                     type="submit"
                     disabled={isSaving || !Number.isInteger(orderId)}
-                    className="w-fit bg-[#212121] hover:bg-black disabled:opacity-60 text-white rounded-full px-6 py-2 transition-colors"
+                    className="w-fit bg-brand-ink hover:bg-black disabled:opacity-60 text-white rounded-full px-6 py-2 transition-colors"
                     style={{ fontSize: '0.85rem', fontWeight: 600 }}
                   >
                     {isSaving ? 'Guardando...' : 'Enviar calificacion'}
@@ -198,7 +198,7 @@ export function OrderDetailPage() {
                         <div className="flex items-center gap-2">
                           <StarRating value={r.Estrellas} size={14} />
                           {ratingLabel(r.Estrellas) && (
-                            <span className="text-[#f57f17]" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                            <span className="text-brand-orange" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
                               {ratingLabel(r.Estrellas)}
                             </span>
                           )}
@@ -226,11 +226,11 @@ export function OrderDetailPage() {
                           className="w-12 h-12 object-cover rounded-xl shrink-0"
                         />
                         <div className="min-w-0">
-                          <p className="text-[#212121] truncate" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{name}</p>
+                          <p className="text-brand-ink truncate" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{name}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <StarRating value={r.Estrellas} size={14} />
                             {ratingLabel(r.Estrellas) && (
-                              <span className="text-[#f57f17]" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
+                              <span className="text-brand-orange" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
                                 {ratingLabel(r.Estrellas)}
                               </span>
                             )}

@@ -106,14 +106,14 @@ export function OrdersPage() {
 
   if (!isLoggedIn || !user) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+      <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
         <p className="text-center text-gray-400 py-16">Inicia sesion para ver tus compras.</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+    <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
         <PageHeader title="Mis compras" subtitle="Revisa el estado de tus pedidos" backTo="/cuenta" />
 
@@ -142,13 +142,13 @@ export function OrdersPage() {
             ))}
           </div>
         ) : error ? (
-          <p className="text-center text-[#C62828] py-16">{error}</p>
+          <p className="text-center text-brand-red py-16">{error}</p>
         ) : orders.length === 0 ? (
           <EmptyState
             icon={ShoppingBag}
             title="Aun no tienes compras"
             description="Cuando realices un pedido aparecera aqui."
-            action={<Link to="/catalogo" className="bg-[#C62828] text-white rounded-full px-6 py-2.5" style={{ fontWeight: 600 }}>Ir al catalogo</Link>}
+            action={<Link to="/catalogo" className="bg-brand-red text-white rounded-full px-6 py-2.5" style={{ fontWeight: 600 }}>Ir al catalogo</Link>}
           />
         ) : (
           <div className="flex flex-col gap-4">
@@ -172,10 +172,10 @@ export function OrdersPage() {
                 role="link"
                 tabIndex={0}
                 aria-label={`Ver detalle del pedido ${order.ID_Pedido}, estado ${order.Estado}`}
-                className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-[#C62828]/20 transition-all cursor-pointer"
+                className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-brand-red/20 transition-all cursor-pointer"
               >
                 <div className="flex items-center justify-between mb-3">
-                  <span className="text-[#212121] font-bold">Pedido #{order.ID_Pedido}</span>
+                  <span className="text-brand-ink font-bold">Pedido #{order.ID_Pedido}</span>
                   <StatusBadge estado={order.Estado} />
                 </div>
                 {isDemoOrder && (
@@ -192,7 +192,7 @@ export function OrdersPage() {
                 )}
                 <div className="flex items-center justify-between text-gray-400 mb-3" style={{ fontSize: '0.8rem' }}>
                   <span>{formatDate(order.Fecha)}</span>
-                  <span className="text-[#C62828] font-bold" style={{ fontSize: '1rem' }}>{formatPrice(order.Total)}</span>
+                  <span className="text-brand-red font-bold" style={{ fontSize: '1rem' }}>{formatPrice(order.Total)}</span>
                 </div>
                 {items.length > 0 && (
                   <div className="flex items-center gap-3 mb-4">
@@ -237,7 +237,7 @@ export function OrdersPage() {
                   {cancellable ? (
                     <button
                       onClick={(e) => { e.stopPropagation(); setCancelError(null); setCancelId(order.ID_Pedido); }}
-                      className="bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full px-5 py-1.5 transition-colors"
+                      className="bg-brand-red hover:bg-brand-red-dark text-white rounded-full px-5 py-1.5 transition-colors"
                       style={{ fontSize: '0.8rem', fontWeight: 600 }}
                     >
                       Cancelar pedido
@@ -250,7 +250,7 @@ export function OrdersPage() {
                   {canReviewOrder(order.Estado) && (
                     <button
                       onClick={(e) => { e.stopPropagation(); void openReview(order); }}
-                      className="border border-[#FBC02D] text-[#f57f17] hover:bg-[#FBC02D]/10 rounded-full px-5 py-1.5 transition-colors"
+                      className="border border-brand-yellow text-brand-orange hover:bg-brand-yellow/10 rounded-full px-5 py-1.5 transition-colors"
                       style={{ fontSize: '0.8rem', fontWeight: 600 }}
                     >
                       Dejar una reseña

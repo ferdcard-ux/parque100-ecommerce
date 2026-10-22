@@ -52,12 +52,12 @@ export function ReviewCard({ rating, isOwn, onEdit }: ReviewCardProps) {
             className="w-9 h-9 rounded-full object-cover border border-gray-100"
           />
         ) : (
-          <span className="w-9 h-9 rounded-full bg-[#C62828]/10 text-[#C62828] flex items-center justify-center shrink-0" style={{ fontSize: '0.8rem', fontWeight: 700 }}>
+          <span className="w-9 h-9 rounded-full bg-brand-red/10 text-brand-red flex items-center justify-center shrink-0" style={{ fontSize: '0.8rem', fontWeight: 700 }}>
             {initials(author)}
           </span>
         )}
         <div className="min-w-0">
-          <p className="text-[#212121] truncate" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{author}</p>
+          <p className="text-brand-ink truncate" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{author}</p>
           <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>{formatReviewDate(rating.Fecha)}</p>
         </div>
         {isOwn && (
@@ -66,7 +66,7 @@ export function ReviewCard({ rating, isOwn, onEdit }: ReviewCardProps) {
             onClick={() => onEdit(rating)}
             aria-label="Editar mi resena"
             title="Editar mi resena"
-            className="absolute top-4 right-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-[#C62828] transition-colors"
+            className="absolute top-4 right-0 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-brand-red transition-colors"
           >
             <Pencil size={14} />
           </button>
@@ -75,7 +75,7 @@ export function ReviewCard({ rating, isOwn, onEdit }: ReviewCardProps) {
       <div className="flex items-center gap-2 mb-1">
         <StarRating value={rating.Estrellas} size={14} />
         {label && (
-          <span className="text-[#f57f17]" style={{ fontSize: '0.8rem', fontWeight: 700 }}>{label}</span>
+          <span className="text-brand-orange" style={{ fontSize: '0.8rem', fontWeight: 700 }}>{label}</span>
         )}
       </div>
       {rating.Comentario && (

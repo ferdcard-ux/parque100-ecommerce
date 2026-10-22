@@ -22,7 +22,7 @@ export function EmptyState({ icon: Icon, title, description, action }: EmptyStat
       <div className="w-16 h-16 rounded-full bg-gray-50 flex items-center justify-center mb-4">
         <Icon size={28} className="text-gray-300" />
       </div>
-      <h3 className="text-[#212121] mb-2" style={{ fontSize: '1.05rem', fontWeight: 700 }}>{title}</h3>
+      <h3 className="text-brand-ink mb-2" style={{ fontSize: '1.05rem', fontWeight: 700 }}>{title}</h3>
       <p className="text-gray-400 mb-6 max-w-sm" style={{ fontSize: '0.85rem' }}>{description}</p>
       {action}
     </div>

@@ -73,7 +73,7 @@ export function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+      <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6" aria-label="Cargando producto">
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
             <div className="w-full h-72 bg-gray-100 rounded-xl animate-pulse" />
@@ -96,22 +96,22 @@ export function ProductDetailPage() {
 
   if (!product) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+      <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
         <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 p-12 text-center">
-          <h1 className="text-[#212121] mb-2" style={{ fontSize: '1.2rem', fontWeight: 700 }}>Producto no encontrado</h1>
+          <h1 className="text-brand-ink mb-2" style={{ fontSize: '1.2rem', fontWeight: 700 }}>Producto no encontrado</h1>
           <p className="text-gray-400 mb-6">Es posible que este producto ya no este disponible.</p>
-          <Link to="/catalogo" className="text-[#C62828] font-medium hover:underline">Volver al catalogo</Link>
+          <Link to="/catalogo" className="text-brand-red font-medium hover:underline">Volver al catalogo</Link>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+    <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
       <div className="max-w-6xl mx-auto">
         <p className="text-gray-400 mb-4" style={{ fontSize: '0.8rem' }}>
-          <Link to="/catalogo" className="hover:text-[#C62828]">Catálogo</Link> /{' '}
-          <Link to={`/catalogo?cat=${encodeURIComponent(product.category)}`} className="hover:text-[#C62828]">{product.category}</Link> / {product.name}
+          <Link to="/catalogo" className="hover:text-brand-red">Catálogo</Link> /{' '}
+          <Link to={`/catalogo?cat=${encodeURIComponent(product.category)}`} className="hover:text-brand-red">{product.category}</Link> / {product.name}
         </p>
         <PageHeader title="Detalle del producto" backTo="/catalogo" />
 
@@ -122,7 +122,7 @@ export function ProductDetailPage() {
               aria-label="Favorito"
               className="absolute top-6 right-6 w-9 h-9 rounded-full bg-white shadow flex items-center justify-center z-10 before:absolute before:-inset-2 before:content-['']"
             >
-              <Heart size={16} className={isFavorite(product.id) ? 'fill-[#C62828] text-[#C62828]' : 'text-gray-400'} />
+              <Heart size={16} className={isFavorite(product.id) ? 'fill-brand-red text-brand-red' : 'text-gray-400'} />
             </button>
             <ImageWithFallback
               src={product.image}
@@ -139,26 +139,26 @@ export function ProductDetailPage() {
                 {product.brand}
               </Link>
             )}
-            <span className="inline-block px-3 py-1 rounded-full bg-[#C62828]/10 text-[#C62828] mb-3 ml-2" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
+            <span className="inline-block px-3 py-1 rounded-full bg-brand-red/10 text-brand-red mb-3 ml-2" style={{ fontSize: '0.75rem', fontWeight: 600 }}>
               {product.category}
             </span>
-            <h2 className="text-[#212121] mb-1" style={{ fontSize: '1.5rem', fontWeight: 700 }}>{product.name}</h2>
+            <h2 className="text-brand-ink mb-1" style={{ fontSize: '1.5rem', fontWeight: 700 }}>{product.name}</h2>
             {unit && <p className="text-gray-500 mb-1" style={{ fontSize: '0.85rem' }}>{unit}</p>}
             <p className="text-gray-400 mb-2" style={{ fontSize: '0.75rem' }}>SKU: {product.sku ?? product.id}</p>
             {promo ? (
               <div className="mb-4">
                 <p className="text-gray-400" style={{ fontSize: '0.85rem' }}>Antes <span className="line-through">{formatPrice(product.previousPrice as number)}</span></p>
-                <p className="text-[#C62828] font-bold" style={{ fontSize: '1.6rem' }}>{formatPrice(product.price)}</p>
+                <p className="text-brand-red font-bold" style={{ fontSize: '1.6rem' }}>{formatPrice(product.price)}</p>
                 <p className="text-green-700 font-semibold" style={{ fontSize: '0.85rem' }}>Ahorro {formatPrice(savingsAmount(product.price, product.previousPrice))}</p>
               </div>
             ) : (
-              <p className="text-[#C62828] font-bold mb-4" style={{ fontSize: '1.6rem' }}>{formatPrice(product.price)}</p>
+              <p className="text-brand-red font-bold mb-4" style={{ fontSize: '1.6rem' }}>{formatPrice(product.price)}</p>
             )}
             <p className="text-gray-500 mb-6" style={{ fontSize: '0.9rem' }}>{product.description}</p>
             <ul className="flex flex-col gap-3 text-gray-600" style={{ fontSize: '0.85rem' }}>
-              <li className="flex items-center gap-2"><Truck size={16} className="text-[#C62828]" /> Entrega en 45-60 minutos</li>
-              <li className="flex items-center gap-2"><ShieldCheck size={16} className="text-[#C62828]" /> Calidad garantizada</li>
-              <li className="flex items-center gap-2"><Leaf size={16} className="text-[#C62828]" /> Producto fresco del dia</li>
+              <li className="flex items-center gap-2"><Truck size={16} className="text-brand-red" /> Entrega en 45-60 minutos</li>
+              <li className="flex items-center gap-2"><ShieldCheck size={16} className="text-brand-red" /> Calidad garantizada</li>
+              <li className="flex items-center gap-2"><Leaf size={16} className="text-brand-red" /> Producto fresco del dia</li>
             </ul>
           </div>
 
@@ -166,10 +166,10 @@ export function ProductDetailPage() {
             {promo && (
               <p className="text-gray-400" style={{ fontSize: '0.8rem' }}>Antes <span className="line-through">{formatPrice(product.previousPrice as number)}</span></p>
             )}
-            <p className="text-[#C62828] font-bold mb-1" style={{ fontSize: '1.4rem' }}>{formatPrice(product.price)}</p>
+            <p className="text-brand-red font-bold mb-1" style={{ fontSize: '1.4rem' }}>{formatPrice(product.price)}</p>
             {product.stock <= 0 ? (
-              <p className="flex items-center gap-2 text-[#C62828] mb-6" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                <span className="w-2 h-2 rounded-full bg-[#C62828]" /> Agotado
+              <p className="flex items-center gap-2 text-brand-red mb-6" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                <span className="w-2 h-2 rounded-full bg-brand-red" /> Agotado
               </p>
             ) : (
               <p className="flex items-center gap-2 text-green-600 mb-6" style={{ fontSize: '0.85rem' }}>
@@ -184,7 +184,7 @@ export function ProductDetailPage() {
             <button
               onClick={handleAdd}
               disabled={product.stock <= 0}
-              className="w-full bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full bg-brand-red hover:bg-brand-red-dark text-white rounded-full py-3 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ fontWeight: 600 }}
             >
               {product.stock <= 0 ? 'Agotado' : added ? 'Anadido!' : 'Anadir al carrito'}
@@ -195,12 +195,12 @@ export function ProductDetailPage() {
         {related.length > 0 && (
           <section className="mt-12">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-[#212121]" style={{ fontSize: '1.2rem', fontWeight: 700 }}>También puede interesarte</h2>
+              <h2 className="text-brand-ink" style={{ fontSize: '1.2rem', fontWeight: 700 }}>También puede interesarte</h2>
               <div className="flex gap-2">
-                <button onClick={() => emblaApi?.scrollPrev()} disabled={!canPrev} className="w-11 h-11 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#C62828] hover:text-[#C62828] disabled:opacity-40 transition-colors" aria-label="Anterior">
+                <button onClick={() => emblaApi?.scrollPrev()} disabled={!canPrev} className="w-11 h-11 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-brand-red hover:text-brand-red disabled:opacity-40 transition-colors" aria-label="Anterior">
                   <ChevronLeft size={16} />
                 </button>
-                <button onClick={() => emblaApi?.scrollNext()} disabled={!canNext} className="w-11 h-11 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-[#C62828] hover:text-[#C62828] disabled:opacity-40 transition-colors" aria-label="Siguiente">
+                <button onClick={() => emblaApi?.scrollNext()} disabled={!canNext} className="w-11 h-11 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-brand-red hover:text-brand-red disabled:opacity-40 transition-colors" aria-label="Siguiente">
                   <ChevronRight size={16} />
                 </button>
               </div>
@@ -219,20 +219,20 @@ export function ProductDetailPage() {
 
         {(product.brand || product.packaging || product.ingredients || product.storage) && (
           <section className="mt-8 bg-white rounded-2xl border border-gray-100 p-6">
-            <h2 className="text-[#212121] mb-4" style={{ fontSize: '1.1rem', fontWeight: 700 }}>Descripción</h2>
+            <h2 className="text-brand-ink mb-4" style={{ fontSize: '1.1rem', fontWeight: 700 }}>Descripción</h2>
             <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3" style={{ fontSize: '0.85rem' }}>
-              <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">Nombre</dt><dd className="text-[#212121] font-medium">{product.name}</dd></div>
-              {product.brand && <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">Marca</dt><dd className="text-[#212121] font-medium">{product.brand}</dd></div>}
-              <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">SKU</dt><dd className="text-[#212121] font-medium">{product.sku ?? product.id}</dd></div>
-              {product.packaging && <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">Embalaje</dt><dd className="text-[#212121]">{product.packaging}</dd></div>}
-              {product.ingredients && <div className="flex gap-2 sm:col-span-2"><dt className="text-gray-400 w-28 shrink-0">Ingredientes</dt><dd className="text-[#212121]">{product.ingredients}</dd></div>}
-              {product.storage && <div className="flex gap-2 sm:col-span-2"><dt className="text-gray-400 w-28 shrink-0">Conservación</dt><dd className="text-[#212121]">{product.storage}</dd></div>}
+              <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">Nombre</dt><dd className="text-brand-ink font-medium">{product.name}</dd></div>
+              {product.brand && <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">Marca</dt><dd className="text-brand-ink font-medium">{product.brand}</dd></div>}
+              <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">SKU</dt><dd className="text-brand-ink font-medium">{product.sku ?? product.id}</dd></div>
+              {product.packaging && <div className="flex gap-2"><dt className="text-gray-400 w-28 shrink-0">Embalaje</dt><dd className="text-brand-ink">{product.packaging}</dd></div>}
+              {product.ingredients && <div className="flex gap-2 sm:col-span-2"><dt className="text-gray-400 w-28 shrink-0">Ingredientes</dt><dd className="text-brand-ink">{product.ingredients}</dd></div>}
+              {product.storage && <div className="flex gap-2 sm:col-span-2"><dt className="text-gray-400 w-28 shrink-0">Conservación</dt><dd className="text-brand-ink">{product.storage}</dd></div>}
             </dl>
           </section>
         )}
 
         <section className="mt-12 bg-white rounded-2xl border border-gray-100 p-6">
-          <h2 className="text-[#212121] mb-2" style={{ fontSize: '1.1rem', fontWeight: 700 }}>Calificaciones</h2>
+          <h2 className="text-brand-ink mb-2" style={{ fontSize: '1.1rem', fontWeight: 700 }}>Calificaciones</h2>
           <div className="flex items-center gap-3 mb-4">
             <StarRating value={summary?.promedio ?? 0} />
             <span className="text-gray-500" style={{ fontSize: '0.85rem' }}>
@@ -242,14 +242,14 @@ export function ProductDetailPage() {
             </span>
           </div>
           {isLoggedIn ? (
-            <p className="bg-[#FBC02D]/10 border border-[#FBC02D]/40 rounded-xl px-4 py-3 mb-2" style={{ fontSize: '0.82rem' }}>
+            <p className="bg-brand-yellow/10 border border-brand-yellow/40 rounded-xl px-4 py-3 mb-2" style={{ fontSize: '0.82rem' }}>
               Solo puedes reseñar productos que compraste en un pedido <strong>entregado</strong>. Ve a{' '}
-              <Link to="/compras" className="text-[#C62828] font-medium hover:underline">Mis compras</Link>{' '}
+              <Link to="/compras" className="text-brand-red font-medium hover:underline">Mis compras</Link>{' '}
               y usa el botón “Dejar una reseña”.
             </p>
           ) : (
             <p className="text-gray-400" style={{ fontSize: '0.85rem' }}>
-              <Link to="/login" className="text-[#C62828] hover:underline">Inicia sesion</Link> para dejar una reseña de este producto.
+              <Link to="/login" className="text-brand-red hover:underline">Inicia sesion</Link> para dejar una reseña de este producto.
             </p>
           )}
           {ratings.length > 0 ? (

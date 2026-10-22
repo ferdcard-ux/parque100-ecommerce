@@ -17,7 +17,7 @@ export function FavoritesPage() {
   const favProducts = products.filter((p) => favorites.includes(String(p.id)));
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+    <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
       <div className="max-w-5xl mx-auto">
         <PageHeader title="Favoritos" subtitle="Productos guardados para comprar despues" backTo="/" />
         {favProducts.length === 0 ? (
@@ -25,7 +25,7 @@ export function FavoritesPage() {
             icon={Heart}
             title="Sin favoritos aun"
             description="Toca la estrella de cualquier producto para guardarlo aqui."
-            action={<Link to="/catalogo" className="bg-[#C62828] text-white rounded-full px-6 py-2.5" style={{ fontWeight: 600 }}>Explorar catalogo</Link>}
+            action={<Link to="/catalogo" className="bg-brand-red text-white rounded-full px-6 py-2.5" style={{ fontWeight: 600 }}>Explorar catalogo</Link>}
           />
         ) : (
           <div className="grid grid-cols-2 max-[380px]:grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-4">

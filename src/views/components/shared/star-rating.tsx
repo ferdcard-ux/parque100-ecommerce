@@ -36,10 +36,10 @@ export function StarRating({ value, editable = false, onChange, onHover, size = 
             onBlur={() => onHover?.(null)}
             className="p-0.5 hover:scale-110 transition-transform"
           >
-            <Star size={size} className={filled ? 'fill-[#FBC02D] text-[#FBC02D]' : 'text-gray-300'} />
+            <Star size={size} className={filled ? 'fill-brand-yellow text-brand-yellow' : 'text-gray-300'} />
           </button>
         ) : (
-          <Star key={star} size={size} className={filled ? 'fill-[#FBC02D] text-[#FBC02D]' : 'text-gray-300'} />
+          <Star key={star} size={size} className={filled ? 'fill-brand-yellow text-brand-yellow' : 'text-gray-300'} />
         );
       })}
     </div>

@@ -83,7 +83,7 @@ export function ReviewFormModal({
     >
       <div ref={panelRef} role="dialog" aria-modal="true" aria-label={title} className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 max-h-[85vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-[#212121] font-bold" style={{ fontSize: '1rem' }}>{title}</h3>
+          <h3 className="text-brand-ink font-bold" style={{ fontSize: '1rem' }}>{title}</h3>
           <button
             onClick={onClose}
             className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500"
@@ -99,13 +99,13 @@ export function ReviewFormModal({
               alt={productName}
               className="w-full h-32 object-cover rounded-xl"
             />
-            <p className="text-[#212121] mt-2" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{productName}</p>
+            <p className="text-brand-ink mt-2" style={{ fontSize: '0.85rem', fontWeight: 600 }}>{productName}</p>
             <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>{productDetails}</p>
           </div>
           <div className="flex flex-col gap-3">
             <div>
-              <p className="text-[#212121] mb-1.5" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                Calificación <span className="text-[#C62828]">*</span>
+              <p className="text-brand-ink mb-1.5" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+                Calificación <span className="text-brand-red">*</span>
               </p>
               <div className="flex items-center gap-2">
                 <StarRating
@@ -116,12 +116,12 @@ export function ReviewFormModal({
                   size={22}
                 />
                 {label && (
-                  <span className="text-[#f57f17]" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{label}</span>
+                  <span className="text-brand-orange" style={{ fontSize: '0.85rem', fontWeight: 700 }}>{label}</span>
                 )}
               </div>
             </div>
             <div>
-              <label htmlFor="review-comment" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
+              <label htmlFor="review-comment" className="block text-brand-ink mb-1.5" style={{ fontSize: '0.85rem', fontWeight: 600 }}>
                 Comentario <span className="text-gray-400" style={{ fontWeight: 400 }}>(opcional)</span>
               </label>
               <textarea
@@ -131,19 +131,19 @@ export function ReviewFormModal({
                 maxLength={REVIEW_COMMENT_MAX}
                 placeholder="Comparte tu opinión del producto"
                 rows={4}
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#C62828] resize-none"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-brand-red resize-none"
                 style={{ fontSize: '0.85rem' }}
               />
               <p className="text-right text-gray-400 mt-1" style={{ fontSize: '0.72rem' }}>
                 {comment.length}/{REVIEW_COMMENT_MAX}
               </p>
             </div>
-            {warning && <p role="alert" className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{warning}</p>}
-            {error && <p className="text-[#C62828]" style={{ fontSize: '0.8rem' }}>{error}</p>}
+            {warning && <p role="alert" className="text-brand-red" style={{ fontSize: '0.8rem' }}>{warning}</p>}
+            {error && <p className="text-brand-red" style={{ fontSize: '0.8rem' }}>{error}</p>}
             <button
               type="submit"
               disabled={saving}
-              className="w-full bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 text-white rounded-full py-2.5 transition-colors"
+              className="w-full bg-brand-red hover:bg-brand-red-dark disabled:opacity-60 text-white rounded-full py-2.5 transition-colors"
               style={{ fontSize: '0.85rem', fontWeight: 600 }}
             >
               {saving ? 'Guardando...' : submitLabel}

@@ -12,11 +12,11 @@ export function RecommendedList({ products }: RecommendedListProps) {
 
   return (
     <div className="mt-2">
-      <h3 className="text-[#212121] font-semibold mb-3" style={{ fontSize: '1rem' }}>También te puede interesar</h3>
+      <h3 className="text-brand-ink font-semibold mb-3" style={{ fontSize: '1rem' }}>También te puede interesar</h3>
       <div className="grid grid-cols-2 max-[380px]:grid-cols-1 sm:grid-cols-4 gap-3">
         {products.map((p) => (
           <Link to={`/producto/${p.id}`} key={p.id} className="bg-white rounded-xl p-3 shadow-sm border border-gray-100 block hover:shadow-md transition-shadow">
-            <div className="aspect-[16/9] rounded-lg overflow-hidden mb-2 bg-[#F5F5F5]">
+            <div className="aspect-[16/9] rounded-lg overflow-hidden mb-2 bg-brand-surface">
               <ImageWithFallback
                 src={p.image}
                 alt={p.name}
@@ -24,8 +24,8 @@ export function RecommendedList({ products }: RecommendedListProps) {
                 className="w-full h-full object-cover"
               />
             </div>
-            <p className="text-[#212121] font-medium leading-tight mb-1" style={{ fontSize: '0.75rem' }}>{p.name}</p>
-            <p className="text-[#C62828] font-bold" style={{ fontSize: '0.8rem' }}>{formatPrice(p.price)}</p>
+            <p className="text-brand-ink font-medium leading-tight mb-1" style={{ fontSize: '0.75rem' }}>{p.name}</p>
+            <p className="text-brand-red font-bold" style={{ fontSize: '0.8rem' }}>{formatPrice(p.price)}</p>
           </Link>
         ))}
       </div>

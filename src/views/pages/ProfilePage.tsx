@@ -43,7 +43,7 @@ function ProfileField({
           readOnly={!editing}
           onChange={(e) => onChange(e.target.value)}
           className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-colors ${
-            editing ? 'border-[#C62828] bg-white' : 'border-gray-200 bg-[#F5F5F5]'
+            editing ? 'border-brand-red bg-white' : 'border-gray-200 bg-brand-surface'
           } focus:outline-none`}
           style={{ fontSize: '0.9rem' }}
         />
@@ -74,7 +74,7 @@ function ChangePasswordDialog({ pwdError, pwdSuccess, pwdLoading, pwdCurrent, pw
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Cambiar contraseña" className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-        <h3 className="text-[#212121] font-bold mb-4" style={{ fontSize: '1rem' }}>Cambiar contrasena</h3>
+        <h3 className="text-brand-ink font-bold mb-4" style={{ fontSize: '1rem' }}>Cambiar contrasena</h3>
         <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
           {pwdError && <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{pwdError}</div>}
           {pwdSuccess && <div role="status" className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>Contrasena actualizada.</div>}
@@ -83,7 +83,7 @@ function ChangePasswordDialog({ pwdError, pwdSuccess, pwdLoading, pwdCurrent, pw
           <ProfileField label="Confirmar nueva contrasena" icon={<Lock size={16} />} type="password" autoComplete="new-password" minLength={8} maxLength={72} value={pwdConfirm} editing onChange={setPwdConfirm} />
           <div className="flex gap-2 mt-2">
             <button type="button" onClick={onClose} className="flex-1 border border-gray-200 rounded-full py-2.5 hover:bg-gray-50 transition-colors" style={{ fontWeight: 600 }}>Cancelar</button>
-            <button type="submit" disabled={pwdLoading} className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2.5 disabled:opacity-60 transition-colors" style={{ fontWeight: 600 }}>
+            <button type="submit" disabled={pwdLoading} className="flex-1 bg-brand-red hover:bg-brand-red-dark text-white rounded-full py-2.5 disabled:opacity-60 transition-colors" style={{ fontWeight: 600 }}>
               {pwdLoading ? 'Guardando...' : 'Guardar'}
             </button>
           </div>
@@ -156,7 +156,7 @@ export function ProfilePage() {
 
   if (!isLoggedIn || !user) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+      <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
         <p className="text-center text-gray-400 py-16">Inicia sesion para ver tu perfil.</p>
       </main>
     );
@@ -216,7 +216,7 @@ export function ProfilePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
+    <main className="min-h-screen bg-brand-surface pt-8 pb-16 px-4">
       <div className="max-w-lg mx-auto">
         <PageHeader title="Informacion de tu perfil" subtitle="Gestiona tus datos personales" backTo="/cuenta" />
 
@@ -224,11 +224,11 @@ export function ProfilePage() {
           {photo ? (
             <img src={photo} alt="Foto de perfil" className="w-20 h-20 rounded-full object-cover mb-3 border border-gray-100" />
           ) : (
-            <div className="w-20 h-20 rounded-full bg-[#C62828] flex items-center justify-center mb-3">
+            <div className="w-20 h-20 rounded-full bg-brand-red flex items-center justify-center mb-3">
               <span className="text-white font-bold" style={{ fontSize: '1.5rem' }}>{initials}</span>
             </div>
           )}
-          <p className="text-[#212121] font-semibold">{firstName} {lastName}</p>
+          <p className="text-brand-ink font-semibold">{firstName} {lastName}</p>
           <p className="text-gray-400" style={{ fontSize: '0.8rem' }}>{email}</p>
           {editing && (
             <div className="flex items-center gap-2 mt-3">
@@ -237,20 +237,20 @@ export function ProfilePage() {
                 <input type="file" accept="image/*" className="hidden" onChange={(e) => handlePhotoFile(e.target.files?.[0])} />
               </label>
               {photo && (
-                <button onClick={() => setPhoto(null)} className="text-gray-400 hover:text-[#C62828] transition-colors" style={{ fontSize: '0.8rem' }}>
+                <button onClick={() => setPhoto(null)} className="text-gray-400 hover:text-brand-red transition-colors" style={{ fontSize: '0.8rem' }}>
                   Quitar
                 </button>
               )}
             </div>
           )}
-          {photoError && <p role="alert" className="text-[#C62828] mt-2" style={{ fontSize: '0.8rem' }}>{photoError}</p>}
+          {photoError && <p role="alert" className="text-brand-red mt-2" style={{ fontSize: '0.8rem' }}>{photoError}</p>}
         </div>
 
         <div className="bg-white rounded-2xl border border-gray-100 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <SectionTitle>Datos personales</SectionTitle>
             {editing ? (
-              <button onClick={() => void handleSave()} disabled={saving} className="bg-[#C62828] text-white rounded-full px-4 py-1.5 disabled:opacity-60" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
+              <button onClick={() => void handleSave()} disabled={saving} className="bg-brand-red text-white rounded-full px-4 py-1.5 disabled:opacity-60" style={{ fontSize: '0.8rem', fontWeight: 600 }}>
                 {saving ? 'Guardando...' : 'Guardar'}
               </button>
             ) : (
@@ -260,7 +260,7 @@ export function ProfilePage() {
             )}
           </div>
           {saved && <p className="text-green-600 mb-3" style={{ fontSize: '0.8rem' }}>Cambios guardados.</p>}
-          {saveError && <p role="alert" className="text-[#C62828] mb-3" style={{ fontSize: '0.8rem' }}>{saveError}</p>}
+          {saveError && <p role="alert" className="text-brand-red mb-3" style={{ fontSize: '0.8rem' }}>{saveError}</p>}
           <div className="flex flex-col gap-4">
             <ProfileField label="Nombre" icon={<User size={16} />} maxLength={30} autoComplete="given-name" value={firstName} editing={editing} onChange={setFirstName} />
             <ProfileField label="Apellido" icon={<User size={16} />} maxLength={30} autoComplete="family-name" value={lastName} editing={editing} onChange={setLastName} />
@@ -273,7 +273,7 @@ export function ProfilePage() {
           <SectionTitle>Seguridad</SectionTitle>
           <button
             onClick={() => setPwdOpen(true)}
-            className="w-full flex items-center gap-3 text-gray-600 hover:text-[#C62828] transition-colors"
+            className="w-full flex items-center gap-3 text-gray-600 hover:text-brand-red transition-colors"
             style={{ fontSize: '0.9rem' }}
           >
             <Lock size={17} /> Cambiar contrasena

@@ -3,12 +3,6 @@
 
 @import 'tw-animate-css';
 
-/** Tipografía raíz fluida: base 16px en escritorio, ~14.5px en móviles angostos.
- * Todo el proyecto usa rem (Tailwind + fontSize inline), así que la UI escala junta. */
-html {
-  font-size: clamp(14.5px, 0.5vw + 13px, 16px);
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

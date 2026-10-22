@@ -63,7 +63,7 @@ export function AdminInventoryPage({ products, catalogProducts, categories, unit
   return (
     <>
       <AdminPageShell active="inventario" title="Gestión de Inventario" subtitle="Administra tus productos y existencias">
-        <div className="sticky top-[60px] z-10 bg-[#F5F5F5] -mt-3 pt-1 pb-2">
+        <div className="sticky top-[60px] z-10 bg-brand-surface -mt-3 pt-1 pb-2">
           <AdminStats
             total={stats.total}
             inStock={stats.inStock}
@@ -74,10 +74,10 @@ export function AdminInventoryPage({ products, catalogProducts, categories, unit
           />
         </div>
         <div className="mb-3 flex flex-wrap justify-end gap-2">
-          <button onClick={() => setCatalogModal('category')} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-[#212121] hover:bg-gray-50">
+          <button onClick={() => setCatalogModal('category')} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-brand-ink hover:bg-gray-50">
             Administrar categorías de productos
           </button>
-          <button onClick={() => setCatalogModal('unit')} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-[#212121] hover:bg-gray-50">
+          <button onClick={() => setCatalogModal('unit')} className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-brand-ink hover:bg-gray-50">
             Administrar unidades de medida
           </button>
         </div>

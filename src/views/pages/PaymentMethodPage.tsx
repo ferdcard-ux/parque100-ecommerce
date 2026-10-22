@@ -31,7 +31,7 @@ export function PaymentMethodPage({ selectedMethod, paymentMode, onSelectMethod,
     || (paymentMode === 'demo' && (selectedMethod === 'card' || selectedMethod === 'nequi'));
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] pb-12">
+    <div className="min-h-screen bg-brand-surface pb-12">
       <div className="max-w-4xl mx-auto px-4 py-8">
         <CheckoutSteps current={3} />
         <CheckoutSummary itemCount={itemCount} total={total} />
@@ -39,7 +39,7 @@ export function PaymentMethodPage({ selectedMethod, paymentMode, onSelectMethod,
         <PaymentOptions selectedMethod={selectedMethod} paymentMode={paymentMode} onSelect={onSelectMethod} />
 
         <button onClick={handleContinue} disabled={!canContinue}
-          className="mt-6 w-full py-3.5 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
+          className="mt-6 w-full py-3.5 rounded-xl bg-brand-red text-white font-semibold hover:bg-brand-red-dark disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg active:scale-[0.98]"
           style={{ fontSize: '1rem' }}
         >
           Continuar con el pago

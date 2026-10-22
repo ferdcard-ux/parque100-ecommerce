@@ -18,7 +18,7 @@ export function RootLayout({ cartCount, isAdmin, isLoggedIn, user, userRole, ses
     <div className="min-h-screen bg-white">
       <a
         href="#contenido"
-        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-white focus:text-[#C62828] focus:px-4 focus:py-2 focus:rounded-xl focus:shadow-lg"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-[60] focus:bg-white focus:text-brand-red focus:px-4 focus:py-2 focus:rounded-xl focus:shadow-lg"
       >
         Saltar al contenido
       </a>
