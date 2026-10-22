@@ -6,7 +6,7 @@ automático** bajo un dominio de **DuckDNS**, todo con herramientas **gratuitas*
 
 - **Alcance:** entorno de pruebas/demostración (equipo encendido, IP dinámica).
 - **No es** un despliegue de producción con alta disponibilidad. Para eso, usar un host en la nube.
-- El acceso del equipo está separado de las cuentas de demostración de la tienda. Aprovisiona la base privada local siguiendo [`ACCESO-ACADEMICO.md`](ACCESO-ACADEMICO.md).
+- El acceso del equipo está separado de las cuentas de demostración de la tienda. El aprovisionamiento de la base privada local se documenta internamente en el equipo.
 
 ---
 
@@ -256,7 +256,7 @@ también redirigen de forma segura a su destino interno.
 
 Antes de reiniciar backend o recargar Caddy, aprovisiona `parque100_acceso` y
 crea las cuentas autorizadas desde una terminal local interactiva, siguiendo
-[`ACCESO-ACADEMICO.md`](ACCESO-ACADEMICO.md). Publica luego el build que incluye
+el documento interno de acceso académico del equipo. Publica luego el build que incluye
 `dist/access.html`. El forward-auth protege el frontend; el backend también
 exige la aceptación del descargo antes de servir las APIs.
 

@@ -66,8 +66,8 @@ Primero se inicia sesión en `/access.html` con una cuenta creada desde el panel
 local; después se acepta el descargo y, cuando corresponda, se inicia sesión
 con una cuenta demo de tienda. Son identidades y sesiones independientes. No
 hay registro público. La base privada `parque100_acceso` no se comparte en el
-repositorio ni en los dumps de `parque100`; consulta
-[`Docs/ACCESO-ACADEMICO.md`](Docs/ACCESO-ACADEMICO.md) para su administración.
+repositorio ni en los dumps de `parque100`. La administración de cuentas se
+documenta internamente en el equipo.
 
 ### Sincronizar la base de datos entre equipos
 
@@ -134,10 +134,10 @@ Base URL: `http://localhost:3001/api`
 | [`Docs/guia-despliegue.md`](Docs/guia-despliegue.md) | Guía de despliegue: servidor propio expuesto a Internet (Caddy + DuckDNS) |
 | [`Docs/manual-usuario.md`](Docs/manual-usuario.md) | Manual de usuario completo: roles, flujo de compra, panel administrativo y FAQ |
 | [`Docs/guia-uso.md`](Docs/guia-uso.md) | Guía rápida de uso: funcionalidades y rutas |
-| [`Docs/ACCESO-ACADEMICO.md`](Docs/ACCESO-ACADEMICO.md) | Autorización del sitio, descargo y gestión local de cuentas |
-| [`Docs/INFORME-AUDITORIA-SEGURIDAD.md`](Docs/INFORME-AUDITORIA-SEGURIDAD.md) | Hallazgos, correcciones, verificaciones y limitaciones de seguridad |
 | [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md) | Estándares de codificación obligatorios |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historial de cambios del proyecto |
+
+> Los documentos internos de auditoría y acceso académico no se publican en el repositorio.
 
 ## Herramientas externas
 

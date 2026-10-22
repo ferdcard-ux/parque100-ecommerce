@@ -53,6 +53,11 @@ Docs/INSTRUCCIONES_COMMITS.md
 # Informe interno de revision tecnica (no forma parte de la entrega)
 Docs/REVISION-MEJORAS.md
 
+# Documentos internos de identidad visual, auditoria y acceso (no se publican)
+Docs/paleta-y-tipografia.md
+Docs/INFORME-AUDITORIA-SEGURIDAD.md
+Docs/ACCESO-ACADEMICO.md
+
 # Scripts y recursos exclusivos del equipo de desarrollo
 # (viven fuera del repo en ../scripts_dev; regla defensiva por si se copian aqui)
 scripts_dev/
