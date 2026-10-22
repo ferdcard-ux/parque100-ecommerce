@@ -65,9 +65,13 @@ muestra un descargo obligatorio antes de habilitar la navegación y las API.
 Primero se inicia sesión en `/access.html` con una cuenta creada desde el panel
 local; después se acepta el descargo y, cuando corresponda, se inicia sesión
 con una cuenta demo de tienda. Son identidades y sesiones independientes. No
-hay registro público. La base privada `parque100_acceso` no se comparte en el
-repositorio ni en los dumps de `parque100`. La administración de cuentas se
-documenta internamente en el equipo.
+hay registro público. Cada cuenta admite una sola sesión web vigente: un login
+nuevo reemplaza la anterior y el panel puede revocarla para forzar la
+reautenticación. Tras 5 intentos fallidos en 15 minutos, la cuenta se bloquea
+15 minutos (HTTP 423), además del límite por IP. La base privada
+`parque100_acceso` no se comparte en el repositorio ni en los dumps de
+`parque100`. La administración de cuentas se documenta internamente en el
+equipo.
 
 En el servidor remoto, usa el dominio HTTPS y comprueba que el navegador valide
 el certificado. El acceso local de desarrollo (`http://localhost`) no usa TLS;
@@ -126,7 +130,7 @@ Base URL: `http://localhost:3001/api`
 | Pedidos | `GET /orders` (`?items=1` incluye detalles), `GET /orders/:id`, `POST /orders` (total recalculado, estado `pendiente`), `PUT /orders/:id/status` (máquina de estados), `PUT /orders/:id/cancel` (con motivo) |
 | Calificaciones | `GET /ratings`, `GET /ratings/resumen?producto=ID`, `POST /ratings`, `PUT /ratings/:id` (autor), `DELETE /ratings/:id` |
 | Pagos | `GET /payments/mode`; con `PAYMENTS_MODE=demo`, `POST /payments/process` inicia un intento y `POST /payments/confirm` registra atómicamente transacción DEMO, pedido y descuento de inventario; `PUT /payments/:reference/cancel` cierra intentos pendientes. Sin cobros ni datos financieros; efectivo contra entrega disponible |
-| Actividad del sitio | `POST /activity/interactions` recibe solo eventos permitidos de carrito, favoritos y cierre de sesión; el backend registra además operaciones de catálogo, pedidos, pagos y administración en un JSONL local rotado, sin credenciales ni cuerpos |
+| Actividad del sitio | `POST /activity/interactions` recibe solo eventos permitidos de carrito, favoritos y cierre de sesión; el backend registra además operaciones de catálogo, pedidos, pagos y administración, y eventos de login/cierre/bloqueo/revocación en un JSONL local rotado, con detalle seguro y sin credenciales, búsquedas, IP ni cuerpos |
 
 > Los endpoints de escritura y los datos ajenos requieren `Authorization: Bearer <JWT>` (se obtiene en `POST /auth/login`); el rol `admin` gestiona usuarios, productos, negocio y moderación.
 

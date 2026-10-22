@@ -36,6 +36,7 @@ export const categoryController = {
         return res.status(409).json({ error: 'Ya existe una categoría con ese nombre.' });
       }
       const id = await categoryModel.create(name);
+      if (res.locals) res.locals.activityDetail = `«${name}» (#${id})`;
       return res.status(201).json({ ID_Categoria: id, Nombre_Categoria: name });
     } catch (err) {
       if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Ya existe una categoría con ese nombre.' });
@@ -56,6 +57,7 @@ export const categoryController = {
         return res.status(409).json({ error: 'Ya existe una categoría con ese nombre.' });
       }
       await categoryModel.update(id, name);
+      if (res.locals) res.locals.activityDetail = `«${name}» (#${id})`;
       return res.json({ ID_Categoria: id, Nombre_Categoria: name });
     } catch (err) {
       if (err.code === 'ER_DUP_ENTRY') return res.status(409).json({ error: 'Ya existe una categoría con ese nombre.' });
@@ -70,6 +72,7 @@ export const categoryController = {
       const current = (await categoryModel.findAll()).find((item) => Number(item.ID_Categoria) === id);
       if (!current) return res.status(404).json({ error: 'Categoría no encontrada.' });
       await categoryModel.remove(id);
+      if (res.locals) res.locals.activityDetail = `«${current.Nombre_Categoria}» (#${id})`;
       return res.json({ message: 'Categoría eliminada.' });
     } catch (err) {
       if (err.code === 'ER_ROW_IS_REFERENCED_2') {

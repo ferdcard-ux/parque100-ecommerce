@@ -9,6 +9,7 @@ import siteAccessModel from '../models/site-access.model.js';
 import userModel from '../models/user.model.js';
 
 process.env.JWT_SECRET = 'test-secret-with-at-least-thirty-two-characters';
+process.env.SITE_ACTIVITY_LOG = 'off';
 
 function responseRecorder() {
   return {
@@ -50,15 +51,23 @@ function responseRecorder() {
 test('site access login creates an independent secure cookie for a valid team identity', async () => {
   const originalFind = siteAccessModel.findByUsername;
   const originalUpdate = siteAccessModel.updateLastLogin;
+  const originalStart = siteAccessModel.startSession;
   const passwordHash = await bcrypt.hash('password123', 4);
   siteAccessModel.findByUsername = async () => ({
     ID_Acceso: 17,
     Usuario: '3183694992',
     Hash_Contrasena: passwordHash,
     Activo: 1,
+    Intentos_Fallidos: 0,
+    Ultimo_Intento_Fallido: null,
+    Bloqueado_Hasta: null,
   });
   let updatedId;
+  let session;
   siteAccessModel.updateLastLogin = async (id) => { updatedId = id; };
+  siteAccessModel.startSession = async (id, sessionId) => {
+    session = { id, sessionId };
+  };
   const res = responseRecorder();
 
   try {
@@ -68,6 +77,8 @@ test('site access login creates an independent secure cookie for a valid team id
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body, { authenticated: true });
     assert.equal(updatedId, 17);
+    assert.equal(session.id, 17);
+    assert.match(session.sessionId, /^[0-9a-f-]{36}$/i);
     assert.equal(res.cookies[0].name, 'p100_access');
     assert.deepEqual(res.cookies[0].options, {
       httpOnly: true,
@@ -79,6 +90,7 @@ test('site access login creates an independent secure cookie for a valid team id
   } finally {
     siteAccessModel.findByUsername = originalFind;
     siteAccessModel.updateLastLogin = originalUpdate;
+    siteAccessModel.startSession = originalStart;
   }
 });
 
@@ -103,12 +115,17 @@ test('site access login rejects passwords longer than the field limit', async ()
 
 test('inactive and unknown site accounts receive the same login rejection', async () => {
   const originalFind = siteAccessModel.findByUsername;
+  const originalFailed = siteAccessModel.registerFailedAttempt;
   siteAccessModel.findByUsername = async () => ({
     ID_Acceso: 17,
     Usuario: '3183694992',
     Hash_Contrasena: await bcrypt.hash('password123', 4),
     Activo: 0,
+    Intentos_Fallidos: 0,
+    Ultimo_Intento_Fallido: null,
+    Bloqueado_Hasta: null,
   });
+  siteAccessModel.registerFailedAttempt = async () => {};
   const res = responseRecorder();
   try {
     await siteAccessController.login({
@@ -116,6 +133,62 @@ test('inactive and unknown site accounts receive the same login rejection', asyn
     }, res);
     assert.equal(res.statusCode, 401);
     assert.deepEqual(res.body, { error: 'Usuario o contraseña no válidos.' });
+    assert.equal(res.cookies.length, 0);
+  } finally {
+    siteAccessModel.findByUsername = originalFind;
+    siteAccessModel.registerFailedAttempt = originalFailed;
+  }
+});
+
+test('repeated failures lock the account for a while and report 423', async () => {
+  const originalFind = siteAccessModel.findByUsername;
+  const originalFailed = siteAccessModel.registerFailedAttempt;
+  let stored;
+  siteAccessModel.findByUsername = async () => ({
+    ID_Acceso: 21,
+    Usuario: '3000000001',
+    Hash_Contrasena: await bcrypt.hash('password123', 4),
+    Activo: 1,
+    Intentos_Fallidos: 4,
+    Ultimo_Intento_Fallido: new Date(),
+    Bloqueado_Hasta: null,
+  });
+  siteAccessModel.registerFailedAttempt = async (id, attempts, until) => {
+    stored = { id, attempts, until };
+  };
+  const res = responseRecorder();
+  try {
+    await siteAccessController.login({
+      body: { username: '3000000001', password: 'wrong-password' },
+    }, res);
+    assert.equal(res.statusCode, 423);
+    assert.match(res.body.error, /bloqueada temporalmente/i);
+    assert.equal(stored.id, 21);
+    assert.equal(stored.attempts, 5);
+    assert.ok(stored.until instanceof Date);
+  } finally {
+    siteAccessModel.findByUsername = originalFind;
+    siteAccessModel.registerFailedAttempt = originalFailed;
+  }
+});
+
+test('a blocked account cannot start a session even with the right password', async () => {
+  const originalFind = siteAccessModel.findByUsername;
+  siteAccessModel.findByUsername = async () => ({
+    ID_Acceso: 22,
+    Usuario: '3000000002',
+    Hash_Contrasena: await bcrypt.hash('password123', 4),
+    Activo: 1,
+    Intentos_Fallidos: 5,
+    Ultimo_Intento_Fallido: new Date(),
+    Bloqueado_Hasta: new Date(Date.now() + 10 * 60 * 1000),
+  });
+  const res = responseRecorder();
+  try {
+    await siteAccessController.login({
+      body: { username: '3000000002', password: 'password123' },
+    }, res);
+    assert.equal(res.statusCode, 423);
     assert.equal(res.cookies.length, 0);
   } finally {
     siteAccessModel.findByUsername = originalFind;
@@ -185,6 +258,32 @@ test('protected API session blocks requests until this site session accepts', as
     await requireSiteSession(req, res, () => { continued = true; });
     assert.equal(continued, true);
     assert.equal(req.siteAccess.username, '3183694992');
+  } finally {
+    siteAccessModel.findActiveById = originalFindActive;
+    siteAccessModel.hasAcceptedDisclaimer = originalHasAccepted;
+  }
+});
+
+test('a revoked or replaced site session is rejected before disclaimer checks', async () => {
+  const originalFindActive = siteAccessModel.findActiveById;
+  const originalHasAccepted = siteAccessModel.hasAcceptedDisclaimer;
+  siteAccessModel.findActiveById = async () => ({
+    ID_Acceso: 17,
+    Usuario: '3183694992',
+    Sesion_ID: 'a-different-session',
+  });
+  siteAccessModel.hasAcceptedDisclaimer = async () => {
+    throw new Error('no debe consultarse');
+  };
+  const res = responseRecorder();
+  let continued = false;
+  const token = signSiteAccessToken({ ID_Acceso: 17 });
+  const req = { headers: { cookie: `p100_access=${token}` } };
+
+  try {
+    await requireSiteSession(req, res, () => { continued = true; });
+    assert.equal(res.statusCode, 401);
+    assert.equal(continued, false);
   } finally {
     siteAccessModel.findActiveById = originalFindActive;
     siteAccessModel.hasAcceptedDisclaimer = originalHasAccepted;

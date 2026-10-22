@@ -63,6 +63,13 @@ export const ratingController = {
   async create(req, res) {
     try {
       const id = await ratingModel.create({ ...(req.body || {}), ID_Usuario: Number(req.user?.id) });
+      const product = typeof req.body?.ID_Producto === 'string'
+        ? req.body.ID_Producto.slice(0, 64) : null;
+      const stars = Number(req.body?.Estrellas);
+      const parts = [];
+      if (product) parts.push(`producto #${product}`);
+      if (Number.isInteger(stars) && stars >= 1 && stars <= 5) parts.push(`${stars}★`);
+      if (res.locals) res.locals.activityDetail = parts.join(' · ') || null;
       res.status(201).json({ id, message: 'Calificacion guardada' });
     } catch (err) {
       res.status(err.statusCode || 500).json({ error: err.message });
@@ -86,6 +93,9 @@ export const ratingController = {
       }
       const updated = await ratingModel.updateById(id, { ...(req.body || {}), ID_Usuario: Number(req.user?.id) });
       if (updated === null) return res.status(404).json({ error: 'Calificacion no encontrada' });
+      const stars = Number(req.body?.Estrellas);
+      if (res.locals) res.locals.activityDetail = Number.isInteger(stars)
+        && stars >= 1 && stars <= 5 ? `${stars}★` : null;
       res.json({ message: 'Resena actualizada' });
     } catch (err) {
       res.status(err.statusCode || 500).json({ error: err.message });

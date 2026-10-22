@@ -63,6 +63,7 @@ export const paymentController = {
         method: body.method,
         idempotencyKey: body.idempotencyKey,
       });
+      if (res.locals) res.locals.activityDetail = `Método: ${body.method}`;
       return res.status(201).json({
         success: true,
         mode: 'demo',
@@ -106,6 +107,9 @@ export const paymentController = {
       if (result.expired) {
         return res.status(410).json({ success: false, error: 'La simulacion vencio; inicia un nuevo flujo.' });
       }
+      const lines = Array.isArray(body.order.productos) ? body.order.productos.length : 0;
+      if (res.locals) res.locals.activityDetail = `Pedido #${result.id}`
+        + (lines ? ` · ${lines} producto(s)` : '');
       return res.status(result.existing ? 200 : 201).json({
         success: true,
         mode: 'demo',
@@ -128,6 +132,7 @@ export const paymentController = {
     }
     try {
       await orderModel.cancelDemoPayment(req.params.reference, req.user?.id);
+      if (res.locals) res.locals.activityDetail = `Referencia: ${req.params.reference.slice(0, 12)}…`;
       return res.json({ success: true, state: 'cancelada_demo' });
     } catch (error) {
       return res.status(error.statusCode || 500).json({ success: false, error: error.message });

@@ -37,9 +37,14 @@ export const orderController = {
     try {
       const withItems = req.query.items === '1';
       const orders = withItems ? await orderModel.findAllWithItems() : await orderModel.findAll();
-      if (isStaffRole(req.user?.rol)) return res.json(orders);
-      const own = orders.filter((order) => Number(order.ID_Usuario) === Number(req.user?.id));
-      res.json(own);
+      const visible = isStaffRole(req.user?.rol)
+        ? orders
+        : orders.filter((order) => Number(order.ID_Usuario) === Number(req.user?.id));
+      if (res.locals) {
+        res.locals.activityDetail = `${visible.length} pedido(s)`
+          + (withItems ? ' · con detalle' : '');
+      }
+      res.json(visible);
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
@@ -61,6 +66,11 @@ export const orderController = {
       if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
       if (!isStaffRole(req.user?.rol) && Number(order.ID_Usuario) !== Number(req.user?.id)) {
         return res.status(403).json({ error: 'No autorizado' });
+      }
+      if (res.locals) {
+        const lines = Array.isArray(order.detalles) ? order.detalles.length : 0;
+        res.locals.activityDetail = `Estado: ${order.Estado}`
+          + (lines ? ` · ${lines} producto(s)` : '');
       }
       res.json(order);
     } catch (err) {
@@ -89,6 +99,7 @@ export const orderController = {
       }
       const updated = await orderModel.updateStatus(req.params.id, Estado);
       if (!updated) return res.status(404).json({ error: 'Pedido no encontrado' });
+      if (res.locals) res.locals.activityDetail = `Nuevo estado: ${Estado}`;
       res.json({ message: 'Estado actualizado', estado: Estado });
     } catch (err) {
       res.status(err.statusCode || 500).json({ error: err.message });
@@ -139,6 +150,7 @@ export const orderController = {
 
       const cancelled = await orderModel.cancelById(req.params.id, motivo, actor, actorUserId);
       if (!cancelled) return res.status(404).json({ error: 'Pedido no encontrado' });
+      if (res.locals) res.locals.activityDetail = `Actor: ${actor}`;
       res.json({ message: 'Pedido cancelado' });
     } catch (err) {
       res.status(err.statusCode || 500).json({ error: err.message });
@@ -177,6 +189,9 @@ export const orderController = {
         ...req.body,
         ID_Usuario: Number(req.user?.id),
       });
+      const lines = Array.isArray(req.body?.productos) ? req.body.productos.length : 0;
+      if (res.locals) res.locals.activityDetail = `Pedido #${id}` + (lines
+        ? ` · ${lines} producto(s)` : '');
       res.status(201).json({ id, message: 'Pedido creado' });
     } catch (err) {
       res.status(err.statusCode || 500).json({ error: err.message });

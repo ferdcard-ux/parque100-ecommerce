@@ -57,9 +57,9 @@ export function signToken(user) {
 }
 
 /** Signs the separate server-access identity, not a store account token. */
-export function signSiteAccessToken(user) {
+export function signSiteAccessToken(user, sessionId = randomUUID()) {
   assertJwtSecret();
-  return jwt.sign({ kind: 'site-access', id: user.ID_Acceso, jti: randomUUID() }, process.env.JWT_SECRET, {
+  return jwt.sign({ kind: 'site-access', id: user.ID_Acceso, jti: sessionId }, process.env.JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
     algorithm: 'HS256',
   });
@@ -108,12 +108,28 @@ export async function authenticateRequest(req) {
   };
 }
 
-/** Authenticates the independent site-access account exclusively from its cookie. */
+/** Evita escribir en cada petición: como máximo una marca por minuto. */
+const activityTouched = new Map();
+const ACTIVITY_TOUCH_MS = 60 * 1000;
+
+function touchSiteActivity(id) {
+  const now = Date.now();
+  if (now - (activityTouched.get(id) || 0) < ACTIVITY_TOUCH_MS) return;
+  activityTouched.set(id, now);
+  siteAccessModel.touchActivity(id).catch(() => {});
+}
+
+/** Autenticates the independent site-access account exclusively from its cookie. */
 export async function authenticateSiteAccessRequest(req) {
   const payload = verifyToken(getSiteAccessCookie(req), 'site-access');
   if (!payload) return null;
   const user = await siteAccessModel.findActiveById(Number(payload.id));
   if (!user) return null;
+  // Una sesión revocada o reemplazada deja de ser válida de inmediato.
+  // Si la columna no existe (migración pendiente), `undefined` no bloquea.
+  if (user.Sesion_ID === null) return null;
+  if (typeof user.Sesion_ID === 'string' && user.Sesion_ID !== payload.jti) return null;
+  touchSiteActivity(Number(user.ID_Acceso));
   return {
     id: Number(user.ID_Acceso),
     username: user.Usuario,

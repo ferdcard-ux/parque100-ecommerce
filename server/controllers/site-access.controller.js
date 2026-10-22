@@ -1,10 +1,15 @@
 import bcrypt from 'bcryptjs';
+import { randomUUID } from 'node:crypto';
 import { DISCLAIMER_VERSION } from '../config/site-access.js';
 import {
   authenticateSiteAccessRequest,
   signSiteAccessToken,
 } from '../middleware/auth.js';
 import siteAccessModel from '../models/site-access.model.js';
+import {
+  createSessionRecord,
+  writeActivityRecord,
+} from '../utils/activity-log.js';
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
@@ -19,6 +24,40 @@ const CLEAR_COOKIE_OPTIONS = {
   sameSite: 'strict',
   path: '/',
 };
+/** Reintentos fallidos antes de bloquear temporalmente una cuenta. */
+const MAX_FAILED_ATTEMPTS = Math.max(
+  2, Number(process.env.SITE_ACCESS_MAX_FAILED) || 5);
+/** Ventana de conteo y duración del bloqueo (minutos). */
+const FAILURE_WINDOW_MS = Math.max(
+  1, Number(process.env.SITE_ACCESS_LOCK_MINUTES) || 15) * 60 * 1000;
+const LOCK_MS = FAILURE_WINDOW_MS;
+
+/** Guarda un evento de sesión sin bloquear la respuesta. */
+function logSession({ username, action, event, outcome = 'OK',
+  detail = null, httpStatus = null }) {
+  void writeActivityRecord(createSessionRecord({
+    username, action, event, outcome, detail, httpStatus,
+  }));
+}
+
+/** Hora local del bloqueo para el mensaje y el registro. */
+function localTime(value) {
+  try {
+    return new Intl.DateTimeFormat('es-CO', {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(value);
+  } catch {
+    return value.toISOString();
+  }
+}
+
+function blockedResponse(res, until) {
+  return res.status(423).json({
+    error: 'Cuenta bloqueada temporalmente por intentos fallidos. '
+      + `Inténtalo de nuevo después de las ${localTime(until)}.`,
+  });
+}
 
 function redirectToAccess(req, res) {
   const originalUri = req.get('X-Forwarded-Uri') || '/';
@@ -48,21 +87,94 @@ export const siteAccessController = {
     const { username, password } = req.body || {};
     if (typeof username !== 'string' || !/^[0-9]{1,32}$/.test(username)
       || typeof password !== 'string' || password.length === 0 || password.length > 72) {
+      logSession({
+        username: typeof username === 'string' ? username : '(desconocido)',
+        action: 'Falló el inicio de sesión en el sitio',
+        event: 'login.fail',
+        outcome: 'RECHAZADO',
+        detail: 'Datos de acceso con formato no válido',
+        httpStatus: 401,
+      });
       return res.status(401).json({ error: 'Usuario o contraseña no válidos.' });
     }
 
+    const now = new Date();
     const user = await siteAccessModel.findByUsername(username);
+    const blockedUntil = user?.Bloqueado_Hasta
+      ? new Date(user.Bloqueado_Hasta) : null;
+    if (blockedUntil && blockedUntil > now) {
+      logSession({
+        username,
+        action: 'Intentó entrar con la cuenta bloqueada',
+        event: 'login.blocked',
+        outcome: 'BLOQUEADO',
+        detail: `Bloqueo vigente hasta las ${localTime(blockedUntil)}`,
+        httpStatus: 423,
+      });
+      return blockedResponse(res, blockedUntil);
+    }
+
     const passwordMatches = user
       ? await bcrypt.compare(password, user.Hash_Contrasena)
       : false;
     if (!user || !user.Activo || !passwordMatches) {
+      let attempts = null;
+      let until = null;
+      if (user) {
+        const lastFailure = user.Ultimo_Intento_Fallido
+          ? new Date(user.Ultimo_Intento_Fallido) : null;
+        const withinWindow = lastFailure
+          && (now.getTime() - lastFailure.getTime()) <= FAILURE_WINDOW_MS
+          && Number(user.Intentos_Fallidos) > 0;
+        attempts = (withinWindow ? Number(user.Intentos_Fallidos) : 0) + 1;
+        if (attempts >= MAX_FAILED_ATTEMPTS) {
+          until = new Date(now.getTime() + LOCK_MS);
+        }
+        await siteAccessModel.registerFailedAttempt(
+          user.ID_Acceso, attempts, until);
+      }
+      const reason = !user ? 'Usuario no registrado'
+        : !user.Activo ? 'Cuenta desactivada'
+          : 'Contraseña incorrecta';
+      logSession({
+        username,
+        action: 'Falló el inicio de sesión en el sitio',
+        event: 'login.fail',
+        outcome: 'RECHAZADO',
+        detail: attempts
+          ? `${reason} · intento ${attempts}/${MAX_FAILED_ATTEMPTS}`
+          : reason,
+        httpStatus: until ? 423 : 401,
+      });
+      if (until) {
+        logSession({
+          username,
+          action: 'Bloqueó la cuenta por reintentos fallidos',
+          event: 'login.blocked',
+          outcome: 'BLOQUEADO',
+          detail: `${MAX_FAILED_ATTEMPTS} intentos fallidos · `
+            + `hasta las ${localTime(until)}`,
+          httpStatus: 423,
+        });
+        return blockedResponse(res, until);
+      }
       return res.status(401).json({ error: 'Usuario o contraseña no válidos.' });
     }
 
     await siteAccessModel.updateLastLogin(user.ID_Acceso);
-    const token = signSiteAccessToken(user);
+    const sessionId = randomUUID();
+    await siteAccessModel.startSession(user.ID_Acceso, sessionId);
+    const token = signSiteAccessToken(user, sessionId);
     res.cookie('p100_access', token, COOKIE_OPTIONS);
     res.setHeader('Cache-Control', 'no-store');
+    logSession({
+      username: user.Usuario,
+      action: 'Inició sesión en el sitio',
+      event: 'login.ok',
+      outcome: 'OK',
+      detail: 'Sesión web abierta',
+      httpStatus: 200,
+    });
     return res.json({ authenticated: true });
   },
 
@@ -99,7 +211,19 @@ export const siteAccessController = {
     return res.status(204).end();
   },
 
-  async logout(_req, res) {
+  async logout(req, res) {
+    const current = await authenticateSiteAccessRequest(req).catch(() => null);
+    if (current) {
+      await siteAccessModel.endSession(current.id);
+      logSession({
+        username: current.username,
+        action: 'Cerró sesión en el sitio',
+        event: 'session.logout',
+        outcome: 'OK',
+        detail: 'Sesión web cerrada',
+        httpStatus: 204,
+      });
+    }
     res.clearCookie('p100_access', CLEAR_COOKIE_OPTIONS);
     return res.status(204).end();
   },

@@ -63,6 +63,8 @@ export const authController = {
       const ok = user ? await verifyPassword(Contrasena, user.Contrasena) : false;
       if (!ok) return res.status(401).json({ error: 'Credenciales invalidas' });
       const token = signToken(user);
+      // Permite que el registro de actividad identifique la cuenta de tienda.
+      req.user = { id: user.ID_Usuario, rol: user.Rol };
       res.setHeader('Cache-Control', 'no-store');
       res.json({ ...userModel.toPublicUser(user), token });
     } catch {

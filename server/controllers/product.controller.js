@@ -139,6 +139,8 @@ export const productController = {
     try {
       const product = await productModel.findById(req.params.id);
       if (!product) return res.status(404).json({ error: 'Producto no encontrado' });
+      if (res.locals) res.locals.activityDetail = product.Nombre
+        ? `«${product.Nombre}» (#${req.params.id})` : null;
       res.json(product);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -159,6 +161,7 @@ export const productController = {
     if (!data) return res.status(400).json({ error: 'Datos de producto invalidos' });
     try {
       await productModel.create(data);
+      if (res.locals) res.locals.activityDetail = `«${data.Nombre}» (#${data.ID_Producto})`;
       res.status(201).json({ message: 'Producto creado' });
     } catch (err) {
       if (err.code === 'ER_DUP_ENTRY') {
@@ -187,6 +190,7 @@ export const productController = {
       const existing = await productModel.findById(req.params.id);
       if (!existing) return res.status(404).json({ error: 'Producto no encontrado' });
       await productModel.update(req.params.id, data);
+      if (res.locals) res.locals.activityDetail = `«${existing.Nombre || data.Nombre}» (#${req.params.id})`;
       res.json({ message: 'Producto actualizado' });
     } catch (err) {
       if (err.code === 'ER_NO_REFERENCED_ROW_2') {
@@ -210,6 +214,8 @@ export const productController = {
       const existing = await productModel.findById(req.params.id);
       if (!existing) return res.status(404).json({ error: 'Producto no encontrado' });
       await productModel.remove(req.params.id);
+      if (res.locals) res.locals.activityDetail = existing.Nombre
+        ? `«${existing.Nombre}» (#${req.params.id})` : null;
       res.json({ message: 'Producto eliminado' });
     } catch (err) {
       if (err.code === 'ER_ROW_IS_REFERENCED_2') {

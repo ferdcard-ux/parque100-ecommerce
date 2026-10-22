@@ -103,6 +103,7 @@ export const businessController = {
       const updated = await businessModel.update(updateData);
       if (!updated) return res.status(404).json({ error: 'Datos del negocio no encontrados' });
       const business = await businessModel.find();
+      if (res.locals) res.locals.activityDetail = business?.Nombre ? `«${business.Nombre}»` : null;
       res.json(business);
     } catch (err) {
       res.status(500).json({ error: err.message });

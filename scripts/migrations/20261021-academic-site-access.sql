@@ -12,6 +12,13 @@ CREATE TABLE IF NOT EXISTS usuarios_acceso (
   Activo tinyint(1) NOT NULL DEFAULT 1,
   Creado_En timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   Ultimo_Acceso timestamp NULL DEFAULT NULL,
+  Sesion_ID char(36) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL,
+  Sesion_Iniciada_En timestamp(3) NULL DEFAULT NULL,
+  Ultima_Actividad timestamp(3) NULL DEFAULT NULL,
+  Sesion_Revocada_En timestamp(3) NULL DEFAULT NULL,
+  Intentos_Fallidos int unsigned NOT NULL DEFAULT 0,
+  Ultimo_Intento_Fallido timestamp(3) NULL DEFAULT NULL,
+  Bloqueado_Hasta timestamp(3) NULL DEFAULT NULL,
   PRIMARY KEY (ID_Acceso),
   UNIQUE KEY usuarios_acceso_usuario (Usuario)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
