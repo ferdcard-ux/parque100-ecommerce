@@ -10,6 +10,11 @@
 - La pantalla académica es autocontenida y mantiene contraste legible con el modo oscuro del dispositivo; incorpora el control accesible de mostrar/ocultar contraseña mediante iconos de ojo.
 - Guía de despliegue y README aclaran el uso de HTTPS en el servidor remoto y que el entorno local HTTP no ofrece cifrado TLS.
 
+### Identidad visual y accesibilidad
+- Se centralizan los colores y la tipografía de marca en tokens reutilizables y se aplican de forma consistente en tienda, acceso y paneles.
+- Se reemplazan los emojis de interfaz por iconos vectoriales y dibujos SVG propios para las categorías; controles e iconos reciben estados de foco, activación y transiciones consistentes.
+- Se mejora el contraste de textos, tarjetas y navegación del dashboard y se amplía el área táctil de notificaciones en esa vista.
+
 ## [1.6.0] — 2026-10-14
 
 ### Seguridad

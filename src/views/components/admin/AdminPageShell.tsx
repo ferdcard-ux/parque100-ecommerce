@@ -46,7 +46,7 @@ export function AdminPageShell({ active, title, subtitle, children, backTo }: Ad
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] flex h-screen overflow-hidden">
+    <div className="min-h-screen bg-brand-surface flex h-screen overflow-hidden">
       <AdminSidebar
         active={active}
         pendingCount={pending.length}
@@ -59,40 +59,40 @@ export function AdminPageShell({ active, title, subtitle, children, backTo }: Ad
           <div className="min-w-0 flex items-center gap-3">
             {backTo && (
               <Link to={backTo} aria-label="Volver" className="relative w-11 h-11 rounded-full bg-white border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors shrink-0 before:absolute before:-inset-1 before:content-['']">
-                <ArrowLeft size={17} className="text-[#212121]" />
+                <ArrowLeft size={17} className="text-brand-ink" />
               </Link>
             )}
             <div className="min-w-0">
-              <h1 className="text-[#212121] truncate" style={{ fontSize: '1.05rem', fontWeight: 700 }}>{title}</h1>
-              {subtitle && <p className="text-gray-400 truncate" style={{ fontSize: '0.75rem' }}>{subtitle}</p>}
+              <h1 className="text-brand-ink truncate" style={{ fontSize: '1.05rem', fontWeight: 700 }}>{title}</h1>
+              {subtitle && <p className={`${active === 'dashboard' ? 'text-brand-muted' : 'text-gray-400'} truncate`} style={{ fontSize: '0.75rem' }}>{subtitle}</p>}
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link to="/" className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-[#212121] hover:bg-gray-50 transition-colors font-medium" style={{ fontSize: '0.8rem' }}>
+            <Link to="/" className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-brand-ink hover:bg-gray-50 transition-colors font-medium" style={{ fontSize: '0.8rem' }}>
               <Home size={14} /> Ver tienda
             </Link>
             <div className="relative" ref={bellRef}>
-              <button onClick={() => setBellOpen((v) => !v)} className="relative p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Notificaciones" aria-expanded={bellOpen}>
+              <button onClick={() => setBellOpen((v) => !v)} className={`relative p-2 rounded-full hover:bg-gray-100 transition-colors ${active === 'dashboard' ? 'min-w-11 min-h-11 flex items-center justify-center' : ''}`} aria-label="Notificaciones" aria-expanded={bellOpen}>
                 <Bell size={18} className="text-gray-500" />
-                {pending.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-[#C62828] rounded-full" />}
+                {pending.length > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-brand-red rounded-full" />}
               </button>
               {bellOpen && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-                  <p className="px-4 py-3 text-[#212121] font-semibold border-b border-gray-100" style={{ fontSize: '0.85rem' }}>
+                  <p className="px-4 py-3 text-brand-ink font-semibold border-b border-gray-100" style={{ fontSize: '0.85rem' }}>
                     Pedidos pendientes ({pending.length})
                   </p>
                   <div className="max-h-64 overflow-y-auto">
                     {pending.length === 0 ? (
-                      <p className="px-4 py-6 text-gray-400 text-center" style={{ fontSize: '0.8rem' }}>Sin pedidos pendientes.</p>
+                      <p className={`px-4 py-6 ${active === 'dashboard' ? 'text-brand-muted' : 'text-gray-400'} text-center`} style={{ fontSize: '0.8rem' }}>Sin pedidos pendientes.</p>
                     ) : (
                       pending.map((o) => (
                         <button
                           key={o.ID_Pedido}
                           onClick={() => { setBellOpen(false); navigate(`/admin/pedidos/${o.ID_Pedido}`); }}
-                          className="w-full text-left px-4 py-3 hover:bg-[#F5F5F5] transition-colors border-b border-gray-50"
+                          className="w-full text-left px-4 py-3 hover:bg-brand-surface transition-colors border-b border-gray-50"
                         >
-                          <p className="text-[#212121]" style={{ fontSize: '0.85rem' }}>Pedido #{o.ID_Pedido} · {o.Usuario_Nombre ?? 'Cliente'}</p>
-                          <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>
+                          <p className="text-brand-ink" style={{ fontSize: '0.85rem' }}>Pedido #{o.ID_Pedido} · {o.Usuario_Nombre ?? 'Cliente'}</p>
+                          <p className={active === 'dashboard' ? 'text-brand-muted' : 'text-gray-400'} style={{ fontSize: '0.75rem' }}>
                             {isDemoPaymentMethod(o.Metodo_Pago) ? 'SIMULACION · Total de referencia: ' : o.Metodo_Pago === 'Efectivo' ? 'EFECTIVO · ' : ''}${o.Total.toLocaleString('es-CO')}
                           </p>
                         </button>

@@ -55,6 +55,8 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
   const navigate = useNavigate();
   const items = role === 'domiciliario' ? SIDEBAR_ITEMS.filter((item) => DOMICILIARIO_KEYS.includes(item.key)) : SIDEBAR_ITEMS;
   const account = accountOf(user);
+  const mutedTextClass = active === 'dashboard' ? 'text-white/75' : 'text-white/40';
+  const inactiveNavTextClass = active === 'dashboard' ? 'text-white/75' : 'text-white/50';
 
   /** Cierra la sesión activa y vuelve a la tienda. */
   const handleLogout = () => {
@@ -69,14 +71,14 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
       {user?.photo ? (
         <img src={user.photo} alt={`Foto de ${account.name}`} className="w-7 h-7 rounded-full object-cover shrink-0" />
       ) : (
-        <div className="w-7 h-7 rounded-full bg-[#C62828] flex items-center justify-center shrink-0">
+        <div className="w-7 h-7 rounded-full bg-brand-red flex items-center justify-center shrink-0">
           <span className="text-white font-bold" style={{ fontSize: '0.7rem' }}>{initialsOf(user)}</span>
         </div>
       )}
       {showName && (
         <div className="min-w-0">
           <p className="text-white font-medium truncate" style={{ fontSize: '0.78rem' }}>{account.name}</p>
-          <p className="text-white/40 truncate" style={{ fontSize: '0.68rem' }}>{account.email} · {account.roleLabel}</p>
+          <p className={`${mutedTextClass} truncate`} style={{ fontSize: '0.68rem' }}>{account.email} · {account.roleLabel}</p>
         </div>
       )}
     </div>
@@ -89,15 +91,15 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
           key={item.label}
           to={item.path}
           onClick={onNavigate}
-          className={`flex items-center gap-3 px-3 py-3 md:py-2.5 rounded-xl transition-all min-h-11 ${
-            item.key === active ? 'bg-[#C62828] text-white' : 'text-white/50 hover:bg-white/5 hover:text-white'
+          className={`relative flex items-center gap-3 px-3 py-3 md:py-2.5 rounded-xl transition-all min-h-11 ${
+            item.key === active ? 'bg-brand-red text-white shadow-lg shadow-black/15 after:absolute after:left-0 after:top-2 after:bottom-2 after:w-1 after:rounded-full after:bg-brand-yellow' : `${inactiveNavTextClass} hover:bg-white/5 hover:text-white`
           }`}
         >
           <span className="shrink-0">{item.icon}</span>
           {(sidebarOpen || onNavigate) && <span style={{ fontSize: '0.875rem' }}>{item.label}</span>}
           {item.key === 'pendientes' && pendingCount > 0 && (
             <span
-              className="ml-auto min-w-6 h-6 px-1.5 rounded-full bg-[#C62828] text-white flex items-center justify-center font-bold"
+              className="ml-auto min-w-6 h-6 px-1.5 rounded-full bg-brand-red text-white flex items-center justify-center font-bold"
               style={{ fontSize: '0.7rem' }}
               aria-label={`${pendingCount} pedidos pendientes`}
             >
@@ -111,20 +113,20 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
 
   return (
     <>
-      <aside className={`${sidebarOpen ? 'w-56' : 'w-16'} hidden md:flex bg-[#212121] h-screen sticky top-0 flex-col transition-all duration-300 shrink-0 overflow-hidden`}>
+      <aside className={`${sidebarOpen ? 'w-56' : 'w-16'} hidden md:flex bg-brand-ink h-screen sticky top-0 flex-col transition-all duration-300 shrink-0 overflow-hidden`}>
         <div className="px-4 py-5 border-b border-white/10 flex items-center justify-between">
           {sidebarOpen && (
             <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #FBC02D, #C62828)' }}>
+              <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, var(--brand-yellow), var(--brand-red))' }}>
                 <Store size={14} className="text-white" />
               </div>
               <div>
                 <span className="text-white font-bold block" style={{ fontSize: '0.8rem' }}>Parque 100</span>
-                <span className="text-white/40" style={{ fontSize: '0.65rem' }}>Admin Panel</span>
+                <span className={mutedTextClass} style={{ fontSize: '0.65rem' }}>Admin Panel</span>
               </div>
             </div>
           )}
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white/40 hover:text-white transition-colors ml-auto min-w-11 min-h-11 flex items-center justify-center" aria-label={sidebarOpen ? 'Colapsar menú' : 'Expandir menú'}>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className={`${mutedTextClass} hover:text-white transition-colors ml-auto min-w-11 min-h-11 flex items-center justify-center`} aria-label={sidebarOpen ? 'Colapsar menú' : 'Expandir menú'}>
             {sidebarOpen ? <ChevronLeft size={18} /> : <ChevRight size={18} />}
           </button>
         </div>
@@ -133,7 +135,7 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
 
         <div className="border-t border-white/10 p-3">
           {sidebarOpen && accountBlock(true)}
-          <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full min-h-11">
+          <button onClick={handleLogout} className={`flex items-center gap-3 px-3 py-2 rounded-xl ${mutedTextClass} hover:bg-white/5 hover:text-white transition-all w-full min-h-11`}>
             <LogOut size={16} className="shrink-0" />
             {sidebarOpen && <span style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>}
           </button>
@@ -143,7 +145,7 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
       <button
         onClick={() => setMobileOpen(true)}
         aria-label="Abrir menú de administración"
-        className="md:hidden fixed bottom-4 left-4 z-40 w-12 h-12 rounded-full bg-[#212121] text-white shadow-xl flex items-center justify-center"
+        className="md:hidden fixed bottom-4 left-4 z-40 w-12 h-12 rounded-full bg-brand-ink text-white shadow-xl flex items-center justify-center"
       >
         <Menu size={20} />
       </button>
@@ -151,18 +153,18 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50" role="dialog" aria-modal="true" aria-label="Menú de administración">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-64 max-w-[80vw] bg-[#212121] flex flex-col overflow-hidden">
+          <aside className="absolute inset-y-0 left-0 w-64 max-w-[80vw] bg-brand-ink flex flex-col overflow-hidden">
             <div className="px-4 py-5 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, #FBC02D, #C62828)' }}>
+                <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'linear-gradient(135deg, var(--brand-yellow), var(--brand-red))' }}>
                   <Store size={14} className="text-white" />
                 </div>
                 <div>
                   <span className="text-white font-bold block" style={{ fontSize: '0.8rem' }}>Parque 100</span>
-                  <span className="text-white/40" style={{ fontSize: '0.65rem' }}>Admin Panel</span>
+                  <span className={mutedTextClass} style={{ fontSize: '0.65rem' }}>Admin Panel</span>
                 </div>
               </div>
-              <button onClick={() => setMobileOpen(false)} className="text-white/40 hover:text-white min-w-11 min-h-11 flex items-center justify-center" aria-label="Cerrar menú">
+              <button onClick={() => setMobileOpen(false)} className={`${mutedTextClass} hover:text-white min-w-11 min-h-11 flex items-center justify-center`} aria-label="Cerrar menú">
                 <X size={18} />
               </button>
             </div>
@@ -171,7 +173,7 @@ export function AdminSidebar({ active = 'dashboard', pendingCount = 0, role = 'a
 
             <div className="border-t border-white/10 p-3">
               {accountBlock(true)}
-              <button onClick={handleLogout} className="flex items-center gap-3 px-3 py-2 rounded-xl text-white/40 hover:bg-white/5 hover:text-white transition-all w-full min-h-11">
+              <button onClick={handleLogout} className={`flex items-center gap-3 px-3 py-2 rounded-xl ${mutedTextClass} hover:bg-white/5 hover:text-white transition-all w-full min-h-11`}>
                 <LogOut size={16} className="shrink-0" />
                 <span style={{ fontSize: '0.8rem' }}>Cerrar sesión</span>
               </button>
