@@ -9,6 +9,7 @@ import type { ApiUserRow, AdminUserData } from '../../services/user.service';
 import { normalizeUserRole as normalizeRole } from '../../models';
 import { useUsersController } from '../../controllers/use-users-controller';
 import { useDialogBehavior } from '../../utils/useDialog';
+import { DeleteConfirmModal } from '../components/admin/DeleteConfirmModal';
 
 const ROLES = ['cliente', 'domiciliario', 'admin'] as const;
 
@@ -35,7 +36,12 @@ function UserModal({ title, initial, showPassword, error, saving, onClose, onSub
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogBehavior(true, onClose, panelRef);
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
-    setForm((f) => ({ ...f, [key]: e.target.value }));
+    setForm((f) => ({
+      ...f,
+      [key]: key === 'Telefono'
+        ? e.target.value.replace(/\D/g, '').slice(0, 10)
+        : e.target.value,
+    }));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 overflow-y-auto" style={{ background: 'rgba(0,0,0,0.45)' }}
@@ -70,14 +76,14 @@ function UserModal({ title, initial, showPassword, error, saving, onClose, onSub
             </label>
             <label className="block">
               <span className="text-gray-500 block mb-1" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Telefono</span>
-              <input value={form.Telefono} onChange={set('Telefono')} inputMode="numeric" maxLength={20}
+              <input type="tel" value={form.Telefono} onChange={set('Telefono')} inputMode="numeric" maxLength={10} pattern="([0-9]{7,10})?" title="Déjalo vacío o ingresa entre 7 y 10 dígitos" autoComplete="tel"
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#C62828]" />
             </label>
           </div>
           {showPassword && (
             <label className="block">
               <span className="text-gray-500 block mb-1" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Contrasena inicial (min. 8)</span>
-              <input type="password" value={form.Contrasena} onChange={set('Contrasena')} minLength={8} required
+              <input type="password" value={form.Contrasena} onChange={set('Contrasena')} minLength={8} maxLength={72} autoComplete="new-password" required
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-[#C62828]" />
             </label>
           )}
@@ -86,29 +92,6 @@ function UserModal({ title, initial, showPassword, error, saving, onClose, onSub
             {saving ? 'Guardando...' : 'Guardar'}
           </button>
         </form>
-      </div>
-    </div>
-  );
-}
-
-/** Confirmacion de borrado de usuario. */
-function DeleteConfirm({ nombre, onClose, onConfirm }: { nombre: string; onClose: () => void; onConfirm: () => void }) {
-  const panelRef = useRef<HTMLDivElement>(null);
-  useDialogBehavior(true, onClose, panelRef);
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center px-4" style={{ background: 'rgba(0,0,0,0.45)' }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-    >
-      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="Eliminar usuario" className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center">
-        <h3 className="text-[#212121] font-bold mb-2">Eliminar usuario</h3>
-        <p className="text-gray-500 mb-6" style={{ fontSize: '0.9rem' }}>
-          ¿Eliminar a <strong>{nombre}</strong>? No es posible si tiene pedidos asociados.
-        </p>
-        <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 border border-gray-200 rounded-full py-2.5 hover:bg-gray-50 transition-colors" style={{ fontWeight: 600 }}>Cancelar</button>
-          <button onClick={onConfirm} className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2.5 transition-colors" style={{ fontWeight: 600 }}>Eliminar</button>
-        </div>
       </div>
     </div>
   );
@@ -135,6 +118,8 @@ export function AdminClientsPage() {
   const [modalError, setModalError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<ApiUserRow | null>(null);
+  const [deletingUser, setDeletingUser] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
   const q = query.toLowerCase();
@@ -175,15 +160,24 @@ export function AdminClientsPage() {
   };
 
   const handleDelete = async () => {
-    if (!deleting) return;
+    if (!deleting || deletingUser) return;
+    setDeleteError(null);
+    setDeletingUser(true);
     try {
       await deleteUser(deleting.ID_Usuario);
       setDeleting(null);
       setNotice('Usuario eliminado.');
     } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'No fue posible eliminar.');
-      setDeleting(null);
+      setDeleteError(err instanceof Error ? err.message : 'No fue posible eliminar el usuario.');
+    } finally {
+      setDeletingUser(false);
     }
+  };
+
+  const closeDeleteConfirm = () => {
+    if (deletingUser) return;
+    setDeleting(null);
+    setDeleteError(null);
   };
 
   const handleToggleCancel = async (u: ApiUserRow, value: boolean) => {
@@ -200,7 +194,8 @@ export function AdminClientsPage() {
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          maxLength={100}
+          onChange={(e) => setQuery(e.target.value.slice(0, 100))}
           placeholder="Buscar por nombre o correo..."
           className="flex-1 min-w-0 basis-48 px-4 py-2.5 rounded-xl border border-gray-200 bg-white focus:outline-none focus:border-[#C62828]"
           style={{ fontSize: '0.9rem' }}
@@ -267,7 +262,7 @@ export function AdminClientsPage() {
                         className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#C62828] transition-colors" aria-label="Editar" title="Editar">
                         <Pencil size={15} />
                       </button>
-                      <button onClick={() => setDeleting(u)}
+                      <button onClick={() => { setDeleteError(null); setDeleting(u); }}
                         className="p-2 rounded-lg hover:bg-red-50 text-gray-500 hover:text-[#C62828] transition-colors" aria-label="Eliminar" title="Eliminar">
                         <Trash2 size={15} />
                       </button>
@@ -309,7 +304,7 @@ export function AdminClientsPage() {
                     className="relative p-2.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-[#C62828] transition-colors before:absolute before:-inset-1 before:content-['']" aria-label="Editar" title="Editar">
                     <Pencil size={16} />
                   </button>
-                  <button onClick={() => setDeleting(u)}
+                  <button onClick={() => { setDeleteError(null); setDeleting(u); }}
                     className="relative p-2.5 rounded-lg hover:bg-red-50 text-gray-500 hover:text-[#C62828] transition-colors before:absolute before:-inset-1 before:content-['']" aria-label="Eliminar" title="Eliminar">
                     <Trash2 size={16} />
                   </button>
@@ -331,7 +326,16 @@ export function AdminClientsPage() {
           initial={{ Nombre: editing.Nombre, Correo: editing.Correo, Rol: normalizeRole(editing.Rol), Telefono: editing.Telefono === null ? '' : String(editing.Telefono), Contrasena: '' }}
           onClose={() => { setModal(null); setEditing(null); }} onSubmit={handleUpdate} />
       )}
-      {deleting && (<DeleteConfirm nombre={deleting.Nombre} onClose={() => setDeleting(null)} onConfirm={handleDelete} />)}
+      {deleting && (
+        <DeleteConfirmModal
+          title="Eliminar usuario"
+          description={<>¿Eliminar a <strong>{deleting.Nombre}</strong>? No es posible si tiene pedidos asociados.</>}
+          error={deleteError}
+          busy={deletingUser}
+          onClose={closeDeleteConfirm}
+          onConfirm={handleDelete}
+        />
+      )}
     </AdminPageShell>
   );
 }

@@ -14,7 +14,7 @@ import { SectionTitle } from '../components/shared/section-title';
 import { StarRating } from '../components/shared/star-rating';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
-import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice, ratingLabel, isDemoPaymentMethod } from '../../utils';
+import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice, ratingLabel, isApprovedDemoPayment, isDemoPaymentMethod } from '../../utils';
 
 /** Extension del comprobante segun su dataURL (png por defecto). */
 function receiptExtension(comprobante: string): string {
@@ -95,7 +95,12 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
     setSaving(true);
     try {
       await cancelViaController(order.ID_Pedido, motivo);
-      setOrder({ ...order, Estado: 'cancelado', Motivo_Cancelacion: motivo });
+      setOrder({
+        ...order,
+        Estado: 'cancelado',
+        Motivo_Cancelacion: motivo,
+        Estado_Pago_DEMO: order.Referencia_Pago_DEMO ? 'cancelada_demo' : order.Estado_Pago_DEMO,
+      });
       setCancelOpen(false);
     } catch (err) {
       setCancelError(err instanceof Error ? err.message : 'No fue posible cancelar.');
@@ -106,6 +111,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
 
   const subtotal = (order?.detalles ?? []).reduce((sum, d) => sum + Number(d.Subtotal), 0);
   const isDemoOrder = isDemoPaymentMethod(order?.Metodo_Pago);
+  const isApprovedDemo = isApprovedDemoPayment(order?.Metodo_Pago, order?.Estado_Pago_DEMO);
 
   return (
     <AdminPageShell active="pedidos" title={`Pedido #${id ?? ''}`} subtitle="Detalle y gestion del pedido" backTo="/admin/pedidos">
@@ -119,7 +125,9 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
             <div role="alert" className="lg:col-span-2 flex gap-3 bg-amber-50 border-2 border-amber-300 rounded-2xl p-4">
               <TriangleAlert size={22} className="text-amber-600 shrink-0 mt-0.5" />
               <p className="text-amber-900" style={{ fontSize: '0.9rem', fontWeight: 700 }}>
-                SIMULACIÓN: no hay pago confirmado ni reserva de inventario. Este pedido no puede prepararse ni despacharse.
+                {isApprovedDemo
+                  ? 'SIMULACION: aprobada solo en el sistema academico; no hubo cobro. El pedido y el descuento de inventario estan registrados.'
+                  : 'SIMULACION historica sin transaccion aprobada; no se reserva inventario ni se habilita el despacho.'}
               </p>
             </div>
           )}
@@ -139,13 +147,13 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
               <select
                 value={order.Estado}
                 disabled={order.Estado === 'cancelado'}
-                title={order.Estado === 'cancelado' ? 'Un pedido cancelado no se puede reanudar' : isDemoOrder ? 'Solo se puede cancelar un pedido demo; no se puede despachar' : undefined}
+                title={order.Estado === 'cancelado' ? 'Un pedido cancelado no se puede reanudar' : isDemoOrder && !isApprovedDemo ? 'La transaccion demo no esta aprobada' : undefined}
                 onChange={(e) => changeStatus(e.target.value as OrderEstado)}
                 className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828] disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{ fontSize: '0.8rem' }}
               >
                 {ORDER_ESTADOS.filter((estado) => (canCancel || estado !== 'cancelado')
-                  && (!isDemoOrder || estado === 'pendiente' || estado === 'cancelado')).map((estado) => (
+                  && (!isDemoOrder || isApprovedDemo || estado === 'pendiente' || estado === 'cancelado')).map((estado) => (
                   <option key={estado} value={estado}>{estado === 'cancelado' ? 'cancelado (con motivo)' : estado}</option>
                 ))}
               </select>
@@ -155,7 +163,13 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
                 <TriangleAlert size={16} className="text-red-600 shrink-0 mt-0.5" />
                 <div>
                   <p className="text-red-700" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Cancelado: {order.Motivo_Cancelacion ?? '—'}</p>
-                  <p className="text-red-600 mt-0.5" style={{ fontSize: '0.75rem' }}>Proceder con la devolución del pago según lo acordado con el cliente.</p>
+                  <p className="text-red-600 mt-0.5" style={{ fontSize: '0.75rem' }}>
+                    {isDemoOrder
+                      ? order.Referencia_Pago_DEMO
+                        ? 'Transaccion ficticia anulada; no hay devolucion real y el stock reservado fue restablecido.'
+                        : 'Pedido demo historico; no hubo cobro ni reserva de inventario.'
+                      : 'Proceder con la devolución del pago según lo acordado con el cliente.'}
+                  </p>
                 </div>
               </div>
             ) : (
@@ -170,6 +184,7 @@ export function AdminOrderDetailPage() {  const { id } = useParams();
               <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Telefono</dt><dd>{order.Telefono ?? '—'}</dd></div>
               <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Direccion</dt><dd>Torre {order.Torre ?? '—'}, Piso {order.Piso ?? '—'}, Apto {order.Apartamento ?? '—'}</dd></div>
               <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Pago</dt><dd>{order.Metodo_Pago ?? '—'}</dd></div>
+              {order.Referencia_Pago_DEMO && <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Referencia DEMO</dt><dd className="break-all">{order.Referencia_Pago_DEMO}</dd></div>}
               {order.Metodo_Pago === 'Efectivo' && (
                 <>
                   <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Recibido</dt><dd>{formatPrice(Number(order.Monto_Recibido ?? 0))}</dd></div>

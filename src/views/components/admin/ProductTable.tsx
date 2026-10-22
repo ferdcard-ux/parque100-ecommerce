@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { Search, ChevronDown, Upload, Download, Plus, Edit2, Trash2, Package, ChevronLeft, ChevronRight as ChevRight, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
-import type { AdminProduct, InventoryStatus } from '../../../models';
+import type { AdminProduct, InventoryStatus, ProductCreate, ProductUpsert } from '../../../models';
 import { formatPrice, STATUS_LABELS } from '../../../utils';
 
 interface ProductTableProps {
@@ -16,24 +16,9 @@ interface ProductTableProps {
   /** Lee las filas crudas del inventario (exportar/importar). */
   onFetchRows: () => Promise<any[]>;
   /** Crea un producto (importación masiva). */
-  onCreateProduct: (data: {
-    ID_Producto: string;
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => Promise<void>;
+  onCreateProduct: (data: ProductCreate) => Promise<void>;
   /** Actualiza un producto (importación masiva). */
-  onUpdateProduct: (id: string, data: {
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => Promise<void>;
+  onUpdateProduct: (id: string, data: ProductUpsert) => Promise<void>;
 }
 
 /** Columnas exactas de la tabla `productos` (plantilla de importación). */
@@ -44,6 +29,14 @@ const TEMPLATE_HEADERS = [
 ] as const;
 
 type TemplateRow = Record<(typeof TEMPLATE_HEADERS)[number], unknown>;
+const MAX_INT = 2147483647;
+const MAX_CONTENT_QTY = 9999999999.99;
+
+function isValidCsvDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
 
 function toTemplateRow(r: any): TemplateRow {
   return {
@@ -265,27 +258,65 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
         try {
           const id = String(row.ID_Producto ?? '').trim();
           const nombre = String(row.Nombre ?? '').trim();
-          const precio = Number(row.Precio_Venta);
-          const stock = Number(row.Stock_Minimo);
-          const cat = Number(row.ID_Categoria);
-          if (!id || !nombre) throw new Error(`fila ${line}: ID_Producto y Nombre son obligatorios`);
-          if (!Number.isFinite(precio) || !Number.isFinite(stock) || !Number.isFinite(cat)) throw new Error(`fila ${line}: Precio_Venta, Stock_Minimo e ID_Categoria deben ser numéricos`);
-          const numOrNull = (v: unknown) => (v === '' || v == null ? null : Number(v));
+          const descripcion = String(row.Descripcion ?? '').trim();
+          if (!id || id.length > 30) throw new Error(`fila ${line}: ID_Producto es obligatorio y admite hasta 30 caracteres`);
+          if (!nombre || nombre.length > 50) throw new Error(`fila ${line}: Nombre es obligatorio y admite hasta 50 caracteres`);
+          if (descripcion.length > 255) throw new Error(`fila ${line}: Descripcion admite hasta 255 caracteres`);
+          const parseInteger = (value: unknown, field: string, optional = false) => {
+            const raw = String(value ?? '').trim();
+            if (optional && !raw) return null;
+            if (!/^\d{1,10}$/.test(raw) || Number(raw) > MAX_INT) {
+              throw new Error(`fila ${line}: ${field} debe ser un entero entre 0 y ${MAX_INT}`);
+            }
+            return Number(raw);
+          };
+          const parseRequiredInteger = (value: unknown, field: string) => {
+            const parsed = parseInteger(value, field);
+            if (parsed === null) throw new Error(`fila ${line}: ${field} es obligatorio`);
+            return parsed;
+          };
+          const precio = parseRequiredInteger(row.Precio_Venta, 'Precio_Venta');
+          const precioAnterior = parseInteger(row.Precio_Anterior, 'Precio_Anterior', true);
+          const stock = parseRequiredInteger(row.Stock_Minimo, 'Stock_Minimo');
+          const cat = parseRequiredInteger(row.ID_Categoria, 'ID_Categoria');
+          if (!cat || cat < 1) throw new Error(`fila ${line}: ID_Categoria debe ser mayor que cero`);
           const strOrNull = (v: unknown) => {
             const s = String(v ?? '').trim();
             return s ? s : null;
           };
-          const descripcion = String(row.Descripcion ?? '').trim();
-          const payload: any = {
+          const contenidoRaw = String(row.Contenido_Cantidad ?? '').trim();
+          if (contenidoRaw && (!/^\d{1,10}(\.\d{1,2})?$/.test(contenidoRaw) || Number(contenidoRaw) > MAX_CONTENT_QTY)) {
+            throw new Error(`fila ${line}: Contenido_Cantidad admite hasta 10 enteros y 2 decimales`);
+          }
+          const textLimits: Array<[keyof TemplateRow, number]> = [
+            ['Marca', 50], ['Contenido_Unidad', 30], ['Embalaje', 60],
+            ['Ingredientes', 255], ['Conservacion', 255],
+          ];
+          for (const [field, max] of textLimits) {
+            if (String(row[field] ?? '').length > max) {
+              throw new Error(`fila ${line}: ${field} admite hasta ${max} caracteres`);
+            }
+          }
+          const promoFrom = String(row.Promo_Desde ?? '').trim();
+          const promoTo = String(row.Promo_Hasta ?? '').trim();
+          if ((promoFrom && !isValidCsvDate(promoFrom)) || (promoTo && !isValidCsvDate(promoTo))) {
+            throw new Error(`fila ${line}: las fechas promocionales deben tener formato YYYY-MM-DD y ser fechas válidas`);
+          }
+          if (promoFrom && promoTo && promoFrom > promoTo) {
+            throw new Error(`fila ${line}: Promo_Desde no puede ser posterior a Promo_Hasta`);
+          }
+          const payload: ProductUpsert = {
             Nombre: nombre,
             Precio_Venta: precio,
-            Precio_Anterior: numOrNull(row.Precio_Anterior),
+            Precio_Anterior: precioAnterior,
             Marca: strOrNull(row.Marca),
-            Contenido_Cantidad: numOrNull(row.Contenido_Cantidad),
+            Contenido_Cantidad: contenidoRaw ? Number(contenidoRaw) : null,
             Contenido_Unidad: strOrNull(row.Contenido_Unidad),
             Embalaje: strOrNull(row.Embalaje),
             Ingredientes: strOrNull(row.Ingredientes),
             Conservacion: strOrNull(row.Conservacion),
+            Promo_Desde: promoFrom || null,
+            Promo_Hasta: promoTo || null,
             Stock_Minimo: stock,
             ID_Categoria: cat,
           };
@@ -325,6 +356,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text" placeholder="Buscar producto o categoría..."
+              maxLength={100}
               value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               className="pl-9 pr-4 py-2 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"

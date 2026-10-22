@@ -82,6 +82,25 @@ test('site access login creates an independent secure cookie for a valid team id
   }
 });
 
+test('site access login rejects passwords longer than the field limit', async () => {
+  const originalFind = siteAccessModel.findByUsername;
+  let lookupCount = 0;
+  siteAccessModel.findByUsername = async () => {
+    lookupCount += 1;
+    return null;
+  };
+  const res = responseRecorder();
+  try {
+    await siteAccessController.login({
+      body: { username: '3183694992', password: 'x'.repeat(73) },
+    }, res);
+    assert.equal(res.statusCode, 401);
+    assert.equal(lookupCount, 0);
+  } finally {
+    siteAccessModel.findByUsername = originalFind;
+  }
+});
+
 test('inactive and unknown site accounts receive the same login rejection', async () => {
   const originalFind = siteAccessModel.findByUsername;
   siteAccessModel.findByUsername = async () => ({

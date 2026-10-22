@@ -14,7 +14,7 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
     : paymentMode === 'error'
       ? 'No se pudo verificar; pagos electrónicos desactivados'
       : demoEnabled
-        ? 'SIMULACIÓN DEMO — sin cobro ni datos financieros'
+        ? 'SIMULACION DEMO — sin cobro ni datos financieros'
         : 'Temporalmente no disponible';
 
   return (
@@ -36,13 +36,8 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
               <CreditCard size={26} className="text-gray-500" />
             </div>
             <div>
-              <h3 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Tarjeta de crédito / débito</h3>
+              <h3 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Tarjeta (simulacion academica)</h3>
               <p className={`mt-0.5 ${demoEnabled ? 'text-amber-800 font-semibold' : 'text-gray-500'}`} style={{ fontSize: '0.85rem' }}>{modeLabel}</p>
-              <div className="flex gap-2 mt-2">
-                <span className="px-2 py-0.5 bg-blue-600 text-white rounded" style={{ fontSize: '0.65rem', fontWeight: 700 }}>VISA</span>
-                <span className="px-2 py-0.5 bg-red-600 text-white rounded" style={{ fontSize: '0.65rem', fontWeight: 700 }}>MC</span>
-                <span className="px-2 py-0.5 bg-blue-900 text-white rounded" style={{ fontSize: '0.65rem', fontWeight: 700 }}>AMEX</span>
-              </div>
             </div>
           </div>
           {selectedMethod === 'card' && <CheckCircle2 size={24} className="text-[#FBC02D] shrink-0" />}
@@ -64,11 +59,8 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
               <Smartphone size={26} className="text-gray-500" />
             </div>
             <div>
-              <h3 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Nequi</h3>
+              <h3 className="text-[#212121] font-semibold" style={{ fontSize: '1rem' }}>Nequi (simulacion academica)</h3>
               <p className={`mt-0.5 ${demoEnabled ? 'text-amber-800 font-semibold' : 'text-gray-500'}`} style={{ fontSize: '0.85rem' }}>{modeLabel}</p>
-              <div className="mt-2">
-                <span className="px-2 py-0.5 rounded font-bold text-white" style={{ fontSize: '0.65rem', background: '#7B2FBE' }}>NEQUI</span>
-              </div>
             </div>
           </div>
           {selectedMethod === 'nequi' && <CheckCircle2 size={24} className="text-[#FBC02D] shrink-0" />}
@@ -101,14 +93,14 @@ export function PaymentOptions({ selectedMethod, paymentMode, onSelect }: Paymen
         <span className="text-2xl shrink-0">🔒</span>
         <div>
           <p className="text-[#212121] font-medium" style={{ fontSize: '0.875rem' }}>
-            {demoEnabled ? 'Pagos electrónicos solo en modo demo' : 'Pago contra entrega'}
+            {demoEnabled ? 'Pagos electronicos solo en modo DEMO' : 'Pago contra entrega'}
           </p>
           <p className="text-gray-500" style={{ fontSize: '0.8rem' }}>
             {demoEnabled
-              ? 'La simulación no cobra ni reserva inventario. No ingreses ni envíes datos de tarjeta o transferencias.'
+              ? 'El flujo solo guarda datos ficticios: transaccion, pedido e inventario en la base academica. No es un cobro real; no ingreses datos financieros ni hagas transferencias.'
               : paymentMode === 'error'
                 ? 'La verificación del modo de pago falló. Solo está disponible el efectivo contra entrega.'
-                : 'Los pagos electrónicos requieren una pasarela verificada; por ahora solo está disponible el efectivo contra entrega.'}
+                : 'Los pagos electronicos requieren una pasarela verificada; por ahora solo esta disponible el efectivo contra entrega.'}
           </p>
         </div>
       </div>

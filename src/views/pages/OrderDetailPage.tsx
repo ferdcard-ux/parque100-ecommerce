@@ -12,7 +12,7 @@ import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { StarRating } from '../components/shared/star-rating';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { DISPATCH_DELAY_WARNING, CANCEL_REFUND_NOTICE, formatPrice, ratingLabel, isDemoPaymentMethod } from '../../utils';
+import { DISPATCH_DELAY_WARNING, CANCEL_REFUND_NOTICE, formatPrice, ratingLabel, isApprovedDemoPayment, isDemoPaymentMethod } from '../../utils';
 
 /** Formatea fecha y hora legibles. */
 function formatDateTime(value: string): string {
@@ -56,9 +56,10 @@ export function OrderDetailPage() {
 
   const subtotal = (order?.detalles ?? []).reduce((sum, d) => sum + Number(d.Subtotal), 0);
   const isDemoOrder = isDemoPaymentMethod(order?.Metodo_Pago);
+  const isApprovedDemo = isApprovedDemoPayment(order?.Metodo_Pago, order?.Estado_Pago_DEMO);
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
         <PageHeader title="Detalle del pedido" subtitle={order ? `Pedido #${order.ID_Pedido} · ${formatDateTime(order.Fecha)}` : undefined} backTo="/compras" />
 
@@ -72,7 +73,9 @@ export function OrderDetailPage() {
               <div role="alert" className="flex gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
                 <TriangleAlert size={20} className="text-amber-600 shrink-0 mt-0.5" />
                 <p className="text-amber-800" style={{ fontSize: '0.85rem' }}>
-                  SIMULACIÓN: no se cobró, no se reservó inventario y este pedido no puede ser despachado.
+                  {isApprovedDemo
+                    ? 'SIMULACION academica: sin cobro real; pedido e inventario actualizados. Su estado puede avanzar dentro de la demostracion.'
+                    : 'Pedido demo historico sin transaccion aprobada; no se reservo inventario ni se habilito el despacho.'}
                 </p>
               </div>
             ) : order.Estado !== 'entregado' && (
@@ -89,7 +92,13 @@ export function OrderDetailPage() {
               {order.Estado === 'cancelado' ? (
                 <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                   <p className="text-red-700" style={{ fontSize: '0.85rem', fontWeight: 600 }}>Motivo: {order.Motivo_Cancelacion ?? '—'}</p>
-                  <p className="text-red-600 mt-1" style={{ fontSize: '0.8rem' }}>{CANCEL_REFUND_NOTICE}</p>
+                  <p className="text-red-600 mt-1" style={{ fontSize: '0.8rem' }}>
+                    {isDemoOrder
+                      ? order.Referencia_Pago_DEMO
+                        ? 'Transaccion ficticia anulada; no hay devolucion real y el stock reservado fue restablecido.'
+                        : 'Pedido historico demo; no hubo cobro ni reserva de inventario.'
+                      : CANCEL_REFUND_NOTICE}
+                  </p>
                 </div>
               ) : (
                 <OrderTracker estado={order.Estado} />
@@ -136,6 +145,7 @@ export function OrderDetailPage() {
                 <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Piso</dt><dd>{order.Piso ?? '—'}</dd></div>
                 <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Apartamento</dt><dd>{order.Apartamento ?? '—'}</dd></div>
                 <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Metodo de pago</dt><dd>{order.Metodo_Pago ?? '—'}</dd></div>
+                {order.Referencia_Pago_DEMO && <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Referencia DEMO</dt><dd className="break-all">{order.Referencia_Pago_DEMO}</dd></div>}
                 {order.Metodo_Pago === 'Efectivo' && (
                   <>
                     <div><dt className="text-gray-400" style={{ fontSize: '0.7rem' }}>Efectivo recibido</dt><dd>{formatPrice(Number(order.Monto_Recibido ?? 0))}</dd></div>
@@ -164,7 +174,7 @@ export function OrderDetailPage() {
                   <StarRating value={stars} editable onChange={setStars} />
                   <input
                     value={comment}
-                    onChange={(e) => setComment(e.target.value)}
+                    onChange={(e) => setComment(e.target.value.slice(0, 255))}
                     maxLength={255}
                     placeholder="Comentario opcional"
                     className="border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#C62828]"

@@ -18,7 +18,7 @@ export function AccountPage() {
 
   if (!isLoggedIn || !user) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+      <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
         <div className="max-w-lg mx-auto bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <h1 className="text-[#212121] mb-2" style={{ fontSize: '1.1rem', fontWeight: 700 }}>Inicia sesion</h1>
           <p className="text-gray-400 mb-6" style={{ fontSize: '0.85rem' }}>Necesitas una cuenta para ver esta seccion.</p>
@@ -31,7 +31,7 @@ export function AccountPage() {
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
         <h1 className="text-[#212121] mb-6" style={{ fontSize: '1.4rem', fontWeight: 700 }}>Mi cuenta</h1>
 

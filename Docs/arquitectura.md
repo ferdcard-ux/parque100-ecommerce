@@ -143,7 +143,7 @@ server/
 │   ├── order.controller.js     # Listado por rol, detalle, creación y cancelación (identidad del token)
 │   ├── business.controller.js  # Ficha del negocio
 │   ├── rating.controller.js    # Calificaciones (autor del token)
-│   └── payment.controller.js   # Procesamiento simulado (tarjeta validada)
+│   └── payment.controller.js   # Simulación académica DEMO, sin pasarela ni datos financieros
 │
 └── routes/                     # Capa de enrutamiento (routers delgados con autorización)
     ├── products.js             # /api/products (escritura: admin)

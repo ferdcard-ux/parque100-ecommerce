@@ -17,7 +17,7 @@ const FAQS = [
 export function HelpPage() {
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
         <PageHeader title="Centro de ayuda" subtitle="Preguntas frecuentes" backTo="/" />
         <div className="flex flex-col gap-3">

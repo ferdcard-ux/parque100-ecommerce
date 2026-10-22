@@ -13,11 +13,11 @@ interface AddressFormProps {
 
 export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit, submitLabel = 'Guardar dirección y continuar' }: AddressFormProps) {
   const [form, setForm] = useState<DeliveryAddress>(initialAddress);
-  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   useEffect(() => {
     setForm(initialAddress);
-    setPhoneError(null);
+    setValidationError(null);
   }, [initialAddress]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -25,19 +25,25 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
     const value = name === 'phone'
       ? raw.replace(/\D/g, '').slice(0, 10)
       : name === 'tower' || name === 'floor' || name === 'apartment'
-        ? raw.replace(/\D/g, '')
+        ? raw.replace(/\D/g, '').slice(0, 20)
         : raw;
     setForm((prev) => ({ ...prev, [e.target.name]: value }));
-    if (e.target.name === 'phone' && phoneError && value.length === 10) setPhoneError(null);
+    if (validationError && e.target.name === 'phone' && value.length === 10) {
+      setValidationError(null);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (form.phone.length !== 10) {
-      setPhoneError('Ingresa un número de 10 dígitos.');
+    if (`${form.firstName.trim()} ${form.lastName.trim()}`.trim().length > 50) {
+      setValidationError('El nombre del destinatario no puede superar 50 caracteres.');
       return;
     }
-    setPhoneError(null);
+    if (form.phone.length !== 10) {
+      setValidationError('Ingresa un número de 10 dígitos.');
+      return;
+    }
+    setValidationError(null);
     await onSubmit(form);
   };
 
@@ -69,14 +75,14 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Nombre *</label>
             <div className="relative">
               <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="firstName" required readOnly={lockRecipient} value={form.firstName} onChange={handleChange} placeholder="Tu nombre" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="firstName" required maxLength={50} autoComplete="given-name" readOnly={lockRecipient} value={form.firstName} onChange={handleChange} placeholder="Tu nombre" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
           <div>
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Apellido *</label>
             <div className="relative">
               <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="lastName" required readOnly={lockRecipient} value={form.lastName} onChange={handleChange} placeholder="Tu apellido" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="lastName" required maxLength={50} autoComplete="family-name" readOnly={lockRecipient} value={form.lastName} onChange={handleChange} placeholder="Tu apellido" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
         </div>
@@ -85,9 +91,9 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
           <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Teléfono *</label>
           <div className="relative">
             <Phone size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input type="tel" name="phone" inputMode="numeric" required minLength={10} maxLength={10} pattern="[0-9]{10}" title="Ingresa un número de 10 dígitos" aria-invalid={phoneError !== null} aria-describedby={phoneError ? 'phone-error' : undefined} value={form.phone} onChange={handleChange} placeholder="300 000 0000" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+            <input type="tel" name="phone" autoComplete="tel" inputMode="numeric" required minLength={10} maxLength={10} pattern="[0-9]{10}" title="Ingresa un número de 10 dígitos" aria-invalid={validationError !== null} aria-describedby={validationError ? 'address-validation-error' : undefined} value={form.phone} onChange={handleChange} placeholder="300 000 0000" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
           </div>
-          {phoneError && <p id="phone-error" role="alert" className="text-[#C62828] mt-1.5" style={{ fontSize: '0.8rem' }}>{phoneError}</p>}
+          {validationError && <p id="address-validation-error" role="alert" className="text-[#C62828] mt-1.5" style={{ fontSize: '0.8rem' }}>{validationError}</p>}
         </div>
 
         <div className="flex items-center gap-2 mb-4 mt-6">
@@ -100,21 +106,21 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Torre / Bloque *</label>
             <div className="relative">
               <Building size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="tower" required inputMode="numeric" pattern="[0-9]+" title="Solo numeros" value={form.tower} onChange={handleChange} placeholder="1" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="tower" required maxLength={20} inputMode="numeric" pattern="[0-9]{1,20}" title="Ingresa solo números (máximo 20 dígitos)" value={form.tower} onChange={handleChange} placeholder="1" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
           <div>
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Piso *</label>
             <div className="relative">
               <Hash size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="floor" required inputMode="numeric" pattern="[0-9]+" title="Solo numeros" value={form.floor} onChange={handleChange} placeholder="4" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="floor" required maxLength={20} inputMode="numeric" pattern="[0-9]{1,20}" title="Ingresa solo números (máximo 20 dígitos)" value={form.floor} onChange={handleChange} placeholder="4" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
           <div>
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Apartamento *</label>
             <div className="relative">
               <MapPin size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input type="text" name="apartment" required inputMode="numeric" pattern="[0-9]+" title="Solo numeros" value={form.apartment} onChange={handleChange} placeholder="401" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
+              <input type="text" name="apartment" required maxLength={20} inputMode="numeric" pattern="[0-9]{1,20}" title="Ingresa solo números (máximo 20 dígitos)" value={form.apartment} onChange={handleChange} placeholder="401" className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]" style={{ fontSize: '0.9rem' }} />
             </div>
           </div>
         </div>
@@ -125,6 +131,7 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
             name="notes"
             value={form.notes}
             onChange={handleChange}
+            maxLength={500}
             rows={2}
             placeholder="Indicaciones especiales para el domiciliario..."
             className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] resize-none"

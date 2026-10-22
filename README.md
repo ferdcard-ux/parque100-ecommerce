@@ -34,7 +34,7 @@ Convenciones completas en [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md)
 
 | Software | Versión |
 |----------|---------|
-| Node.js | 18+ |
+| Node.js | 20+ |
 | npm | 9+ |
 | MySQL Server o MariaDB | 8.0+ / 10.4+ |
 
@@ -44,7 +44,7 @@ Convenciones completas en [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md)
 # 1. Instalar dependencias
 npm install
 
-# 2. Restaurar la BD (esquema + datos de prueba). Reemplaza las 8 tablas.
+# 2. Restaurar la BD (esquema + datos de prueba). Reemplaza las 9 tablas.
 npm run db:restore
 
 # 3. Terminal 1 — Backend API en http://localhost:3001
@@ -57,6 +57,17 @@ npm run dev
 > Si tu MySQL tiene otras credenciales o base, cópialas en un archivo `.env` (ver `.env.example`: `DB_USER`, `DB_PASSWORD`, `DB_NAME`, además de `PORT`, `JWT_SECRET` y `CORS_ORIGIN`).
 > Windows: si el cliente no está en `C:\Program Files\MySQL\MySQL Server 8.4\bin`, define `MYSQL_BIN` con su directorio `bin`.
 > Linux/macOS: instala el cliente (`sudo apt install mysql-client`, o `mariadb-client`) y usa los mismos comandos; si el binario no está en el PATH, define `MYSQL_BIN` (p. ej. `MYSQL_BIN=/usr/local/mysql/bin npm run db:dump`). El script también acepta clientes MariaDB (`mariadb`/`mariadb-dump`).
+
+### Acceso académico
+
+El sitio está destinado exclusivamente a usuarios autorizados del equipo y
+muestra un descargo obligatorio antes de habilitar la navegación y las API.
+Primero se inicia sesión en `/access.html` con una cuenta creada desde el panel
+local; después se acepta el descargo y, cuando corresponda, se inicia sesión
+con una cuenta demo de tienda. Son identidades y sesiones independientes. No
+hay registro público. La base privada `parque100_acceso` no se comparte en el
+repositorio ni en los dumps de `parque100`; consulta
+[`Docs/ACCESO-ACADEMICO.md`](Docs/ACCESO-ACADEMICO.md) para su administración.
 
 ### Sincronizar la base de datos entre equipos
 
@@ -90,8 +101,9 @@ npm run db:restore
 | `npm run dev` | Servidor de desarrollo frontend (Vite) |
 | `npm run server` | Servidor backend Express (:3001) |
 | `npm run build` | Compila para producción (`dist/`) |
-| `npm test` | Batería de pruebas API + BD (57 checks, requiere backend y MySQL) |
+| `npm test` | Smoke API + BD (73 comprobaciones); requiere backend, MySQL, terminal interactiva y cuenta autorizada. Crea/modifica datos durante la ejecución: úselo solo contra una BD desechable aislada |
 | `npm run typecheck` | Verificación de tipos (`tsc --noEmit`) |
+| `npm run test:payments` | Pruebas unitarias de pagos y pedidos, sin modificar la BD |
 
 ## API REST
 
@@ -101,13 +113,15 @@ Base URL: `http://localhost:3001/api`
 |---------|-----------|
 | Productos | `GET/POST /products`, `GET/PUT/DELETE /products/:id` |
 | Categorías | `GET /categories` |
-| Autenticación | `POST /auth/login`, `POST /auth/register` (correo y teléfono únicos, 409 si existen), `POST /auth/recover` (503 hasta configurar recuperación verificada), `PUT /auth/password` |
+| Acceso académico | `POST /site-access/login`, `GET /site-access/disclaimer/status`, `POST /site-access/disclaimer/accept` |
+| Autenticación | `POST /auth/login`, `POST /auth/register` (deshabilitado), `POST /auth/recover` (503 hasta configurar recuperación verificada), `PUT /auth/password` |
 | Usuarios | `GET /users`, `POST /users`, `PUT /users/:id/admin`, `PUT /users/:id/profile` (perfil propio), `DELETE /users/:id`, `GET/PUT /users/:id/permissions` (delegar `puede_cancelar`) |
 | Datos de entrega de usuario | `GET /users/:id`, `PUT /users/:id` |
 | Negocio | `GET /business`, `PUT /business` |
 | Pedidos | `GET /orders` (`?items=1` incluye detalles), `GET /orders/:id`, `POST /orders` (total recalculado, estado `pendiente`), `PUT /orders/:id/status` (máquina de estados), `PUT /orders/:id/cancel` (con motivo) |
 | Calificaciones | `GET /ratings`, `GET /ratings/resumen?producto=ID`, `POST /ratings`, `PUT /ratings/:id` (autor), `DELETE /ratings/:id` |
-| Pagos | `POST /payments/process` (503: pagos electrónicos deshabilitados hasta integrar pasarela verificada; efectivo contra entrega disponible) |
+| Pagos | `GET /payments/mode`; con `PAYMENTS_MODE=demo`, `POST /payments/process` inicia un intento y `POST /payments/confirm` registra atómicamente transacción DEMO, pedido y descuento de inventario; `PUT /payments/:reference/cancel` cierra intentos pendientes. Sin cobros ni datos financieros; efectivo contra entrega disponible |
+| Actividad del sitio | `POST /activity/interactions` recibe solo eventos permitidos de carrito, favoritos y cierre de sesión; el backend registra además operaciones de catálogo, pedidos, pagos y administración en un JSONL local rotado, sin credenciales ni cuerpos |
 
 > Los endpoints de escritura y los datos ajenos requieren `Authorization: Bearer <JWT>` (se obtiene en `POST /auth/login`); el rol `admin` gestiona usuarios, productos, negocio y moderación.
 
@@ -120,6 +134,8 @@ Base URL: `http://localhost:3001/api`
 | [`Docs/guia-despliegue.md`](Docs/guia-despliegue.md) | Guía de despliegue: servidor propio expuesto a Internet (Caddy + DuckDNS) |
 | [`Docs/manual-usuario.md`](Docs/manual-usuario.md) | Manual de usuario completo: roles, flujo de compra, panel administrativo y FAQ |
 | [`Docs/guia-uso.md`](Docs/guia-uso.md) | Guía rápida de uso: funcionalidades y rutas |
+| [`Docs/ACCESO-ACADEMICO.md`](Docs/ACCESO-ACADEMICO.md) | Autorización del sitio, descargo y gestión local de cuentas |
+| [`Docs/INFORME-AUDITORIA-SEGURIDAD.md`](Docs/INFORME-AUDITORIA-SEGURIDAD.md) | Hallazgos, correcciones, verificaciones y limitaciones de seguridad |
 | [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md) | Estándares de codificación obligatorios |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historial de cambios del proyecto |
 

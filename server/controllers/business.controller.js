@@ -72,8 +72,8 @@ export const businessController = {
         return res.status(400).json({ error: 'El correo del negocio no es valido.' });
       }
       const nit = text(body.NIT);
-      if (nit.length > 30) {
-        return res.status(400).json({ error: 'El NIT no puede superar 30 caracteres.' });
+      if (nit.length > 30 || !/^[\d-]*$/.test(nit)) {
+        return res.status(400).json({ error: 'El NIT debe contener solo numeros y guiones, con un maximo de 30 caracteres.' });
       }
       let imagenQr;
       if (body.Imagen_QR !== undefined) {

@@ -153,11 +153,29 @@ CORS_ORIGIN=https://<subdominio>.duckdns.org,http://localhost:5173,http://127.0.
 ```
 
 `PAYMENTS_MODE` acepta `disabled` (predeterminado si se omite) o `demo`.
-Usa `demo` solo en un entorno de demostración: la interfaz no solicita datos
-financieros, los pedidos quedan marcados como simulados/no pagados, no reservan
-inventario y el panel impide despacharlos. Para cualquier despliegue productivo,
-mantén `PAYMENTS_MODE=disabled` hasta integrar una pasarela real y verificar el
-pago en el servidor.
+Antes de habilitar `demo` en una base `parque100` existente, ejecuta
+`npm run migrate:demo-payments` con una cuenta MySQL autorizada para crear la
+tabla `transacciones_pago_demo`. La migración no modifica la base privada
+`parque100_acceso`. El panel de servicios no ejecuta migraciones de BD al
+reiniciar el servidor; aplica esta migración antes de reiniciar/publicar el
+backend. `setup.sql` ya incluye la tabla para instalaciones nuevas.
+
+En una base `parque100` existente, ejecuta `npm run migrate:product-catalogs`
+antes de iniciar la versión actualizada. Esta migración crea el catálogo de
+unidades y conserva/precarga las unidades ya usadas por productos; también
+amplía el campo de unidad a 30 caracteres. No modifica la base privada
+`parque100_acceso`. Las altas, ediciones y eliminaciones de categorías/unidades
+se gestionan desde **Admin → Inventario**; las categorías con productos y las
+unidades aún utilizadas no se pueden eliminar.
+
+Usa `demo` solo en un entorno académico: el flujo por pasos de tarjeta y Nequi
+no solicita ni almacena datos financieros y no se conecta con proveedores. Al
+confirmar, guarda una transacción identificada como DEMO, crea el pedido y
+descuenta inventario en una sola transacción SQL. El personal puede avanzar los
+estados demostrativos; al cancelar antes de la entrega se restablece el stock y
+se marca la transacción como anulada DEMO. Ninguna de estas operaciones implica
+un pago, una compra o un despacho reales. Para cualquier despliegue productivo,
+mantén `PAYMENTS_MODE=disabled` hasta integrar y verificar una pasarela real.
 
 `SITE_ACCESS_DB_USER` y `SITE_ACCESS_DB_PASSWORD` pertenecen a la base privada
 `parque100_acceso`, no a la base de demostración. Se generan únicamente en el
@@ -173,6 +191,16 @@ vacía por una cuenta exclusiva de la aplicación con privilegios mínimos.
 
 > Genera el `JWT_SECRET` con un generador criptografico, por ejemplo:
 > `node -e "console.log(require('node:crypto').randomBytes(48).toString('hex'))"`
+
+El backend registra acciones principales de usuarios en
+`server\logs\site-activity.jsonl` (máximo 5 MB más una rotación local).
+El log contiene la identidad académica autenticada, el ID/rol de tienda si
+corresponde, la acción y el resultado HTTP; incluye también eventos permitidos
+del carrito, favoritos y cierre de sesión. Excluye credenciales, contenido
+enviado, direcciones IP y datos de pago. Está excluido del repositorio. La
+pestaña **ACTIVIDAD WEB** del panel muestra el archivo actualizado cada cuatro
+segundos; despliega el backend actualizado y reinícialo para habilitar el
+registro. No se requiere migración de base de datos.
 
 ### Paso 8 — Caddyfile
 
@@ -369,7 +397,10 @@ npm run build      # Caddy sirve dist/ directamente; no hay que reiniciar Caddy
 - Express confia unicamente en proxies de loopback para obtener la IP cliente de Caddy; no amplíes `trust proxy` a redes no confiables.
 - El **token de DuckDNS** y los `.env` son **secretos**: nunca al control de versiones.
 - **Windows Update** puede reiniciar el equipo: programa las actualizaciones fuera de las horas de demo.
-- Considera una capa de acceso (Cloudflare Access, *basic-auth*) si el sitio no debe ser de acceso público.
+- El frontend ya exige una cuenta académica autorizada y la aceptación del
+  descargo. Para defensa en profundidad puede añadirse una capa perimetral
+  (Cloudflare Access o *basic-auth*) delante de Caddy, sin sustituir la
+  autorización propia del backend.
 - Si cambia la **MAC** de red (p. ej. pasar de Wi-Fi a cable): rehacer la reserva DHCP y revisar el reenvío.
 - Let's Encrypt **renueva** el certificado automáticamente; no requiere intervención.
 

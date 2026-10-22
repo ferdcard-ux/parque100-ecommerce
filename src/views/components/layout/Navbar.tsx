@@ -47,6 +47,16 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
   }, []);
 
   useEffect(() => {
+    if (!menuOpen) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [menuOpen]);
+
+  useEffect(() => {
     const q = searchValue.trim().toLowerCase();
     if (q.length < 2) {
       setSuggestItems([]);
@@ -136,6 +146,7 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
               <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
+                maxLength={100}
                 placeholder="Buscar productos..."
                 value={searchValue}
                 onChange={(e) => setSearchValue(e.target.value)}
@@ -299,11 +310,12 @@ export function Navbar({ cartCount, isAdmin, isLoggedIn, user, userRole, session
       </div>
 
       {menuOpen && (
-        <div className="md:hidden bg-white border-t px-4 py-4 flex flex-col gap-3 shadow-lg">
+        <div className="md:hidden max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain bg-white border-t px-4 py-4 flex flex-col gap-3 shadow-lg">
           <div className="relative">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
+              maxLength={100}
               placeholder="Buscar productos..."
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}

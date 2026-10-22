@@ -46,7 +46,7 @@ export interface Product {
 
 /** Categoria con su presentacion visual para la grilla del home. */
 export interface Category {
-  /** Identificador posicional asignado en el cliente. */
+  /** Identificador persistido en la base de datos. */
   id: number;
   /** Nombre normalizado (sin tildes). */
   name: string;
@@ -58,6 +58,12 @@ export interface Category {
   border: string;
 }
 
+/** Unidad de medida disponible para el contenido de los productos. */
+export interface UnitOfMeasure {
+  id: number;
+  name: string;
+}
+
 /** Fila resumida de producto para la tabla de inventario admin. */
 export interface AdminProduct {
   /** Identificador del producto. */
@@ -66,6 +72,8 @@ export interface AdminProduct {
   name: string;
   /** Categoria normalizada. */
   category: string;
+  /** Identificador de categoría persistido. */
+  categoryId: number;
   /** Cantidad en stock. */
   quantity: number;
   /** Precio de venta. */
@@ -106,6 +114,15 @@ export interface ProductUpsert {
   Contenido_Cantidad?: number | null;
   /** Unidad de contenido (opcional). */
   Contenido_Unidad?: string | null;
+  /** Presentación comercial opcional. */
+  Embalaje?: string | null;
+  /** Ingredientes opcionales. */
+  Ingredientes?: string | null;
+  /** Conservación opcional. */
+  Conservacion?: string | null;
+  /** Fechas opcionales de vigencia promocional (YYYY-MM-DD). */
+  Promo_Desde?: string | null;
+  Promo_Hasta?: string | null;
   /** Stock disponible. */
   Stock_Minimo: number;
   /** Categoría asociada. */

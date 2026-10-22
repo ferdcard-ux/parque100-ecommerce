@@ -42,7 +42,8 @@ import { PrivacyPage } from './views/pages/PrivacyPage';
 import { TermsPage } from './views/pages/TermsPage';
 import { SitemapPage } from './views/pages/SitemapPage';
 import { SiteDisclaimerGate } from './views/components/auth/SiteDisclaimerGate';
-import type { User, UserRole, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, PaymentModeState, Product, CartItem, AdminProduct, Order, ProductCreate, ProductUpsert } from './models';
+import { activityService } from './services/activity.service';
+import type { User, UserRole, LoginCredentials, RegisterData, DeliveryAddress, PaymentMethodType, PaymentModeState, Product, CartItem, Category, UnitOfMeasure, AdminProduct, Order, ProductCreate, ProductUpsert } from './models';
 
 /* ── Context Definition ── */
 interface AppContextValue {
@@ -67,10 +68,19 @@ interface AppContextValue {
   cartShipping: number;
   cartTotal: number;
   products: Product[];
+  categories: Category[];
+  units: UnitOfMeasure[];
+  unitCatalogError: string | null;
   adminProducts: AdminProduct[];
-  deleteAdminProduct: (id: number) => void;
+  deleteAdminProduct: (id: number) => Promise<void>;
   createAdminProduct: (data: ProductCreate) => Promise<void>;
   updateAdminProduct: (id: string, data: ProductUpsert) => Promise<void>;
+  createCategory: (name: string) => Promise<void>;
+  updateCategory: (id: number, name: string) => Promise<void>;
+  deleteCategory: (id: number) => Promise<void>;
+  createUnit: (name: string) => Promise<void>;
+  updateUnit: (id: number, name: string) => Promise<void>;
+  deleteUnit: (id: number) => Promise<void>;
   reloadProducts: () => Promise<void>;
   fetchInventoryRows: () => Promise<any[]>;
   paymentMethod: PaymentMethodType | null;
@@ -80,7 +90,9 @@ interface AppContextValue {
   isPaymentProcessing: boolean;
   lastOrder: Order | null;
   payWithCash: (tendered: number) => Promise<void>;
-  payWithDemo: (method: Exclude<PaymentMethodType, 'cash'>) => Promise<void>;
+  startDemoPayment: (method: Exclude<PaymentMethodType, 'cash'>) => Promise<string>;
+  cancelDemoPayment: (reference: string) => Promise<void>;
+  payWithDemo: (method: Exclude<PaymentMethodType, 'cash'>, reference: string) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -187,8 +199,8 @@ function AccountAddressWrapper() {
   );
 }
 function PaymentMethodWrapper() { const ctx = useApp(); return <Protected><PaymentMethodPage selectedMethod={ctx.paymentMethod} paymentMode={ctx.paymentMode} onSelectMethod={ctx.selectPaymentMethod} itemCount={ctx.cartCount} total={ctx.cartTotal} /></Protected>; }
-function CardPaymentWrapper() { const ctx = useApp(); return <Protected><CardPaymentPage total={ctx.cartTotal} itemCount={ctx.cartCount} isProcessing={ctx.isPaymentProcessing} paymentMode={ctx.paymentMode} onPayCash={ctx.payWithCash} onPayDemo={ctx.payWithDemo} /></Protected>; }
-function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} onImported={ctx.reloadProducts} onFetchRows={ctx.fetchInventoryRows} />; }
+function CardPaymentWrapper() { const ctx = useApp(); return <Protected><CardPaymentPage total={ctx.cartTotal} itemCount={ctx.cartCount} isProcessing={ctx.isPaymentProcessing} paymentMode={ctx.paymentMode} onPayCash={ctx.payWithCash} onStartDemo={ctx.startDemoPayment} onCancelDemo={ctx.cancelDemoPayment} onPayDemo={ctx.payWithDemo} /></Protected>; }
+function AdminWrapper() { const ctx = useApp(); return <AdminInventoryPage products={ctx.adminProducts} catalogProducts={ctx.products} categories={ctx.categories} units={ctx.units} unitCatalogError={ctx.unitCatalogError} onDelete={ctx.deleteAdminProduct} onCreate={ctx.createAdminProduct} onUpdate={ctx.updateAdminProduct} onImported={ctx.reloadProducts} onFetchRows={ctx.fetchInventoryRows} onCreateCategory={ctx.createCategory} onUpdateCategory={ctx.updateCategory} onDeleteCategory={ctx.deleteCategory} onCreateUnit={ctx.createUnit} onUpdateUnit={ctx.updateUnit} onDeleteUnit={ctx.deleteUnit} />; }
 function AccountWrapper() { return <Protected><AccountPage /></Protected>; }
 function ProfileWrapper() { return <Protected><ProfilePage /></Protected>; }
 function OrdersWrapper() { return <Protected><OrdersPage /></Protected>; }
@@ -255,11 +267,21 @@ function AppDataProvider() {
     payment.reset();
   };
 
-  const handlePayWithDemo = useCallback(async (method: Exclude<PaymentMethodType, 'cash'>) => {
-    await payment.processDemo(method, cart.items, auth.user?.id ?? null);
+  const handlePayWithDemo = useCallback(async (method: Exclude<PaymentMethodType, 'cash'>, reference: string) => {
+    await payment.processDemo(method, cart.items, reference, auth.user?.id ?? null);
     cart.clearItems();
     payment.reset();
   }, [payment.processDemo, payment.reset, cart.items, cart.clearItems, auth.user?.id]);
+
+  const handleStartDemoPayment = useCallback(
+    (method: Exclude<PaymentMethodType, 'cash'>) => payment.startDemo(method),
+    [payment.startDemo],
+  );
+
+  const handleCancelDemoPayment = useCallback(
+    (reference: string) => payment.cancelDemo(reference),
+    [payment.cancelDemo],
+  );
 
   /** Agrega al carrito solo con sesion; si no, redirige al login con retorno. */
   const handleAddToCart = useCallback((product: Product) => {
@@ -268,8 +290,18 @@ function AppDataProvider() {
       window.location.href = `/login?next=${next}`;
       return;
     }
+    const existing = cart.items.find((item) => item.id === product.id);
+    const willAdd = product.stock > 0
+      && (!existing || existing.quantity < product.stock);
     cart.addItem(product);
+    if (willAdd) activityService.recordInteraction('cart.add', product.id);
   }, [auth.isLoggedIn, cart]);
+
+  const handleRemoveFromCart = useCallback((id: number) => {
+    const exists = cart.items.some((item) => item.id === id);
+    cart.removeItem(id);
+    if (exists) activityService.recordInteraction('cart.remove', id);
+  }, [cart.items, cart.removeItem]);
 
   const contextValue: AppContextValue = useMemo(() => ({
     user: auth.user,
@@ -286,7 +318,7 @@ function AppDataProvider() {
     changePassword: auth.changePassword,
     cartItems: cart.items,
     addToCart: handleAddToCart,
-    removeFromCart: cart.removeItem,
+    removeFromCart: handleRemoveFromCart,
     updateQuantity: cart.updateQuantity,
     clearCart: cart.clearItems,
     cartCount: cart.itemCount,
@@ -294,10 +326,19 @@ function AppDataProvider() {
     cartShipping: cart.shipping,
     cartTotal: cart.total,
     products: productCtrl.products,
+    categories: productCtrl.categories,
+    units: productCtrl.units,
+    unitCatalogError: productCtrl.unitCatalogError,
     adminProducts: productCtrl.adminProducts,
     deleteAdminProduct: productCtrl.deleteProduct,
     createAdminProduct: productCtrl.createProduct,
     updateAdminProduct: productCtrl.updateProduct,
+    createCategory: productCtrl.createCategory,
+    updateCategory: productCtrl.updateCategory,
+    deleteCategory: productCtrl.deleteCategory,
+    createUnit: productCtrl.createUnit,
+    updateUnit: productCtrl.updateUnit,
+    deleteUnit: productCtrl.deleteUnit,
     reloadProducts: productCtrl.reload,
     fetchInventoryRows: productCtrl.getInventoryRows,
     paymentMethod: payment.method,
@@ -307,13 +348,18 @@ function AppDataProvider() {
     isPaymentProcessing: payment.isProcessing,
     lastOrder: payment.lastOrder,
     payWithCash: handlePayWithCash,
+    startDemoPayment: handleStartDemoPayment,
+    cancelDemoPayment: handleCancelDemoPayment,
     payWithDemo: handlePayWithDemo,
   }), [
     auth.user, auth.sessions, auth.switchSession, auth.isLoggedIn, auth.isAdmin, auth.updateProfile,
     auth.changePassword,
     cart.items, cart.itemCount, cart.subtotal, cart.shipping, cart.total, handleAddToCart,
-    productCtrl.products, productCtrl.adminProducts,
-    payment.method, payment.paymentMode, payment.isProcessing, handlePayWithDemo,
+    productCtrl.products, productCtrl.categories, productCtrl.units, productCtrl.unitCatalogError, productCtrl.adminProducts,
+    productCtrl.createCategory, productCtrl.updateCategory, productCtrl.deleteCategory,
+    productCtrl.createUnit, productCtrl.updateUnit, productCtrl.deleteUnit,
+    payment.method, payment.paymentMode, payment.isProcessing, handleStartDemoPayment,
+    handleCancelDemoPayment, handlePayWithDemo,
   ]);
 
   return (

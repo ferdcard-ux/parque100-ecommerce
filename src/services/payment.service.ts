@@ -14,26 +14,41 @@ export const paymentService = {
     return data.mode;
   },
 
-  async simulate(method: Exclude<PaymentMethodType, 'cash'>): Promise<PaymentResult> {
+  async startSimulation(
+    method: Exclude<PaymentMethodType, 'cash'>,
+    idempotencyKey: string,
+  ): Promise<PaymentResult> {
     const response = await fetch(`${API}/payments/process`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', ...authHeaders() },
-      body: JSON.stringify({ method }),
+      body: JSON.stringify({ method, idempotencyKey }),
     });
     const data = await response.json().catch(() => null);
     if (!response.ok) {
-      throw new Error(data?.error || 'No fue posible ejecutar la simulacion.');
+      throw new Error(data?.error || 'No fue posible iniciar la simulacion.');
     }
     if (data?.mode !== 'demo' || data?.simulated !== true || data?.paid !== false
-      || typeof data?.simulationId !== 'string') {
-      throw new Error('El servidor devolvio un resultado de pago inesperado.');
+      || typeof data?.simulationId !== 'string'
+      || !['iniciada_demo', 'aprobada_demo'].includes(data?.state)) {
+      throw new Error('El servidor devolvio un estado de simulacion inesperado.');
     }
     return {
       success: true,
       simulated: true,
       paid: false,
       simulationId: data.simulationId,
-      message: typeof data.message === 'string' ? data.message : 'Simulacion completada; no hubo cobro.',
+      message: typeof data.message === 'string' ? data.message : 'Simulacion iniciada; no hubo cobro.',
     };
+  },
+
+  async cancelSimulation(simulationId: string): Promise<void> {
+    const response = await fetch(`${API}/payments/${encodeURIComponent(simulationId)}/cancel`, {
+      method: 'PUT',
+      headers: authHeaders(),
+    });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || data?.success !== true) {
+      throw new Error(data?.error || 'No fue posible cerrar la simulacion.');
+    }
   },
 };

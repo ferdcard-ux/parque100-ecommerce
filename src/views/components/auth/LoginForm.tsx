@@ -111,7 +111,7 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
                 <label htmlFor="login-email" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Correo electrónico</label>
                 <div className="relative">
                   <Mail size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input id="login-email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com"
+                  <input id="login-email" type="email" required maxLength={50} autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="correo@ejemplo.com"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.9rem' }}
                   />
@@ -122,7 +122,7 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
                 <label htmlFor="login-password" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Contraseña</label>
                 <div className="relative">
                   <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input id="login-password" type={showPassword ? 'text' : 'password'} required value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
+                  <input id="login-password" type={showPassword ? 'text' : 'password'} required maxLength={72} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
                     className="w-full pl-10 pr-10 py-3 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.9rem' }}
                   />
@@ -221,7 +221,7 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
                 <label htmlFor="admin-email" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Correo</label>
                 <div className="relative">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input id="admin-email" type="email" required value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="admin@ejemplo.com"
+                  <input id="admin-email" type="email" required maxLength={50} autoComplete="username" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="admin@ejemplo.com"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.875rem' }}
                   />
@@ -231,7 +231,7 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
                 <label htmlFor="admin-password" className="block text-[#212121] mb-1.5" style={{ fontSize: '0.85rem' }}>Contraseña</label>
                 <div className="relative">
                   <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input id="admin-password" type={showAdminPassword ? 'text' : 'password'} required value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••"
+                  <input id="admin-password" type={showAdminPassword ? 'text' : 'password'} required maxLength={72} autoComplete="current-password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••"
                     className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.875rem' }}
                   />

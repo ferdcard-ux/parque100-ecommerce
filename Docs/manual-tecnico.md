@@ -4,7 +4,7 @@
 
 | Herramienta | Versión mínima |
 |-------------|----------------|
-| Node.js | 18+ |
+| Node.js | 20+ |
 | npm | 9+ |
 | MySQL | 8.0+ o MariaDB 10.4+ |
 | Navegador | Chrome 90+, Firefox 90+, Edge 90+ |
@@ -93,20 +93,24 @@ npm run build
 
 ### Esquema
 
-La base de demostración `parque100` consta de 8 tablas: `categorias`, `productos`, `usuario`, `pedidos`, `detalle_pedido`, `negocio`, `permisos_usuario` y `calificaciones`. Las credenciales del equipo y las aceptaciones del descargo residen en la base privada local independiente `parque100_acceso`, aprovisionada con `npm run access:provision`; nunca se agregan a `setup.sql` ni a `.BD/parque100.sql`.
+La base de demostración `parque100` consta de 10 tablas: `categorias`, `productos`, `unidades_medida`, `usuario`, `pedidos`, `detalle_pedido`, `transacciones_pago_demo`, `negocio`, `permisos_usuario` y `calificaciones`. Las credenciales del equipo y las aceptaciones del descargo residen en la base privada local independiente `parque100_acceso`, aprovisionada con `npm run access:provision`; nunca se agregan a `setup.sql` ni a `.BD/parque100.sql`.
 
 La tabla `productos` incluye una columna `Imagen MEDIUMTEXT` opcional para almacenar URLs web o imagenes locales en dataURL al crear/editar productos desde el panel administrativo (el backend acepta cuerpos JSON de hasta 10 MB).
 
+La tabla `unidades_medida` mantiene las opciones de contenido que se muestran en el inventario. En bases existentes, ejecuta `npm run migrate:product-catalogs` antes de reiniciar el backend. Al renombrar una unidad se actualizan los productos asociados; la eliminación se rechaza mientras la use algún producto.
+
 La tabla `usuario` exige `Correo` y `Telefono` únicos en todo el sistema (índices `UNIQUE`; el teléfono admite `NULL`); el registro, el alta/edición admin y el perfil propio devuelven 409 específico si ya existen.
 
-Los pedidos se fechan en horario del servidor (fecha local, sin desfase UTC) y los cancelados no suman a las ventas: reportes calculan `Ventas totales` y `Ticket promedio` solo sobre pedidos no cancelados.
+Los pedidos se fechan en horario del servidor (fecha local, sin desfase UTC). El flujo DEMO usa referencias/idempotencia internas y crea transacción, pedido y descuento de stock en una única transacción SQL. La cancelación restituye stock y anula el registro DEMO; no representa devolución de dinero. Los reportes excluyen pedidos DEMO de ventas y ticket promedio y los muestran por separado.
+
+En bases ya instaladas aplica `npm run migrate:demo-payments` antes de activar `PAYMENTS_MODE=demo`; el comando crea únicamente `transacciones_pago_demo` y requiere permisos DDL MySQL. La tabla registra usuario, método DEMO, estado, importe calculado en servidor y referencia ficticia; no contiene PAN, CVV, OTP, datos de transferencia ni comprobantes. La aceptación de la transacción permanece en `paid: false`.
 
 ### Sincronización entre equipos
 
 Los datos del proyecto son ficticios (creados para pruebas), por lo que el estado completo de la BD se comparte con los commits mediante el dump `.BD/parque100.sql`:
 
 - **Exportar** (tras cambios en la BD local): `npm run db:dump` → guarda esquema + datos en `.BD/parque100.sql`; hay que commitear ese archivo.
-- **Importar** (tras hacer pull): `npm run db:restore` → reemplaza las 8 tablas del proyecto por las del dump (idempotente).
+- **Importar** (tras hacer pull): `npm run db:restore` → reemplaza las 9 tablas del proyecto por las del dump (idempotente).
 - Ambos comandos (`scripts/db.mjs`) son multi-entorno (Windows, Linux, macOS) y localizan el cliente MySQL o MariaDB así: `MYSQL_BIN` → rutas por defecto de la plataforma (`C:\Program Files\MySQL\MySQL Server 8.4\bin`, `/usr/bin`, `/usr/local/bin`, `/usr/local/mysql/bin`, `/opt/homebrew/bin`) → `mysql`/`mysqldump` o `mariadb`/`mariadb-dump` en el PATH. Autenticación por entorno (`DB_USER`, `DB_PASSWORD`, `DB_NAME`, ver `.env.example`).
 - Para una BD nueva sin datos compartidos basta el esquema de `setup.sql`.
 
@@ -142,6 +146,13 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `PUT /api/products/:id` | Actualizar producto (admin, validado; 404 si no existe) |
 | `DELETE /api/products/:id` | Eliminar producto (admin; 409 si tiene pedidos) |
 | `GET /api/categories` | Listar todas las categorías |
+| `POST /api/categories` | Crear categoría (admin) |
+| `PUT /api/categories/:id` | Renombrar categoría (admin) |
+| `DELETE /api/categories/:id` | Eliminar categoría no utilizada (admin) |
+| `GET /api/units` | Listar unidades de medida |
+| `POST /api/units` | Crear unidad de medida (admin) |
+| `PUT /api/units/:id` | Renombrar unidad y actualizar productos asociados (admin) |
+| `DELETE /api/units/:id` | Eliminar unidad no utilizada (admin) |
 | `POST /api/site-access/login` | Autenticar al equipo y establecer cookie HttpOnly independiente |
 | `GET /api/site-access/disclaimer/status` | Consultar aceptación vigente para la sesión |
 | `POST /api/site-access/disclaimer/accept` | Registrar aceptación del descargo |
@@ -162,7 +173,10 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `PUT /api/business` | Actualizar ficha (admin) |
 | `GET /api/orders` | Listar pedidos (staff: todos; cliente: propios; `?items=1` con detalles) |
 | `GET /api/orders/:id` | Detalle de pedido con sus líneas (dueño o staff) |
-| `POST /api/orders` | Crear pedido (total recalculado en servidor, estado `pendiente`) |
+| `POST /api/orders` | Crear pedido en efectivo (total recalculado en servidor, estado `pendiente`) |
+| `POST /api/payments/process` | Iniciar intento DEMO con referencia e idempotencia, sin importe ni datos financieros |
+| `POST /api/payments/confirm` | Confirmar pedido y transacción DEMO atomizados; recalcula importe y descuenta stock |
+| `PUT /api/payments/:reference/cancel` | Cerrar un intento DEMO aún no confirmado |
 | `PUT /api/orders/:id/status` | Avanzar estado (staff; `pendiente → preparando → enviando → entregado`, 409 ante saltos/retrocesos) |
 | `PUT /api/orders/:id/cancel` | Cancelar con motivo (devuelve stock; actor del token; 400 sin motivo, 409 si el estado no admite) |
 | `GET /api/ratings` | Listar calificaciones (filtros `producto`, `pedido`, `usuario`) |
@@ -173,6 +187,23 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `POST /api/payments/process` | 503 hasta integrar una pasarela real con verificacion server-to-server |
 
 > Salvo lectura pública (catálogo, negocio, reseñas), los endpoints exigen `Authorization: Bearer <JWT>`; la escritura sensible y los datos ajenos exigen rol `admin` o staff según la ruta.
+
+### Registro de actividad del sitio
+
+El middleware `server/utils/activity-log.js` registra una lista acotada de
+acciones de negocio después de que el middleware global autentica la sesión
+académica. Las acciones que solo ocurren en el navegador (añadir/quitar del
+carrito, favoritos y cierre de sesión) se envían a `POST
+/api/activity/interactions`, que acepta exclusivamente eventos enumerados y
+limita solicitudes. Cuando existe una cuenta de tienda autenticada, conserva
+su ID y rol junto a la identidad académica. Guarda fecha UTC, acción, resultado
+HTTP e identificadores; no registra cuerpos, contraseñas, cookies, IP ni datos
+financieros. El archivo local es
+`server/logs/site-activity.jsonl`; se limita a 5 MB y mantiene una sola rotación
+de respaldo (`.1`). Está excluido de Git y el panel local lo lee desde la
+carpeta del proyecto Node configurada como `repo` en `config.json` cada cuatro
+segundos en la pestaña **ACTIVIDAD WEB**. No requiere cambios de esquema ni
+migraciones SQL.
 
 ## Modales accesibles
 
@@ -198,10 +229,11 @@ El sistema maneja imágenes en este orden de prioridad:
 
 ## Pruebas
 
-Batería automatizada API + BD: `scripts/smoke-lote2.mjs` (requiere el backend, MySQL y una cuenta de acceso del equipo; solicita localmente sus credenciales, acepta el descargo solo para la sesión de prueba y limpia esa aceptación al finalizar). Verifica negocio, permisos/roles, reglas de cancelación, reseñas con compra verificada, autorización 401/403, integridad del pedido y limpieza de datos de prueba.
+Batería automatizada API + BD: `scripts/smoke-lote2.mjs` (73 comprobaciones; requiere backend, MySQL, terminal interactiva y cuenta de acceso del equipo; solicita credenciales localmente, acepta el descargo solo para la sesión de prueba y limpia datos de prueba al finalizar). Crea y modifica pedidos, negocio, permisos, productos e información de prueba durante la ejecución: úsela solo contra una base de datos desechable aislada, nunca contra la base viva del demo.
 
 ```bash
-npm test            # requiere backend en :3001 y MySQL local
+npm test            # destructiva: solo backend y MySQL de pruebas aislados
+npm run test:payments # pruebas unitarias de pagos/modelos; no modifica la BD
 npm run typecheck   # tsc --noEmit (strict + noUnusedLocals/Parameters)
 ```
 

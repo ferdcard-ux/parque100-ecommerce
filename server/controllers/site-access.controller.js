@@ -47,7 +47,7 @@ export const siteAccessController = {
   async login(req, res) {
     const { username, password } = req.body || {};
     if (typeof username !== 'string' || !/^[0-9]{1,32}$/.test(username)
-      || typeof password !== 'string' || password.length === 0) {
+      || typeof password !== 'string' || password.length === 0 || password.length > 72) {
       return res.status(401).json({ error: 'Usuario o contraseña no válidos.' });
     }
 

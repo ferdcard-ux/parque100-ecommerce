@@ -20,15 +20,16 @@ function validateDeliveryDetails(body) {
   if (Object.keys(body).some((field) => !allowedFields.includes(field))) return null;
 
   const { Telefono, Torre_Bloque, Piso, Apartamento } = body;
-  if (typeof Telefono !== 'string' || !/^\d{1,10}$/.test(Telefono)) return null;
+  if (typeof Telefono !== 'string' || !/^\d{10}$/.test(Telefono)) return null;
 
   const fields = [
-    [Torre_Bloque, 50],
+    [Torre_Bloque, 20],
     [Piso, 20],
     [Apartamento, 20],
   ];
   if (fields.some(([value, maxLength]) =>
-    typeof value !== 'string' || value.trim().length === 0 || value.trim().length > maxLength
+    typeof value !== 'string' || value.trim().length === 0 ||
+    value.trim().length > maxLength || !/^\d+$/.test(value.trim())
   )) {
     return null;
   }
@@ -49,7 +50,7 @@ function validateAdminUser(body) {
   if (typeof Nombre !== 'string' || Nombre.trim().length === 0 || Nombre.trim().length > 30) return null;
   if (typeof Correo !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Correo) || Correo.length > 50) return null;
   if (typeof Rol !== 'string' || !VALID_ROLES.includes(Rol)) return null;
-  if (Telefono !== null && Telefono !== undefined && Telefono !== '' && !/^\d{1,20}$/.test(String(Telefono))) return null;
+  if (Telefono !== null && Telefono !== undefined && Telefono !== '' && !/^\d{7,10}$/.test(String(Telefono))) return null;
   return {
     Nombre: Nombre.trim(),
     Correo: Correo.trim(),
@@ -64,7 +65,7 @@ function validateProfile(body) {
   const { Nombre, Correo, Telefono, Foto } = body;
   if (typeof Nombre !== 'string' || Nombre.trim().length === 0 || Nombre.trim().length > 30) return null;
   if (typeof Correo !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Correo) || Correo.length > 50) return null;
-  if (Telefono !== null && Telefono !== undefined && Telefono !== '' && !/^\d{1,20}$/.test(String(Telefono))) return null;
+  if (Telefono !== null && Telefono !== undefined && Telefono !== '' && !/^\d{7,10}$/.test(String(Telefono))) return null;
   if (Foto !== null && Foto !== undefined && Foto !== '') {
     if (typeof Foto !== 'string' || Foto.length > 7000000 || !Foto.startsWith('data:image/')) return null;
   }
@@ -107,8 +108,8 @@ export const usersController = {
     const data = validateAdminUser(req.body);
     if (!data) return res.status(400).json({ error: 'Datos de usuario invalidos' });
     const { Contrasena } = req.body;
-    if (typeof Contrasena !== 'string' || Contrasena.length < 8) {
-      return res.status(400).json({ error: 'La contrasena debe tener al menos 8 caracteres' });
+    if (typeof Contrasena !== 'string' || Contrasena.length < 8 || Contrasena.length > 72) {
+      return res.status(400).json({ error: 'La contrasena debe tener entre 8 y 72 caracteres' });
     }
     try {
       if (await userModel.existsByEmail(data.Correo)) {

@@ -11,6 +11,8 @@
 | [`guia-despliegue.md`](guia-despliegue.md) | Despliegue: publicar la tienda desde un servidor propio (Caddy + DuckDNS + reenvío de puertos) |
 | [`manual-usuario.md`](manual-usuario.md) | Manual de usuario completo: roles, flujo de compra, panel administrativo y preguntas frecuentes |
 | [`guia-uso.md`](guia-uso.md) | Guía rápida de uso: funcionalidades por pantalla y credenciales de prueba |
+| [`ACCESO-ACADEMICO.md`](ACCESO-ACADEMICO.md) | Cuentas autorizadas, acceso web, aceptación del descargo y administración local |
+| [`INFORME-AUDITORIA-SEGURIDAD.md`](INFORME-AUDITORIA-SEGURIDAD.md) | Hallazgos, mitigaciones, impacto funcional y limitaciones de la auditoría |
 | [`CODING_STANDARDS.md`](CODING_STANDARDS.md) | Estándares de codificación obligatorios del proyecto |
 | [`CHANGELOG.md`](../CHANGELOG.md) | Historial de cambios del proyecto |
 

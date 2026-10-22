@@ -1,5 +1,14 @@
 # Guía de Uso
 
+## Acceso académico
+
+Este proyecto es una demostración académica para personas autorizadas. Entra
+por `/access.html`, autentícate con la cuenta del equipo y acepta el descargo
+obligatorio. Para probar las funciones de la tienda, inicia sesión después con
+una cuenta demo independiente. No hay registro público; las cuentas las crea el
+responsable desde el panel local. No introduzcas datos financieros ni datos
+personales reales.
+
 ## Credenciales de prueba
 
 | Rol | Correo | Contraseña |
@@ -25,7 +34,7 @@
 - "¿Olvidaste tu contraseña?": muestra el canal de soporte; la recuperación automática está deshabilitada hasta configurar entrega verificada
 - Retorno post-login con `?next=`: tras ingresar vuelve a la página solicitada
 - Modo multisesión con `?mode=switch`: agrega otra cuenta sin cerrar la actual
-- Enlace a registro de cuenta
+- No hay registro público; `/register` redirige al acceso académico
 - Modal de inicio de sesión para administradores (link "¿Eres administrador?")
 
 ### Navegación — Menú de usuario y notificaciones
@@ -40,11 +49,11 @@
   - Opción "Cerrar sesión" (cierra solo la cuenta activa; las demás siguen disponibles)
 - El menú se cierra al hacer clic fuera de él
 
-### Registro (`/register`)
-- Formulario con nombre, apellido, correo, teléfono (10 dígitos, obligatorio), contraseña y confirmación
-- Correo y teléfono únicos por cuenta: si ya existen muestra "El correo electronico ya esta registrado" / "El numero de telefono ya esta registrado"
-- Validación de campos (correo válido, teléfono de 10 dígitos, contraseña 8+ caracteres, coincidencia)
-- Aceptación de términos y condiciones (requerido para enviar, enlaza a `/terminos` y `/privacidad`)
+### Acceso académico (`/access.html`)
+- Autenticación independiente para integrantes autorizados del equipo
+- Aceptación obligatoria del descargo antes de navegar; la aceptación se asocia a la sesión
+- Las cuentas se administran desde la pestaña **ACCESO ACADÉMICO** del panel local
+- No hay registro público; `/register` redirige al acceso académico
 
 ### Catálogo (`/catalogo`)
 - Chips por categoría sincronizados con `?cat=`, buscador del navbar con `?q=`, orden (relevancia, precio, nombre)
@@ -85,19 +94,19 @@
 
 ### Método de pago (`/payment-method`)
 - Efectivo contra entrega está disponible.
-- Tarjeta y Nequi solo aparecen habilitados cuando el servidor configura `PAYMENTS_MODE=demo`; la pantalla indica que es una simulación sin cobro ni datos financieros.
-- Los pedidos demo quedan marcados como no pagados, no reservan inventario y no se pueden despachar. En `disabled` (predeterminado), los pagos electrónicos no se pueden seleccionar.
+- Tarjeta y Nequi solo aparecen habilitados cuando el servidor configura `PAYMENTS_MODE=demo`; ambos usan un flujo de pasos interno, sin pasarela, cobro ni datos financieros.
+- Al confirmar, el sistema guarda la transacción DEMO y el pedido, y descuenta inventario en una sola operación de BD. El personal puede avanzar sus estados demostrativos; la operación no representa una compra o entrega real. Los registros históricos sin transacción DEMO aprobada siguen bloqueados para despacho.
 - Resumen del pedido con el total
 
 ### Confirmación del pedido (`/payment-card`)
-- Tarjeta y Nequi no solicitan datos de tarjeta, CVV, transferencias ni comprobantes. En modo demo, el botón registra un pedido no pagado que no se despacha.
+- Tarjeta y Nequi no solicitan datos de tarjeta, CVV, claves, transferencias ni comprobantes. Inicia el flujo, revisa la referencia ficticia y confirma la simulación para registrar el pedido y el movimiento de inventario.
 - Variante efectivo (`/payment-card?method=cash`): monto recibido obligatorio con cálculo del cambio en vivo
 
 ### Confirmación (`/payment-success`)
 - Animación de éxito con icono de check
 - Número de pedido real (asignado por el backend) con botón "Ver mi pedido"
 - Efectivo: muestra recibido y cambio
-- Demo: confirma que no hubo cobro y muestra la referencia de simulación, sin presentarla como transacción financiera
+- Demo: confirma que no hubo cobro real y muestra la referencia ficticia. El pedido y el inventario sí quedan actualizados en la base académica
 - Advertencia de posible demora en el despacho
 - Timeline del estado del pedido
 - Botón para volver a la tienda
@@ -109,23 +118,24 @@
 - Botón **Ver tienda** para volver a la página principal
 - Estadísticas: total productos, en stock, bajo stock, sin stock
 - Tabla de productos con búsqueda, filtro por estado y paginación
-- **CRUD completo**: agregar (modal con nombre, categoría, cantidad, precio e imagen por URL web o archivo local con vista previa), editar (modal precargado), eliminar (confirmación directa)
+- **CRUD completo**: agregar (modal con nombre, categoría preestablecida, cantidad, precio, contenido/unidad e imagen por URL web o archivo local con vista previa), editar (modal precargado), eliminar (confirmación con nombre del producto, cancelable antes de ejecutar)
+- Botones **Administrar categorías de productos** y **Administrar unidades de medida** con opciones para agregar, renombrar y eliminar. La lista desplegable de categorías evita nombres duplicados y ofrece **+ Agregar categoría**; no se eliminan opciones que sigan en uso.
 - Importación desde la plantilla CSV oficial y exportación en CSV o PDF
 
 ### Pedidos admin (`/admin/pedidos-pendientes`, `/admin/pedidos`, `/admin/pedidos/:id`)
 - Pendientes con botón "Tomar pedido" (pendiente → preparando)
-- Los pedidos de simulación se identifican claramente y no se pueden tomar ni avanzar a despacho
+- Los pedidos DEMO se identifican claramente; solo los que tienen transacción simulada aprobada pueden avanzar por estados en el flujo administrativo
 - Cancelación con motivos operativos propios del admin (distintos a los del cliente); el pedido cancelado no se puede reanudar (select deshabilitado y 409 en backend); tarjeta Cancelados y aviso de devolución
 - Efectivo prioritario: banner "llevar cambio", insignia en gestión y aviso en la campana
 - Los comprobantes de pagos Nequi solo se muestran en pedidos históricos; los nuevos pedidos electrónicos están bloqueados.
 - Resumen por estado, tracker compacto, cambio de estado persistente y detalle con líneas
 
 ### Reportes (`/admin/reportes`)
-- KPIs (ventas, pedidos, ticket promedio, entregados), filtros hoy/semana/mes/personalizado y pedidos por estado
-- Ventas y ticket promedio excluyen pedidos cancelados
+- KPIs (ventas no DEMO, pedidos, ticket promedio, entregados y transacciones DEMO), filtros hoy/semana/mes/personalizado y pedidos por estado
+- Las cifras de ventas/ticket no suman pedidos cancelados ni transacciones DEMO
 
 ### Clientes (`/admin/clientes`) y Configuración (`/admin/configuracion`)
-- CRUD de usuarios: agregar, editar datos y rol (cliente, domiciliario, admin), eliminar con protección si tiene pedidos; correo y teléfono únicos (409 si existen); búsqueda y filtro por rol
+- CRUD de usuarios: agregar, editar datos y rol (cliente, domiciliario, admin), eliminar con diálogo de confirmación y protección si tiene pedidos; correo y teléfono únicos (409 si existen); búsqueda y filtro por rol
 - Preferencias del panel persistidas en localStorage
 
 ## Flujo completo de compra (requiere sesión)
@@ -148,11 +158,16 @@ Inicio → Agregar productos al carrito (sin sesión: redirige al login)
 
 ## Rutas del proyecto
 
+Todas las rutas de la tienda requieren primero una sesión de acceso académico
+autorizada y la aceptación del descargo. Las rutas que indican sesión o rol
+requieren además iniciar sesión con una cuenta demo de tienda.
+
 | Ruta | Vista | Descripción |
 |------|-------|-------------|
 | `/` | Home | Página principal |
 | `/login` | Login | Inicio de sesión |
-| `/register` | Register | Registro de usuario |
+| `/access.html` | Acceso académico | Inicio de sesión del equipo autorizado |
+| `/register` | Acceso académico | Redirección; registro público deshabilitado |
 | `/cart` | Cart | Carrito de compras |
 | `/address` | Address | Dirección de entrega |
 | `/payment-method` | Payment Method | Selección de pago |

@@ -141,6 +141,17 @@ export async function requireAuth(req, res, next) {
   }
 }
 
+/** Attaches a valid store identity when present without blocking site-only activity. */
+export async function optionalAuth(req, _res, next) {
+  try {
+    const user = await authenticateRequest(req);
+    if (user) req.user = user;
+    return next();
+  } catch (err) {
+    return next(err);
+  }
+}
+
 /** Attaches the independent, active site-access identity to the request. */
 export async function requireSiteAccessAuth(req, res, next) {
   try {
@@ -209,6 +220,7 @@ export default {
   authenticateRequest,
   authenticateSiteAccessRequest,
   requireAuth,
+  optionalAuth,
   requireSiteAccessAuth,
   requireSiteSession,
   requireRole,

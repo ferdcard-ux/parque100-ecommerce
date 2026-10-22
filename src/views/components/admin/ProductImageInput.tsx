@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { ImagePlus, Trash2 } from 'lucide-react';
+import { isValidHttpUrl } from '../../../utils/validators';
 
 const MAX_BYTES = 2 * 1024 * 1024;
 
@@ -65,9 +66,17 @@ export function ProductImageInput({
       </label>
       <input
         type="url"
+        maxLength={2048}
+        title="Ingresa una URL web válida (máximo 2048 caracteres)"
         placeholder={placeholder}
         value={value.startsWith('data:') ? '' : value}
-        onChange={(e) => { setError(null); onChange(e.target.value); }}
+        onChange={(e) => {
+          const next = e.target.value;
+          onChange(next);
+          setError(next && !isValidHttpUrl(next)
+            ? 'Ingresa una URL válida que comience con http:// o https://.'
+            : null);
+        }}
         className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
         style={{ fontSize: '0.9rem' }}
       />

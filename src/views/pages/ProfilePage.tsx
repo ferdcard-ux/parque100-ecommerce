@@ -15,16 +15,31 @@ interface FieldProps {
   value: string;
   editing: boolean;
   onChange: (value: string) => void;
+  type?: React.HTMLInputTypeAttribute;
+  maxLength?: number;
+  minLength?: number;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
+  pattern?: string;
+  autoComplete?: string;
 }
 
-function ProfileField({ label, icon, value, editing, onChange }: FieldProps) {
+function ProfileField({
+  label, icon, value, editing, onChange, type = 'text', maxLength,
+  minLength, inputMode, pattern, autoComplete,
+}: FieldProps) {
   return (
     <label className="block">
       <span className="text-gray-500 block mb-1" style={{ fontSize: '0.75rem', fontWeight: 600 }}>{label}</span>
       <span className="relative block">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>
         <input
+          type={type}
           value={value}
+          maxLength={maxLength}
+          minLength={minLength}
+          inputMode={inputMode}
+          pattern={pattern}
+          autoComplete={autoComplete}
           readOnly={!editing}
           onChange={(e) => onChange(e.target.value)}
           className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-colors ${
@@ -63,9 +78,9 @@ function ChangePasswordDialog({ pwdError, pwdSuccess, pwdLoading, pwdCurrent, pw
         <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
           {pwdError && <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{pwdError}</div>}
           {pwdSuccess && <div role="status" className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>Contrasena actualizada.</div>}
-          <ProfileField label="Contrasena actual" icon={<Lock size={16} />} value={pwdCurrent} editing onChange={setPwdCurrent} />
-          <ProfileField label="Nueva contrasena" icon={<Lock size={16} />} value={pwdNew} editing onChange={setPwdNew} />
-          <ProfileField label="Confirmar nueva contrasena" icon={<Lock size={16} />} value={pwdConfirm} editing onChange={setPwdConfirm} />
+          <ProfileField label="Contrasena actual" icon={<Lock size={16} />} type="password" autoComplete="current-password" maxLength={72} value={pwdCurrent} editing onChange={setPwdCurrent} />
+          <ProfileField label="Nueva contrasena" icon={<Lock size={16} />} type="password" autoComplete="new-password" minLength={8} maxLength={72} value={pwdNew} editing onChange={setPwdNew} />
+          <ProfileField label="Confirmar nueva contrasena" icon={<Lock size={16} />} type="password" autoComplete="new-password" minLength={8} maxLength={72} value={pwdConfirm} editing onChange={setPwdConfirm} />
           <div className="flex gap-2 mt-2">
             <button type="button" onClick={onClose} className="flex-1 border border-gray-200 rounded-full py-2.5 hover:bg-gray-50 transition-colors" style={{ fontWeight: 600 }}>Cancelar</button>
             <button type="submit" disabled={pwdLoading} className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2.5 disabled:opacity-60 transition-colors" style={{ fontWeight: 600 }}>
@@ -117,8 +132,8 @@ export function ProfilePage() {
     e.preventDefault();
     setPwdError(null);
     setPwdSuccess(false);
-    if (pwdNew.length < 8) {
-      setPwdError('La nueva contrasena debe tener al menos 8 caracteres.');
+    if (pwdNew.length < 8 || pwdNew.length > 72) {
+      setPwdError('La nueva contrasena debe tener entre 8 y 72 caracteres.');
       return;
     }
     if (pwdNew !== pwdConfirm) {
@@ -141,7 +156,7 @@ export function ProfilePage() {
 
   if (!isLoggedIn || !user) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+      <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
         <p className="text-center text-gray-400 py-16">Inicia sesion para ver tu perfil.</p>
       </main>
     );
@@ -176,9 +191,13 @@ export function ProfilePage() {
       setSaveError('Ingresa un correo electrónico válido.');
       return;
     }
-    const cleanPhone = phone.replace(/\D/g, '');
-    if (cleanPhone.length > 0 && cleanPhone.length < 7) {
-      setSaveError('Ingresa un teléfono válido.');
+    const cleanPhone = phone.replace(/\D/g, '').slice(0, 10);
+    if (cleanPhone.length > 0 && (cleanPhone.length < 7 || cleanPhone.length > 10)) {
+      setSaveError('Ingresa un teléfono de 7 a 10 dígitos.');
+      return;
+    }
+    if (`${firstName.trim()} ${lastName.trim()}`.trim().length > 30) {
+      setSaveError('El nombre y apellido no pueden superar 30 caracteres en total.');
       return;
     }
     setSaveError(null);
@@ -197,7 +216,7 @@ export function ProfilePage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-lg mx-auto">
         <PageHeader title="Informacion de tu perfil" subtitle="Gestiona tus datos personales" backTo="/cuenta" />
 
@@ -243,10 +262,10 @@ export function ProfilePage() {
           {saved && <p className="text-green-600 mb-3" style={{ fontSize: '0.8rem' }}>Cambios guardados.</p>}
           {saveError && <p role="alert" className="text-[#C62828] mb-3" style={{ fontSize: '0.8rem' }}>{saveError}</p>}
           <div className="flex flex-col gap-4">
-            <ProfileField label="Nombre" icon={<User size={16} />} value={firstName} editing={editing} onChange={setFirstName} />
-            <ProfileField label="Apellido" icon={<User size={16} />} value={lastName} editing={editing} onChange={setLastName} />
-            <ProfileField label="Correo" icon={<Mail size={16} />} value={email} editing={editing} onChange={setEmail} />
-            <ProfileField label="Telefono" icon={<Phone size={16} />} value={phone} editing={editing} onChange={(v) => setPhone(v.replace(/\D/g, '').slice(0, 20))} />
+            <ProfileField label="Nombre" icon={<User size={16} />} maxLength={30} autoComplete="given-name" value={firstName} editing={editing} onChange={setFirstName} />
+            <ProfileField label="Apellido" icon={<User size={16} />} maxLength={30} autoComplete="family-name" value={lastName} editing={editing} onChange={setLastName} />
+            <ProfileField label="Correo" icon={<Mail size={16} />} type="email" maxLength={50} autoComplete="email" value={email} editing={editing} onChange={setEmail} />
+            <ProfileField label="Telefono" icon={<Phone size={16} />} type="tel" inputMode="numeric" pattern="[0-9]{7,10}" maxLength={10} autoComplete="tel" value={phone} editing={editing} onChange={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))} />
           </div>
         </div>
 

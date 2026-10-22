@@ -9,6 +9,7 @@ import { useCatalogController, CATALOG_SORT_OPTIONS, useFavoritesController, typ
 import { PageHeader } from '../components/shared/page-header';
 import { EmptyState } from '../components/shared/empty-state';
 import { ProductCard } from '../components/shop/product-card';
+import { limitNumericInput } from '../../utils/validators';
 
 /** Productos por pagina del catalogo. */
 const PAGE_SIZE = 12;
@@ -95,7 +96,7 @@ export function CatalogPage() {
   };
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-7xl mx-auto">
         <p className="text-gray-400 mb-4" style={{ fontSize: '0.8rem' }}>
           <Link to="/" className="hover:text-[#C62828]">Inicio</Link> / {category === 'Todos' ? 'Catalogo' : category}
@@ -131,10 +132,10 @@ export function CatalogPage() {
             <div>
               <p className="text-[#212121] font-semibold mb-2" style={{ fontSize: '0.85rem' }}>Precio</p>
               <div className="flex items-center gap-2">
-                <input type="number" min={0} placeholder="Min" value={draftMin} onChange={(e) => setDraftMin(e.target.value)}
+                <input type="text" inputMode="numeric" pattern="[0-9]{0,10}" maxLength={10} title="Hasta 10 dígitos" placeholder="Min" value={draftMin} onChange={(e) => setDraftMin(limitNumericInput(e.target.value, 10))}
                   className="w-full px-3 py-1.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828]" style={{ fontSize: '0.8rem' }} />
                 <span className="text-gray-400">-</span>
-                <input type="number" min={0} placeholder="Max" value={draftMax} onChange={(e) => setDraftMax(e.target.value)}
+                <input type="text" inputMode="numeric" pattern="[0-9]{0,10}" maxLength={10} title="Hasta 10 dígitos" placeholder="Max" value={draftMax} onChange={(e) => setDraftMax(limitNumericInput(e.target.value, 10))}
                   className="w-full px-3 py-1.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828]" style={{ fontSize: '0.8rem' }} />
               </div>
             </div>

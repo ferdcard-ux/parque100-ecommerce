@@ -8,7 +8,7 @@
  *   node scripts/db.mjs dump     -> Exporta la BD local `parque100`
  *                                   (esquema + datos) a .BD/parque100.sql.
  *   node scripts/db.mjs restore  -> Importa .BD/parque100.sql en la BD local,
- *                                   reemplazando las 5 tablas del proyecto.
+ *                                   reemplazando las tablas del proyecto.
  *
  * Requisitos:
  *   - MySQL (o MariaDB) levantado y accesible localmente.

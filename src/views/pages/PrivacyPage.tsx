@@ -6,7 +6,7 @@ import { PageHeader } from '../components/shared/page-header';
 /** Informacion sobre tratamiento de datos y cookies. */
 export function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-gray-100 p-8">
         <PageHeader title="Privacidad y Cookies" subtitle="Politica de tratamiento de datos" backTo="/" />
         <div className="flex flex-col gap-4 text-gray-600" style={{ fontSize: '0.9rem' }}>

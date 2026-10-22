@@ -1,11 +1,10 @@
 /**
- * @fileoverview Confirmacion del pedido con pago en efectivo contra
- * entrega; los pagos electronicos permanecen bloqueados sin pasarela
- * verificada.
+ * @fileoverview Checkout en efectivo o flujo academico de pago DEMO.
+ * Los metodos electronicos no solicitan datos ni se conectan a proveedores.
  */
 import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import { ReceiptText, TriangleAlert } from 'lucide-react';
+import { CheckCircle2, ReceiptText, TriangleAlert } from 'lucide-react';
 import type { PaymentModeState, PaymentMethodType } from '../../models';
 import { CheckoutSteps } from '../components/checkout/checkout-steps';
 import { CheckoutSummary } from '../components/checkout/checkout-summary';
@@ -18,18 +17,31 @@ interface CardPaymentPageProps {
   isProcessing: boolean;
   paymentMode: PaymentModeState;
   onPayCash: (tendered: number) => Promise<void>;
-  onPayDemo: (method: Exclude<PaymentMethodType, 'cash'>) => Promise<void>;
+  onStartDemo: (method: Exclude<PaymentMethodType, 'cash'>) => Promise<string>;
+  onCancelDemo: (reference: string) => Promise<void>;
+  onPayDemo: (method: Exclude<PaymentMethodType, 'cash'>, reference: string) => Promise<void>;
 }
 
-export function CardPaymentPage({ total, itemCount, isProcessing, paymentMode, onPayCash, onPayDemo }: CardPaymentPageProps) {
+export function CardPaymentPage({
+  total,
+  itemCount,
+  isProcessing,
+  paymentMode,
+  onPayCash,
+  onStartDemo,
+  onCancelDemo,
+  onPayDemo,
+}: CardPaymentPageProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const method = searchParams.get('method');
   const isNequi = method === 'nequi';
   const isCash = method === 'cash';
   const isDemoMethod = method === 'card' || isNequi;
+  const demoMethod: Exclude<PaymentMethodType, 'cash'> = isNequi ? 'nequi' : 'card';
   const [error, setError] = useState('');
   const [tendered, setTendered] = useState('');
+  const [simulationId, setSimulationId] = useState<string | null>(null);
   const tenderedValue = Number(tendered.replace(/\D/g, '')) || 0;
   const change = tenderedValue >= total ? tenderedValue - total : 0;
 
@@ -48,17 +60,42 @@ export function CardPaymentPage({ total, itemCount, isProcessing, paymentMode, o
     }
   };
 
-  const handleDemoSubmit = async () => {
+  const handleStartDemo = async () => {
     setError('');
     if (paymentMode !== 'demo' || !isDemoMethod) {
-      setError('La simulación no está habilitada en este servidor.');
+      setError('La simulacion no esta habilitada en este servidor.');
       return;
     }
     try {
-      await onPayDemo(isNequi ? 'nequi' : 'card');
+      setSimulationId(await onStartDemo(demoMethod));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible iniciar la simulacion.');
+    }
+  };
+
+  const handleConfirmDemo = async () => {
+    setError('');
+    if (!simulationId) {
+      setError('Inicia la simulacion antes de confirmar.');
+      return;
+    }
+    try {
+      await onPayDemo(demoMethod, simulationId);
       navigate('/payment-success');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No fue posible completar la simulación.');
+      setError(err instanceof Error ? err.message : 'No fue posible completar la simulacion.');
+    }
+  };
+
+  const handleCancelDemo = async () => {
+    if (!simulationId) return;
+    setError('');
+    try {
+      await onCancelDemo(simulationId);
+      setSimulationId(null);
+      navigate('/payment-method');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No fue posible cancelar la simulacion.');
     }
   };
 
@@ -68,8 +105,8 @@ export function CardPaymentPage({ total, itemCount, isProcessing, paymentMode, o
         <CheckoutSteps current={3} />
         <CheckoutSummary itemCount={itemCount} total={total} />
         <PageHeader
-          title={isNequi ? 'Simulación de Nequi' : isCash ? 'Pago en efectivo' : 'Simulación con tarjeta'}
-          subtitle={`${isDemoMethod ? 'Total del pedido' : 'Total a pagar'}: ${formatPrice(total)}`}
+          title={isNequi ? 'Simulacion de Nequi DEMO' : isCash ? 'Pago en efectivo' : 'Simulacion con tarjeta DEMO'}
+          subtitle={`${isDemoMethod ? 'Total de referencia' : 'Total a pagar'}: ${formatPrice(total)}`}
           backTo="/payment-method"
         />
         {error && (
@@ -84,7 +121,7 @@ export function CardPaymentPage({ total, itemCount, isProcessing, paymentMode, o
                 <ReceiptText size={20} />
               </span>
               <p className="text-gray-500" style={{ fontSize: '0.85rem' }}>
-                Pagas al recibir el pedido. Indica con qué billete pagarás.
+                Pagas al recibir el pedido. Indica con que billete pagaras.
               </p>
             </div>
             <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Monto en efectivo *</label>
@@ -95,7 +132,7 @@ export function CardPaymentPage({ total, itemCount, isProcessing, paymentMode, o
               value={tendered}
               onChange={(e) => setTendered(e.target.value.replace(/\D/g, '').slice(0, 6))}
               maxLength={6}
-              title="Máximo 6 dígitos"
+              title="Maximo 6 digitos"
               placeholder="Ej. 500000"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] mb-4"
             />
@@ -109,35 +146,82 @@ export function CardPaymentPage({ total, itemCount, isProcessing, paymentMode, o
             </button>
           </form>
         ) : isDemoMethod && paymentMode === 'demo' ? (
-          <section className="mx-auto max-w-md rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-amber-950">
-            <div className="flex gap-3">
+          <section className="mx-auto max-w-xl rounded-2xl border-2 border-amber-300 bg-amber-50 p-6 text-amber-950">
+            <div className="flex gap-3 mb-5">
               <TriangleAlert size={22} className="shrink-0 mt-0.5 text-amber-700" />
               <div>
-                <h2 className="mb-2 font-bold">SIMULACIÓN — no se realizará ningún cobro</h2>
-                <p>No ingreses datos de tarjeta ni realices transferencias. Este flujo solo registra un pedido demo marcado como no pagado.</p>
-                <p className="mt-2">El pedido no reserva ni descuenta inventario y no puede ser preparado ni despachado.</p>
+                <h2 className="mb-2 font-bold">SIMULACION ACADEMICA — sin cobros ni proveedores reales</h2>
+                <p>No ingreses datos de tarjeta, claves, codigos, cuentas bancarias ni comprobantes. No abras otra aplicacion ni realices transferencias.</p>
+                <p className="mt-2">Al confirmar, el sistema guardara una transaccion ficticia y un pedido DEMO. El stock y los estados del pedido se actualizaran localmente en la base de datos.</p>
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => void handleDemoSubmit()}
-              disabled={isProcessing}
-              className="mt-5 w-full py-3 rounded-xl text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 transition-all"
-            >
-              {isProcessing ? 'Simulando...' : 'Registrar pedido de demostración'}
-            </button>
+
+            <ol className="flex flex-col gap-3 mb-5">
+              <li className="flex items-start gap-3 rounded-xl bg-white/80 p-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#C62828] text-white text-sm font-bold">1</span>
+                <span><strong>Inicia el flujo.</strong> Se registra un intento DEMO sin importe cobrado ni datos financieros.</span>
+              </li>
+              <li className="flex items-start gap-3 rounded-xl bg-white/80 p-3">
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold ${simulationId ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                  {simulationId ? <CheckCircle2 size={17} /> : '2'}
+                </span>
+                <span><strong>Revisa la confirmacion ficticia.</strong> No se conecta con {isNequi ? 'Nequi' : 'una entidad financiera'}.</span>
+              </li>
+              <li className="flex items-start gap-3 rounded-xl bg-white/80 p-3">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-200 text-gray-600 text-sm font-bold">3</span>
+                <span><strong>Confirma.</strong> El pedido, la referencia DEMO y el descuento de inventario se guardan juntos.</span>
+              </li>
+            </ol>
+
+            {!simulationId ? (
+              <button
+                type="button"
+                onClick={() => void handleStartDemo()}
+                disabled={isProcessing}
+                className="w-full py-3 rounded-xl text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 transition-all"
+              >
+                {isProcessing ? 'Iniciando...' : `1. Iniciar ${isNequi ? 'Nequi' : 'tarjeta'} DEMO`}
+              </button>
+            ) : (
+              <div className="rounded-xl border border-amber-300 bg-white p-4">
+                <p className="text-sm font-semibold text-[#212121]">Referencia ficticia</p>
+                <p className="mt-1 break-all font-mono text-sm text-[#C62828]">{simulationId}</p>
+                <p className="mt-3 text-sm">
+                  {isNequi
+                    ? 'Destino de prueba: CUENTA-NEQUI-DEMO. No uses un telefono real ni hagas una transferencia.'
+                    : 'Autorizacion de prueba: TARJETA-DEMO. No se solicita ni se procesa numero, vencimiento o CVV.'}
+                </p>
+                <p className="mt-3 text-sm font-semibold">Importe de referencia: {formatPrice(total)} — no se cobrara.</p>
+                <button
+                  type="button"
+                  onClick={() => void handleConfirmDemo()}
+                  disabled={isProcessing}
+                  className="mt-4 w-full py-3 rounded-xl text-white font-semibold bg-[#C62828] hover:bg-[#b71c1c] disabled:opacity-60 transition-all"
+                >
+                  {isProcessing ? 'Confirmando...' : `3. Simular ${isNequi ? 'transferencia' : 'autorizacion'} y crear pedido`}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleCancelDemo()}
+                  disabled={isProcessing}
+                  className="mt-2 w-full py-2 rounded-xl border border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                >
+                  Cancelar simulacion
+                </button>
+              </div>
+            )}
           </section>
         ) : (
           <section role="status" className="mx-auto max-w-md rounded-2xl border border-amber-200 bg-amber-50 p-6 text-amber-950">
             <h2 className="mb-2 font-semibold">
-              {isNequi ? 'Simulación con Nequi no disponible' : 'Pago con tarjeta no disponible'}
+              {isNequi ? 'Simulacion con Nequi no disponible' : 'Pago con tarjeta no disponible'}
             </h2>
             <p>
               {paymentMode === 'error'
-                ? 'No fue posible verificar el modo de pago. Los métodos electrónicos permanecen desactivados.'
+                ? 'No fue posible verificar el modo de pago. Los metodos electronicos permanecen desactivados.'
                 : isNequi
-                  ? 'No envíes transferencias ni comprobantes. El servidor no tiene habilitada la simulación.'
-                  : 'No ingreses datos de tarjeta. El servidor no tiene habilitada la simulación ni una pasarela real.'}
+                  ? 'No envies transferencias ni comprobantes. El servidor no tiene habilitada la simulacion.'
+                  : 'No ingreses datos de tarjeta. El servidor no tiene habilitada la simulacion ni una pasarela real.'}
             </p>
             <p className="mt-3">Puedes volver y elegir efectivo contra entrega.</p>
           </section>

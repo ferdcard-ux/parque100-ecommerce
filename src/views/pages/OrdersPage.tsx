@@ -15,7 +15,7 @@ import { CancelOrderModal } from '../components/shared/cancel-order-modal';
 import { ReviewProductModal } from '../components/ratings/review-product-modal';
 import { ReviewFormModal } from '../components/ratings/review-form-modal';
 import { ImageWithFallback } from '../components/figma/ImageWithFallback';
-import { CANCEL_REFUND_NOTICE, canReviewOrder, formatPrice, isDemoPaymentMethod } from '../../utils';
+import { CANCEL_REFUND_NOTICE, canReviewOrder, formatPrice, isApprovedDemoPayment, isDemoPaymentMethod } from '../../utils';
 
 /** Formatea la fecha ISO a estilo legible (ej. 10 de diciembre de 2024). */
 function formatDate(value: string): string {
@@ -106,14 +106,14 @@ export function OrdersPage() {
 
   if (!isLoggedIn || !user) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+      <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
         <p className="text-center text-gray-400 py-16">Inicia sesion para ver tus compras.</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-2xl mx-auto">
         <PageHeader title="Mis compras" subtitle="Revisa el estado de tus pedidos" backTo="/cuenta" />
 
@@ -154,6 +154,7 @@ export function OrdersPage() {
           <div className="flex flex-col gap-4">
             {orders.map((order) => {
               const isDemoOrder = isDemoPaymentMethod(order.Metodo_Pago);
+              const isApprovedDemo = isApprovedDemoPayment(order.Metodo_Pago, order.Estado_Pago_DEMO);
               const cancellable = order.Estado === 'pendiente' || order.Estado === 'preparando';
               const locked = order.Estado === 'enviando';
               const items = order.detalles ?? [];
@@ -179,7 +180,14 @@ export function OrdersPage() {
                 </div>
                 {isDemoOrder && (
                   <p className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900" style={{ fontSize: '0.78rem', fontWeight: 600 }}>
-                    SIMULACIÓN — no pagado, sin reserva de inventario ni despacho
+                    {isApprovedDemo
+                      ? 'SIMULACION DEMO — sin cobro real; pedido e inventario actualizados en la base academica.'
+                      : 'Pedido demo historico sin transaccion aprobada ni reserva de inventario.'}
+                  </p>
+                )}
+                {order.Referencia_Pago_DEMO && (
+                  <p className="mb-3 break-all text-amber-800" style={{ fontSize: '0.75rem' }}>
+                    Referencia DEMO: {order.Referencia_Pago_DEMO}
                   </p>
                 )}
                 <div className="flex items-center justify-between text-gray-400 mb-3" style={{ fontSize: '0.8rem' }}>
@@ -214,7 +222,13 @@ export function OrdersPage() {
                 {order.Estado === 'cancelado' ? (
                   <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-1">
                     <p className="text-red-700" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Motivo: {order.Motivo_Cancelacion ?? '—'}</p>
-                    <p className="text-red-600 mt-1" style={{ fontSize: '0.75rem' }}>{CANCEL_REFUND_NOTICE}</p>
+                    <p className="text-red-600 mt-1" style={{ fontSize: '0.75rem' }}>
+                      {isDemoOrder
+                        ? order.Referencia_Pago_DEMO
+                          ? 'Transaccion ficticia anulada; no existe devolucion real y el stock reservado fue restablecido.'
+                          : 'Pedido historico demo; no hubo cobro ni reserva de inventario.'
+                        : CANCEL_REFUND_NOTICE}
+                    </p>
                   </div>
                 ) : (
                   <OrderTracker estado={order.Estado} />

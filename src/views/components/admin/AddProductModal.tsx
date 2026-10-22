@@ -2,27 +2,25 @@ import { useState, useRef } from 'react';
 import { X } from 'lucide-react';
 import { useScrollLock } from '../../../utils/useScrollLock';
 import { useDialogBehavior } from '../../../utils/useDialog';
+import { isValidHttpUrl, limitNumericInput } from '../../../utils/validators';
 import { ProductImageInput } from './ProductImageInput';
+import type { Category, ProductCreate, UnitOfMeasure } from '../../../models';
 
 interface AddProductModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreate: (data: {
-    ID_Producto: string;
-    Nombre: string;
-    Descripcion: string;
-    Imagen?: string;
-    Precio_Venta: number;
-    Precio_Anterior?: number | null;
-    Marca?: string | null;
-    Contenido_Cantidad?: number | null;
-    Contenido_Unidad?: string | null;
-    Stock_Minimo: number;
-    ID_Categoria: number;
-  }) => Promise<void>;
+  categories: Category[];
+  units: UnitOfMeasure[];
+  onCreate: (data: ProductCreate) => Promise<void>;
+  onManageCategories: () => void;
 }
 
-export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalProps) {
+const MAX_INT = 2147483647;
+const MAX_CONTENT_QTY = 9999999999.99;
+const INTEGER_PATTERN = '[0-9]{1,10}';
+const DECIMAL_PATTERN = '[0-9]{1,10}(\\.[0-9]{1,2})?';
+
+export function AddProductModal({ isOpen, onClose, onCreate, categories, units, onManageCategories }: AddProductModalProps) {
   useScrollLock(isOpen);
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogBehavior(isOpen, onClose, panelRef);
@@ -42,27 +40,38 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
 
   const handleSubmit = async () => {
     if (!nombre || !descripcion.trim() || !categoria || !cantidad || !precio) return;
+    const stockValue = Number(cantidad);
+    const priceValue = Number(precio);
+    const previousPriceValue = precioAnterior ? Number(precioAnterior) : null;
+    const contentValue = contQty ? Number(contQty) : null;
+    if (
+      !Number.isInteger(stockValue) || stockValue < 0 || stockValue > MAX_INT ||
+      !Number.isInteger(priceValue) || priceValue < 0 || priceValue > MAX_INT ||
+      (previousPriceValue !== null && (
+        !Number.isInteger(previousPriceValue) ||
+        previousPriceValue < 0 || previousPriceValue > MAX_INT
+      )) ||
+      (contentValue !== null && (
+        !Number.isFinite(contentValue) || contentValue < 0 ||
+        contentValue > MAX_CONTENT_QTY
+      )) ||
+      (imagen && !imagen.startsWith('data:') && !isValidHttpUrl(imagen))
+    ) return;
     setSaving(true);
     try {
-      const catMap: Record<string, number> = {
-        verduras: 1, frutas: 2, carnes: 3, granos: 4,
-        lácteos: 5, lacteos: 5, panadería: 6, panaderia: 6,
-        bebidas: 7, limpieza: 8,
-      };
-      const catId = catMap[categoria.toLowerCase().trim()] || 1;
       const id = `P${String(Date.now()).slice(-3)}`;
       await onCreate({
         ID_Producto: id,
         Nombre: nombre.trim(),
         Descripcion: descripcion.trim(),
         Imagen: imagen.trim() || undefined,
-        Precio_Venta: parseInt(precio),
-        Precio_Anterior: precioAnterior ? parseInt(precioAnterior) : null,
+        Precio_Venta: priceValue,
+        Precio_Anterior: previousPriceValue,
         Marca: marca.trim() || null,
-        Contenido_Cantidad: contQty ? Number(contQty) : null,
+        Contenido_Cantidad: contentValue,
         Contenido_Unidad: contQty ? contUnit : null,
-        Stock_Minimo: parseInt(cantidad),
-        ID_Categoria: catId,
+        Stock_Minimo: stockValue,
+        ID_Categoria: Number(categoria),
       });
       setNombre('');
       setDescripcion('');
@@ -91,7 +100,7 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
         <div className="flex flex-col gap-4">
           <div>
             <label htmlFor="prod-nombre" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Nombre del producto</label>
-            <input id="prod-nombre" type="text" placeholder="Ej: Manzanas x5" value={nombre} onChange={(e) => setNombre(e.target.value)}
+            <input id="prod-nombre" type="text" maxLength={50} placeholder="Ej: Manzanas x5" value={nombre} onChange={(e) => setNombre(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
@@ -106,21 +115,34 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
           </div>
           <div>
             <label htmlFor="prod-categoria" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Categoría</label>
-            <input id="prod-categoria" type="text" placeholder="Ej: Frutas" value={categoria} onChange={(e) => setCategoria(e.target.value)}
+            <select id="prod-categoria" value={categoria} onChange={(e) => {
+              if (e.target.value === '__add_category__') {
+                setCategoria('');
+                onManageCategories();
+              } else {
+                setCategoria(e.target.value);
+              }
+            }}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
-            />
+            >
+              <option value="">Selecciona una categoría</option>
+              {[...new Map(categories.map((item) => [item.name.trim().toLocaleLowerCase(), item])).values()].map((item) => (
+                <option key={item.id} value={item.id}>{item.name}</option>
+              ))}
+              <option value="__add_category__">+ Agregar categoría</option>
+            </select>
           </div>
           <div>
             <label htmlFor="prod-cantidad" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Cantidad inicial</label>
-            <input id="prod-cantidad" type="number" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(e.target.value)}
+            <input id="prod-cantidad" type="text" inputMode="numeric" pattern={INTEGER_PATTERN} maxLength={10} title="Ingresa un entero entre 0 y 2147483647" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(limitNumericInput(e.target.value, 10))}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
           </div>
           <div>
             <label htmlFor="prod-precio" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio (COP)</label>
-            <input id="prod-precio" type="number" placeholder="Ej: 4800" value={precio} onChange={(e) => setPrecio(e.target.value)}
+            <input id="prod-precio" type="text" inputMode="numeric" pattern={INTEGER_PATTERN} maxLength={10} title="Ingresa un precio entero entre 0 y 2147483647" placeholder="Ej: 4800" value={precio} onChange={(e) => setPrecio(limitNumericInput(e.target.value, 10))}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
               style={{ fontSize: '0.9rem' }}
             />
@@ -128,14 +150,14 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="prod-precio-ant" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Precio anterior (opcional)</label>
-              <input id="prod-precio-ant" type="number" placeholder="Ej: 5200" value={precioAnterior} onChange={(e) => setPrecioAnterior(e.target.value)}
+              <input id="prod-precio-ant" type="text" inputMode="numeric" pattern="[0-9]{0,10}" maxLength={10} title="Ingresa un precio entero entre 0 y 2147483647" placeholder="Ej: 5200" value={precioAnterior} onChange={(e) => setPrecioAnterior(limitNumericInput(e.target.value, 10))}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
                 style={{ fontSize: '0.9rem' }}
               />
             </div>
             <div>
               <label htmlFor="prod-marca" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Marca (opcional)</label>
-              <input id="prod-marca" type="text" placeholder="Ej: Colanta" value={marca} onChange={(e) => setMarca(e.target.value)}
+              <input id="prod-marca" type="text" maxLength={50} placeholder="Ej: Colanta" value={marca} onChange={(e) => setMarca(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
                 style={{ fontSize: '0.9rem' }}
               />
@@ -144,7 +166,7 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="prod-contenido" className="block text-[#212121] mb-1" style={{ fontSize: '0.875rem' }}>Contenido (opcional)</label>
-              <input id="prod-contenido" type="number" placeholder="Ej: 500" value={contQty} onChange={(e) => setContQty(e.target.value)}
+              <input id="prod-contenido" type="text" inputMode="decimal" pattern={DECIMAL_PATTERN} maxLength={13} title="Hasta 10 enteros y 2 decimales" placeholder="Ej: 500" value={contQty} onChange={(e) => setContQty(limitNumericInput(e.target.value, 10, 2))}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121]"
                 style={{ fontSize: '0.9rem' }}
               />
@@ -154,10 +176,9 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
               <select id="prod-unidad" value={contUnit} onChange={(e) => setContUnit(e.target.value)}
                 className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] text-[#212121]"
                 style={{ fontSize: '0.9rem' }}>
-                <option value="g">g</option>
-                <option value="ml">ml</option>
-                <option value="un">un</option>
-                <option value="kg">kg</option>
+                {[...new Map(units.map((item) => [item.name.trim().toLocaleLowerCase(), item])).values()].map((item) => (
+                  <option key={item.id} value={item.name}>{item.name}</option>
+                ))}
               </select>
             </div>
           </div>
@@ -169,7 +190,7 @@ export function AddProductModal({ isOpen, onClose, onCreate }: AddProductModalPr
             >
               Cancelar
             </button>
-            <button onClick={handleSubmit} disabled={saving || !nombre || !descripcion.trim() || !categoria || !cantidad || !precio}
+            <button onClick={handleSubmit} disabled={saving || !nombre.trim() || !descripcion.trim() || !categoria || !cantidad || !precio || !Number.isInteger(Number(cantidad)) || Number(cantidad) > MAX_INT || !Number.isInteger(Number(precio)) || Number(precio) > MAX_INT || (precioAnterior !== '' && (!Number.isInteger(Number(precioAnterior)) || Number(precioAnterior) > MAX_INT)) || (contQty !== '' && (!Number.isFinite(Number(contQty)) || Number(contQty) > MAX_CONTENT_QTY)) || (imagen !== '' && !imagen.startsWith('data:') && !isValidHttpUrl(imagen))}
               className="flex-1 py-2.5 rounded-xl bg-[#C62828] text-white font-semibold hover:bg-[#b71c1c] transition-colors shadow-sm disabled:opacity-50"
               style={{ fontSize: '0.9rem' }}
             >

@@ -101,8 +101,8 @@ export const authController = {
       if (!Correo || !ContrasenaActual || !ContrasenaNueva) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
       }
-      if (String(ContrasenaNueva).length < 8) {
-        return res.status(400).json({ error: 'La nueva contrasena debe tener al menos 8 caracteres' });
+      if (typeof ContrasenaNueva !== 'string' || ContrasenaNueva.length < 8 || ContrasenaNueva.length > 72) {
+        return res.status(400).json({ error: 'La nueva contrasena debe tener entre 8 y 72 caracteres' });
       }
       const user = await userModel.findByEmail(String(Correo).trim());
       if (!user || !(await verifyPassword(ContrasenaActual, user.Contrasena))) {

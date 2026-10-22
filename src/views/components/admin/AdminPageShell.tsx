@@ -93,7 +93,7 @@ export function AdminPageShell({ active, title, subtitle, children, backTo }: Ad
                         >
                           <p className="text-[#212121]" style={{ fontSize: '0.85rem' }}>Pedido #{o.ID_Pedido} · {o.Usuario_Nombre ?? 'Cliente'}</p>
                           <p className="text-gray-400" style={{ fontSize: '0.75rem' }}>
-                            {isDemoPaymentMethod(o.Metodo_Pago) ? 'SIMULACIÓN · ' : o.Metodo_Pago === 'Efectivo' ? 'EFECTIVO · ' : ''}Total: ${o.Total.toLocaleString('es-CO')}
+                            {isDemoPaymentMethod(o.Metodo_Pago) ? 'SIMULACION · Total de referencia: ' : o.Metodo_Pago === 'Efectivo' ? 'EFECTIVO · ' : ''}${o.Total.toLocaleString('es-CO')}
                           </p>
                         </button>
                       ))

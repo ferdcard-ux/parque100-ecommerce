@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS productos (
   Precio_Anterior int(20) DEFAULT NULL,
   Marca varchar(50) DEFAULT NULL,
   Contenido_Cantidad decimal(12,2) DEFAULT NULL,
-  Contenido_Unidad varchar(10) DEFAULT NULL,
+  Contenido_Unidad varchar(30) DEFAULT NULL,
   Embalaje varchar(60) DEFAULT NULL,
   Ingredientes varchar(255) DEFAULT NULL,
   Conservacion varchar(255) DEFAULT NULL,
@@ -39,6 +39,13 @@ CREATE TABLE IF NOT EXISTS productos (
   PRIMARY KEY (ID_Producto),
   KEY ID_Categoria (ID_Categoria),
   CONSTRAINT productos_ibfk_1 FOREIGN KEY (ID_Categoria) REFERENCES categorias (ID_Categoria)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+CREATE TABLE IF NOT EXISTS unidades_medida (
+  ID_Unidad int NOT NULL AUTO_INCREMENT,
+  Nombre_Unidad varchar(30) NOT NULL,
+  PRIMARY KEY (ID_Unidad),
+  UNIQUE KEY unidades_medida_nombre (Nombre_Unidad)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -85,6 +92,31 @@ CREATE TABLE IF NOT EXISTS pedidos (
   PRIMARY KEY (ID_Pedido),
   KEY ID_Usuario (ID_Usuario),
   CONSTRAINT pedidos_ibfk_1 FOREIGN KEY (ID_Usuario) REFERENCES usuario (ID_Usuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+-- TRANSACCIONES SIMULADAS (sin datos ni cobros financieros)
+-- --------------------------------------------------------
+CREATE TABLE IF NOT EXISTS transacciones_pago_demo (
+  ID_Transaccion bigint unsigned NOT NULL AUTO_INCREMENT,
+  Clave_Idempotencia char(36) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  Referencia varchar(45) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  ID_Usuario int NOT NULL,
+  ID_Pedido int DEFAULT NULL,
+  Metodo varchar(30) NOT NULL,
+  Estado varchar(20) NOT NULL,
+  Monto int DEFAULT NULL,
+  Fecha_Creacion timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  Fecha_Actualizacion timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (ID_Transaccion),
+  UNIQUE KEY transacciones_pago_demo_idempotencia (ID_Usuario, Clave_Idempotencia),
+  UNIQUE KEY transacciones_pago_demo_referencia (Referencia),
+  UNIQUE KEY transacciones_pago_demo_pedido (ID_Pedido),
+  KEY transacciones_pago_demo_vencimiento (ID_Usuario, Estado, Fecha_Creacion),
+  CONSTRAINT transacciones_pago_demo_usuario_fk
+    FOREIGN KEY (ID_Usuario) REFERENCES usuario (ID_Usuario) ON DELETE CASCADE,
+  CONSTRAINT transacciones_pago_demo_pedido_fk
+    FOREIGN KEY (ID_Pedido) REFERENCES pedidos (ID_Pedido) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -156,6 +188,7 @@ CREATE TABLE IF NOT EXISTS calificaciones (
 
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE detalle_pedido;
+TRUNCATE transacciones_pago_demo;
 TRUNCATE pedidos;
 TRUNCATE calificaciones;
 TRUNCATE permisos_usuario;
@@ -185,6 +218,12 @@ INSERT INTO productos (ID_Producto, Nombre, Descripcion, Precio_Venta, Precio_An
 ('P008', 'Mix Frutas Tropicales', 'Frutas tropicales frescas', 5500, NULL, 'Parque100', 800, 'g', 20, 2),
 ('P009', 'Leche Entera 1L', 'Leche entera pasteurizada', 3200, 3800, 'Colanta', 1000, 'ml', 5, 5),
 ('P010', 'Pan Tajado 500g', 'Pan de molde blanco', 4500, NULL, 'Comapan', 500, 'g', 18, 6);
+
+INSERT IGNORE INTO unidades_medida (Nombre_Unidad) VALUES ('g'), ('kg'), ('ml'), ('un');
+INSERT IGNORE INTO unidades_medida (Nombre_Unidad)
+SELECT DISTINCT TRIM(Contenido_Unidad)
+FROM productos
+WHERE Contenido_Unidad IS NOT NULL AND TRIM(Contenido_Unidad) <> '';
 
 INSERT INTO usuario (ID_Usuario, Nombre, Correo, Contrasena, Rol, Telefono, Direccion) VALUES
 (1, 'Usuario Demo', 'usuario@ejemplo.com', '$2b$10$Vif0JY2IZ3OYWZqnyg0VEuQOLdiYw63p8ePbr94agM4dlzQKrQTSa', 'usuario', 300123456, 'Calle 123 #45-67'),

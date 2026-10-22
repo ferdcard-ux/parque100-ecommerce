@@ -4,7 +4,7 @@ import { X, ShoppingCart } from 'lucide-react';
 import { Link } from 'react-router';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import type { Product, Category } from '../../../models';
-import { formatPrice } from '../../../utils';
+import { formatPrice, formatUnitPrice } from '../../../utils';
 import { useScrollLock } from '../../../utils/useScrollLock';
 
 interface CategoryModalProps {
@@ -69,8 +69,10 @@ export function CategoryModal({ category, products, onClose, onAddToCart }: Cate
             </div>
           ) : (
             <div className="grid grid-cols-2 max-[380px]:grid-cols-1 sm:grid-cols-3 gap-4">
-              {filtered.map((product) => (
-                <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
+              {filtered.map((product) => {
+                const unitPrice = formatUnitPrice(product.price, product.contentQty, product.contentUnit);
+                return (
+                  <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 group">
                   <div className="relative aspect-[4/3] overflow-hidden bg-[#F5F5F5]">
                     <Link to={`/producto/${product.id}`} onClick={onClose}>
                       <ImageWithFallback
@@ -88,8 +90,9 @@ export function CategoryModal({ category, products, onClose, onAddToCart }: Cate
                   </div>
                   <div className="p-3">
                     <Link to={`/producto/${product.id}`} onClick={onClose}>
-                      <h3 className="text-[#212121] font-semibold leading-tight mb-2 hover:text-[#C62828] transition-colors" style={{ fontSize: '0.8rem' }}>{product.name}</h3>
+                      <h3 className="text-[#212121] font-semibold leading-tight mb-1 hover:text-[#C62828] transition-colors" style={{ fontSize: '0.8rem' }}>{product.name}</h3>
                     </Link>
+                    {unitPrice && <p className="mb-2 text-gray-400" style={{ fontSize: '0.62rem' }}>{unitPrice}</p>}
                     <div className="flex items-center justify-between">
                       <span className="text-[#C62828] font-bold" style={{ fontSize: '0.95rem' }}>{formatPrice(product.price)}</span>
                       <button onClick={() => handleAdd(product)}
@@ -101,8 +104,9 @@ export function CategoryModal({ category, products, onClose, onAddToCart }: Cate
                       </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>

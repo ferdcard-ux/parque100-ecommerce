@@ -10,7 +10,7 @@ import { AdminPageShell } from '../components/admin/AdminPageShell';
 import { StatusBadge } from '../components/shared/status-badge';
 import { OrderTracker } from '../components/shared/order-tracker';
 import { CancelOrderModal } from '../components/shared/cancel-order-modal';
-import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice, isDemoPaymentMethod } from '../../utils';
+import { ORDER_ESTADOS, ADMIN_CANCEL_REASONS, formatPrice, isApprovedDemoPayment, isDemoPaymentMethod } from '../../utils';
 import type { OrderEstado } from '../../models';
 
 /** Resumen y gestion de pedidos en curso, finalizados y cancelados. */
@@ -192,15 +192,18 @@ export function AdminOrdersPage() {
                   <div className="flex flex-col gap-4 mt-3">
                     {list.map((order) => {
                       const isDemoOrder = isDemoPaymentMethod(order.Metodo_Pago);
+                      const isApprovedDemo = isApprovedDemoPayment(order.Metodo_Pago, order.Estado_Pago_DEMO);
                       const allowedStatuses = ORDER_ESTADOS.filter((estado) => (
                         (canCancel || estado !== 'cancelado')
-                        && (!isDemoOrder || estado === 'pendiente' || estado === 'cancelado')
+                        && (!isDemoOrder || isApprovedDemo || estado === 'pendiente' || estado === 'cancelado')
                       ));
                       return (
             <div key={order.ID_Pedido} className="bg-white rounded-2xl border border-gray-100 p-5">
               {isDemoOrder && (
                 <p role="alert" className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
-                  SIMULACIÓN: no pagado, inventario intacto y no despachable
+                  {isApprovedDemo
+                    ? 'SIMULACION: sin cobro real; transaccion DEMO e inventario registrados.'
+                    : 'SIMULACION historica sin transaccion aprobada; no despachable.'}
                 </p>
               )}
               <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
@@ -221,12 +224,23 @@ export function AdminOrdersPage() {
               <p className="text-gray-400 mb-4" style={{ fontSize: '0.8rem' }}>
                 Torre {order.Torre ?? '—'} · Piso {order.Piso ?? '—'} · Apto {order.Apartamento ?? '—'}
               </p>
+              {order.Referencia_Pago_DEMO && (
+                <p className="text-amber-800 mb-3" style={{ fontSize: '0.75rem' }}>
+                  Referencia DEMO: <strong>{order.Referencia_Pago_DEMO}</strong>
+                </p>
+              )}
               {order.Estado === 'cancelado' ? (
                 <div role="alert" className="flex gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-1">
                   <TriangleAlert size={16} className="text-red-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="text-red-700" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Cancelado: {order.Motivo_Cancelacion ?? '—'}</p>
-                    <p className="text-red-600 mt-0.5" style={{ fontSize: '0.75rem' }}>Proceder con la devolución del pago según lo acordado con el cliente.</p>
+                    <p className="text-red-600 mt-0.5" style={{ fontSize: '0.75rem' }}>
+                      {isDemoOrder
+                        ? order.Referencia_Pago_DEMO
+                          ? 'Transaccion ficticia anulada; stock reservado restablecido. No hay devolucion real.'
+                          : 'Pedido historico demo; no hubo cobro ni reserva de inventario.'
+                        : 'Proceder con la devolución del pago según lo acordado con el cliente.'}
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -239,7 +253,7 @@ export function AdminOrdersPage() {
                 <select
                   value={order.Estado}
                   disabled={order.Estado === 'cancelado'}
-                  title={order.Estado === 'cancelado' ? 'Un pedido cancelado no se puede reanudar' : isDemoOrder ? 'Solo se puede cancelar un pedido demo; no se puede despachar' : undefined}
+                  title={order.Estado === 'cancelado' ? 'Un pedido cancelado no se puede reanudar' : isDemoOrder && !isApprovedDemo ? 'La transaccion demo no esta aprobada' : undefined}
                   onChange={(e) => handleSelect(order.ID_Pedido, e.target.value as OrderEstado)}
                   className="border border-gray-200 rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#C62828] disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ fontSize: '0.8rem' }}

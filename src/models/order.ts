@@ -31,9 +31,9 @@ export interface Order {
   cashTendered?: number | null;
   /** Cambio a devolver (solo pago contra entrega). */
   cashChange?: number | null;
-  /** Indica que este checkout fue una simulacion sin cobro. */
+  /** Indica que este checkout simulado no produjo un cobro real. */
   simulatedPayment?: boolean;
-  /** Referencia visual de simulacion; no es una referencia financiera. */
+  /** Referencia DEMO interna; no es una referencia financiera. */
   paymentSimulationId?: string;
   /** Lineas de producto incluidas. */
   items: CartItem[];
@@ -102,11 +102,15 @@ export interface ApiOrder {
   Apartamento?: string | null;
   /** Metodo de pago usado. */
   Metodo_Pago?: string | null;
+  /** Referencia generada por una transaccion academica, nunca financiera. */
+  Referencia_Pago_DEMO?: string | null;
+  /** Estado de la transaccion ficticia. */
+  Estado_Pago_DEMO?: 'iniciada_demo' | 'aprobada_demo' | 'cancelada_demo' | 'expirada_demo' | null;
   /** Monto en efectivo recibido (solo pago contra entrega). */
   Monto_Recibido?: number | null;
   /** Cambio a devolver (solo pago contra entrega). */
   Cambio?: number | null;
-  /** Comprobante de pago Nequi (imagen dataURL, solo ese metodo). */
+  /** Comprobante historico de pedidos previos; no se aceptan nuevos comprobantes. */
   Comprobante?: string | null;
   /** Motivo de cancelacion (solo pedidos cancelados). */
   Motivo_Cancelacion?: string | null;

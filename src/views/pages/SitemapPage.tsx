@@ -21,7 +21,7 @@ const ROUTES = [
 /** Indice de rutas de la aplicacion. */
 export function SitemapPage() {
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-2xl mx-auto bg-white rounded-2xl border border-gray-100 p-8">
         <PageHeader title="Mapa del sitio" subtitle="Todas las secciones" backTo="/" />
         <ul className="flex flex-col divide-y divide-gray-50">

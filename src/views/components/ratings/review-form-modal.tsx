@@ -128,6 +128,7 @@ export function ReviewFormModal({
                 id="review-comment"
                 value={comment}
                 onChange={(e) => setComment(e.target.value.slice(0, REVIEW_COMMENT_MAX))}
+                maxLength={REVIEW_COMMENT_MAX}
                 placeholder="Comparte tu opinión del producto"
                 rows={4}
                 className="w-full border border-gray-200 rounded-xl px-3 py-2 focus:outline-none focus:border-[#C62828] resize-none"

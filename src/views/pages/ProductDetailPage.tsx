@@ -73,7 +73,7 @@ export function ProductDetailPage() {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+      <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6" aria-label="Cargando producto">
           <div className="bg-white rounded-2xl border border-gray-100 p-4">
             <div className="w-full h-72 bg-gray-100 rounded-xl animate-pulse" />
@@ -96,7 +96,7 @@ export function ProductDetailPage() {
 
   if (!product) {
     return (
-      <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+      <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
         <div className="max-w-3xl mx-auto bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <h1 className="text-[#212121] mb-2" style={{ fontSize: '1.2rem', fontWeight: 700 }}>Producto no encontrado</h1>
           <p className="text-gray-400 mb-6">Es posible que este producto ya no este disponible.</p>
@@ -107,7 +107,7 @@ export function ProductDetailPage() {
   }
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-6xl mx-auto">
         <p className="text-gray-400 mb-4" style={{ fontSize: '0.8rem' }}>
           <Link to="/catalogo" className="hover:text-[#C62828]">Catálogo</Link> /{' '}

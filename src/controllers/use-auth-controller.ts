@@ -7,6 +7,7 @@ import { useState, useCallback, useEffect } from 'react';
 import type { User, LoginCredentials, RegisterData } from '../models';
 import { normalizeUserRole } from '../models';
 import { authService, userService } from '../services';
+import { activityService } from '../services/activity.service';
 import { setAuthToken } from '../services/api';
 
 const SESSION_KEY = 'p100-session';
@@ -157,7 +158,7 @@ export function useAuthController() {
     const row = await userService.updateProfile(activeId, {
       Nombre: `${data.firstName} ${data.lastName}`.trim(),
       Correo: data.email.trim(),
-      Telefono: data.phone.replace(/\D/g, '').slice(0, 20),
+      Telefono: data.phone.replace(/\D/g, '').slice(0, 10),
       Foto: data.photo ?? null,
     });
     const parts = (row.Nombre || '').split(' ');
@@ -189,6 +190,7 @@ export function useAuthController() {
 
   /** Cierra la sesion activa (las demas siguen disponibles). */
   const logout = useCallback(async () => {
+    activityService.recordInteraction('session.logout');
     try {
       await authService.logout();
     } finally {

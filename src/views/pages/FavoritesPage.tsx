@@ -17,7 +17,7 @@ export function FavoritesPage() {
   const favProducts = products.filter((p) => favorites.includes(String(p.id)));
 
   return (
-    <main className="min-h-screen bg-[#F5F5F5] pt-24 pb-16 px-4">
+    <main className="min-h-screen bg-[#F5F5F5] pt-8 pb-16 px-4">
       <div className="max-w-5xl mx-auto">
         <PageHeader title="Favoritos" subtitle="Productos guardados para comprar despues" backTo="/" />
         {favProducts.length === 0 ? (

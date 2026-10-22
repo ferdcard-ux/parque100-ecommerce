@@ -18,6 +18,7 @@ import rateLimit from 'express-rate-limit';
 import { assertSiteAccessDbConfig } from './config/site-access-db.js';
 import productsRouter from './routes/products.js';
 import categoriesRouter from './routes/categories.js';
+import unitsRouter from './routes/units.js';
 import authRouter from './routes/auth.js';
 import ordersRouter from './routes/orders.js';
 import paymentsRouter from './routes/payments.js';
@@ -25,7 +26,9 @@ import usersRouter from './routes/users.js';
 import businessRouter from './routes/business.js';
 import ratingsRouter from './routes/ratings.js';
 import siteAccessRouter from './routes/site-access.js';
+import activityRouter from './routes/activity.js';
 import { assertJwtSecret, requireSiteSession } from './middleware/auth.js';
+import { activityLogMiddleware } from './utils/activity-log.js';
 
 assertJwtSecret();
 assertSiteAccessDbConfig();
@@ -104,12 +107,16 @@ app.use('/api', async (req, res, next) => {
   return requireSiteSession(req, res, next);
 });
 
+app.use('/api', activityLogMiddleware);
+app.use('/api', activityRouter);
+
 /** Registro de routers por modulo. */
 app.use('/api/auth', authLimiter);
 app.use('/api/site-access/login', authLimiter);
 app.use('/api', siteAccessRouter);
 app.use('/api', productsRouter);
 app.use('/api', categoriesRouter);
+app.use('/api', unitsRouter);
 app.use('/api', authRouter);
 app.use('/api', ordersRouter);
 app.use('/api', paymentsRouter);

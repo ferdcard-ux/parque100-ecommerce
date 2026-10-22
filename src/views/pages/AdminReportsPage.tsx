@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { DollarSign, ShoppingCart, Receipt, Package } from 'lucide-react';
 import { useAdminOrdersController } from '../../controllers';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
-import { ORDER_ESTADOS, formatPrice } from '../../utils';
+import { ORDER_ESTADOS, formatPrice, isDemoPaymentMethod } from '../../utils';
 
 type Period = 'hoy' | 'semana' | 'mes' | 'personalizado';
 
@@ -51,8 +51,12 @@ export function AdminReportsPage() {
     [orders, period, from, to],
   );
 
-  /** Pedidos cancelados no suman a las ventas ni al ticket promedio. */
-  const validOrders = useMemo(() => filtered.filter((o) => o.Estado !== 'cancelado'), [filtered]);
+  /** Las simulaciones se cuentan aparte y nunca se presentan como ventas reales. */
+  const validOrders = useMemo(
+    () => filtered.filter((o) => o.Estado !== 'cancelado' && !isDemoPaymentMethod(o.Metodo_Pago)),
+    [filtered],
+  );
+  const demoOrders = filtered.filter((o) => isDemoPaymentMethod(o.Metodo_Pago)).length;
   const totalSales = validOrders.reduce((sum, o) => sum + Number(o.Total), 0);
   const avgTicket = validOrders.length > 0 ? Math.round(totalSales / validOrders.length) : 0;
   const byStatus = ORDER_ESTADOS.map((estado) => ({
@@ -62,10 +66,11 @@ export function AdminReportsPage() {
   const maxStatus = Math.max(1, ...byStatus.map((b) => b.count));
 
   const kpis = [
-    { icon: DollarSign, label: 'Ventas totales', value: formatPrice(totalSales), tile: 'bg-[#C62828]/10 text-[#C62828]' },
-    { icon: ShoppingCart, label: 'Pedidos', value: String(filtered.length), tile: 'bg-blue-100 text-blue-600' },
+    { icon: DollarSign, label: 'Ventas no DEMO', value: formatPrice(totalSales), tile: 'bg-[#C62828]/10 text-[#C62828]' },
+    { icon: ShoppingCart, label: 'Pedidos (incluye DEMO)', value: String(filtered.length), tile: 'bg-blue-100 text-blue-600' },
     { icon: Receipt, label: 'Ticket promedio', value: formatPrice(avgTicket), tile: 'bg-[#FBC02D]/20 text-[#f57f17]' },
     { icon: Package, label: 'Pedidos entregados', value: String(byStatus.find((b) => b.estado === 'entregado')?.count ?? 0), tile: 'bg-green-100 text-green-700' },
+    { icon: Receipt, label: 'Pedidos DEMO', value: String(demoOrders), tile: 'bg-amber-100 text-amber-700' },
   ];
 
   return (
@@ -106,7 +111,7 @@ export function AdminReportsPage() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-100 p-5 overflow-x-auto">
-            <h2 className="text-[#212121] mb-6" style={{ fontSize: '1rem', fontWeight: 700 }}>Pedidos por estado</h2>
+            <h2 className="text-[#212121] mb-6" style={{ fontSize: '1rem', fontWeight: 700 }}>Pedidos por estado (incluye DEMO)</h2>
             <div className="flex items-end gap-6 h-48 min-w-[420px]">
               {byStatus.map(({ estado, count }) => (
                 <div key={estado} className="flex-1 flex flex-col items-center justify-end gap-2">

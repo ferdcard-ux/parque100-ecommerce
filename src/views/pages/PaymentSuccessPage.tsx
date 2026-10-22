@@ -13,8 +13,9 @@ export function PaymentSuccessPage() {
   const detailTo = lastOrder?.backendId ? `/compras/${lastOrder.backendId}` : '/compras';
   const statusSteps: Array<{ icon: ReactNode; label: string; sub: string; done?: boolean; active?: boolean; pending?: boolean }> = isDemo
     ? [
-        { icon: <CheckCircle2 size={18} />, label: 'Pedido demo registrado', sub: 'Simulación sin cobro', done: true },
-        { icon: <Package size={18} />, label: 'No se despacha', sub: 'No afecta el inventario', pending: true },
+        { icon: <CheckCircle2 size={18} />, label: 'Transaccion DEMO aprobada', sub: 'Registro academico; no hubo cobro', done: true },
+        { icon: <Package size={18} />, label: 'Pedido e inventario actualizados', sub: 'Cambios persistidos en la base demo', done: true },
+        { icon: <Clock size={18} />, label: 'Seguimiento demostrativo', sub: 'El personal puede avanzar sus estados', active: true },
       ]
     : [
         { icon: <CheckCircle2 size={18} />, label: 'Pedido registrado', sub: 'Pago pendiente contra entrega', done: true },
@@ -46,10 +47,10 @@ export function PaymentSuccessPage() {
         </div>
 
         <h1 className="text-[#212121] mb-2" style={{ fontSize: '1.8rem', fontWeight: 800 }}>
-          {isDemo ? '¡Simulación registrada!' : '¡Pedido confirmado!'}
+          {isDemo ? '¡Simulacion completa!' : '¡Pedido confirmado!'}
         </h1>
         <p className="text-gray-500 mb-2" style={{ fontSize: '1rem' }}>
-          {isDemo ? 'No se realizó un cobro ni se confirmó un pago real.' : 'El pago se realizará en efectivo al recibirlo'}
+          {isDemo ? 'El pago se aprobo unicamente dentro del flujo DEMO; no se realizo ningun cobro.' : 'El pago se realizará en efectivo al recibirlo'}
         </p>
         <div className="inline-block bg-[#FBC02D]/10 border border-[#FBC02D]/30 rounded-full px-4 py-1 mb-6">
           <span className="text-[#212121] font-semibold" style={{ fontSize: '0.875rem' }}>
@@ -65,7 +66,7 @@ export function PaymentSuccessPage() {
 
         {isDemo && lastOrder.paymentSimulationId && (
           <p className="mb-4 text-gray-500" style={{ fontSize: '0.8rem' }}>
-            Referencia de simulación (no financiera): <strong>{lastOrder.paymentSimulationId}</strong>
+            Referencia de simulacion (no financiera): <strong>{lastOrder.paymentSimulationId}</strong>
           </p>
         )}
 
@@ -73,7 +74,7 @@ export function PaymentSuccessPage() {
           <TriangleAlert size={20} className="text-amber-600 shrink-0 mt-0.5" />
           <p className="text-amber-800" style={{ fontSize: '0.85rem' }}>
             {isDemo
-              ? 'Este pedido de demostración queda marcado como no pagado, no reserva inventario y no puede avanzar a preparación o despacho.'
+              ? 'No es una compra ni un pago real. El pedido y el descuento de inventario se guardaron para la demostracion; el personal puede avanzar sus estados dentro del sistema.'
               : DISPATCH_DELAY_WARNING}
           </p>
         </div>

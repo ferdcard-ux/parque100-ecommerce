@@ -5,7 +5,7 @@ import { Link } from 'react-router';
 import { Package, TriangleAlert } from 'lucide-react';
 import { useAdminOrdersController } from '../../controllers';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
-import { formatPrice, isDemoPaymentMethod } from '../../utils';
+import { formatPrice, isApprovedDemoPayment, isDemoPaymentMethod } from '../../utils';
 
 /** Listado de pedidos con estado 'pendiente' listos para tomar. */
 export function AdminPendingOrdersPage() {
@@ -24,11 +24,17 @@ export function AdminPendingOrdersPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {pending.map((order) => (
+          {pending.map((order) => {
+            const isDemoOrder = isDemoPaymentMethod(order.Metodo_Pago);
+            const demoApproved = isApprovedDemoPayment(order.Metodo_Pago, order.Estado_Pago_DEMO);
+            const blockedDemo = isDemoOrder && !demoApproved;
+            return (
             <div key={order.ID_Pedido} className="bg-white rounded-2xl border border-gray-100 p-5">
-              {isDemoPaymentMethod(order.Metodo_Pago) && (
+              {isDemoOrder && (
                 <p role="alert" className="mb-3 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-amber-900" style={{ fontSize: '0.75rem', fontWeight: 700 }}>
-                  SIMULACIÓN: no pagado, inventario intacto y no despachable
+                  {demoApproved
+                    ? 'SIMULACION: aprobacion ficticia; sin cobro real. Inventario actualizado.'
+                    : 'SIMULACION historica sin transaccion aprobada; no despachable.'}
                 </p>
               )}
               <div className="flex items-center justify-between mb-3">
@@ -45,23 +51,25 @@ export function AdminPendingOrdersPage() {
                 <div className="flex justify-between"><dt>Cliente</dt><dd className="text-[#212121]">{order.Usuario_Nombre ?? order.Destinatario ?? '—'}</dd></div>
                 <div className="flex justify-between"><dt>Ubicacion</dt><dd className="text-[#212121]">Torre {order.Torre ?? '—'} · Apto {order.Apartamento ?? '—'}</dd></div>
                 <div className="flex justify-between"><dt>Pago</dt><dd className="text-[#212121]">{order.Metodo_Pago ?? '—'}</dd></div>
+                {order.Referencia_Pago_DEMO && <div className="flex justify-between"><dt>Referencia DEMO</dt><dd className="text-[#212121] break-all">{order.Referencia_Pago_DEMO}</dd></div>}
               </dl>
               <div className="flex gap-2">
                 <button
                   onClick={() => takeOrder(order.ID_Pedido)}
-                  disabled={isDemoPaymentMethod(order.Metodo_Pago)}
-                  title={isDemoPaymentMethod(order.Metodo_Pago) ? 'Los pedidos demo no se pueden despachar' : undefined}
+                  disabled={blockedDemo}
+                  title={blockedDemo ? 'La transaccion demo no esta aprobada' : undefined}
                   className="flex-1 bg-[#C62828] hover:bg-[#b71c1c] text-white rounded-full py-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ fontSize: '0.8rem', fontWeight: 600 }}
                 >
-                  <Package size={14} className="inline mr-1" /> {isDemoPaymentMethod(order.Metodo_Pago) ? 'No despachable' : 'Tomar pedido'}
+                  <Package size={14} className="inline mr-1" /> {blockedDemo ? 'No despachable' : isDemoOrder ? 'Tomar pedido DEMO' : 'Tomar pedido'}
                 </button>
                 <Link to={`/admin/pedidos/${order.ID_Pedido}`} className="px-4 py-2 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors" style={{ fontSize: '0.8rem' }}>
                   Ver
                 </Link>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </AdminPageShell>

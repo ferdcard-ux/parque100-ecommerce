@@ -48,6 +48,10 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
       setError('La contraseña debe tener al menos 8 caracteres');
       return;
     }
+    if (`${form.firstName.trim()} ${form.lastName.trim()}`.trim().length > 30) {
+      setError('El nombre y apellido no pueden superar 30 caracteres en total.');
+      return;
+    }
     if (form.password !== form.confirm) {
       setError('Las contraseñas no coinciden');
       return;
@@ -111,7 +115,7 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
                   <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Nombre *</label>
                   <div className="relative">
                     <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input type="text" name="firstName" required value={form.firstName} onChange={handleChange} placeholder="Tu nombre"
+                    <input type="text" name="firstName" required maxLength={30} autoComplete="given-name" value={form.firstName} onChange={handleChange} placeholder="Tu nombre"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                       style={{ fontSize: '0.9rem' }}
                     />
@@ -121,7 +125,7 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
                   <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Apellido *</label>
                   <div className="relative">
                     <User size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input type="text" name="lastName" required value={form.lastName} onChange={handleChange} placeholder="Tu apellido"
+                    <input type="text" name="lastName" required maxLength={30} autoComplete="family-name" value={form.lastName} onChange={handleChange} placeholder="Tu apellido"
                       className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                       style={{ fontSize: '0.9rem' }}
                     />
@@ -133,7 +137,7 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
                 <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Correo electrónico *</label>
                 <div className="relative">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input type="email" name="email" required value={form.email} onChange={handleChange} placeholder="correo@ejemplo.com"
+                  <input type="email" name="email" required maxLength={50} autoComplete="email" value={form.email} onChange={handleChange} placeholder="correo@ejemplo.com"
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                     style={{ fontSize: '0.9rem' }}
                   />
@@ -161,7 +165,7 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
                   <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Contraseña *</label>
                   <div className="relative">
                     <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input type={showPassword ? 'text' : 'password'} name="password" required value={form.password} onChange={handleChange} placeholder="Mín. 8 caracteres"
+                    <input type={showPassword ? 'text' : 'password'} name="password" required minLength={8} maxLength={72} autoComplete="new-password" value={form.password} onChange={handleChange} placeholder="Mín. 8 caracteres"
                       className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                       style={{ fontSize: '0.9rem' }}
                     />
@@ -174,7 +178,7 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
                   <label className="block text-[#212121] mb-1.5" style={{ fontSize: '0.875rem' }}>Confirmar contraseña *</label>
                   <div className="relative">
                     <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input type={showConfirm ? 'text' : 'password'} name="confirm" required value={form.confirm} onChange={handleChange} placeholder="Repite tu contraseña"
+                    <input type={showConfirm ? 'text' : 'password'} name="confirm" required minLength={8} maxLength={72} autoComplete="new-password" value={form.confirm} onChange={handleChange} placeholder="Repite tu contraseña"
                       className="w-full pl-10 pr-10 py-2.5 rounded-xl border border-gray-200 bg-[#F5F5F5] focus:outline-none focus:border-[#C62828] focus:ring-2 focus:ring-[#C62828]/20 text-[#212121] transition-all"
                       style={{ fontSize: '0.9rem' }}
                     />

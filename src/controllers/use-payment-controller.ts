@@ -1,8 +1,7 @@
 /**
  * @fileoverview Controlador del flujo de pago.
- * Hook React que orquesta el checkout: metodo de pago, direccion de
- * entrega y creacion del pedido contra entrega. Los pagos electronicos
- * permanecen deshabilitados hasta contar con una pasarela verificada.
+ * Hook React que orquesta el checkout en efectivo y las simulaciones
+ * academicas, sin pasarelas ni datos financieros.
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type {
@@ -35,6 +34,7 @@ export function usePaymentController() {
   const [result, setResult] = useState<PaymentResult | null>(null);
   const [lastOrder, setLastOrder] = useState<Order | null>(null);
   const [paymentMode, setPaymentMode] = useState<PaymentModeState>('loading');
+  const [simulationReference, setSimulationReference] = useState<string | null>(null);
   /** Evita procesar dos pagos a la vez (doble clic antes del re-render). */
   const busyRef = useRef(false);
 
@@ -58,11 +58,12 @@ export function usePaymentController() {
 
   /**
    * Limpia metodo, direccion y resultado para un nuevo checkout.
-   * Conserva `lastOrder` para que la confirmacion muestre el pedido real. */
+   * Conserva `lastOrder` para que la confirmacion muestre el pedido persistido. */
   const reset = useCallback(() => {
     setMethod(null);
     setAddress(null);
     setResult(null);
+    setSimulationReference(null);
     setIsProcessing(false);
   }, []);
 
@@ -102,18 +103,65 @@ export function usePaymentController() {
     [address, method],
   );
 
+  const startDemo = useCallback(
+    async (paymentMethod: Exclude<PaymentMethodType, 'cash'>) => {
+      if (paymentMode !== 'demo') throw new Error('El modo de simulacion no esta habilitado.');
+      if (busyRef.current) throw new Error('La simulacion ya se esta procesando.');
+      if (!window.crypto?.randomUUID) {
+        throw new Error('El navegador no permite generar una clave segura para la simulacion.');
+      }
+      busyRef.current = true;
+      setIsProcessing(true);
+      try {
+        const paymentResult = await paymentService.startSimulation(paymentMethod, window.crypto.randomUUID());
+        if (!paymentResult.simulationId) throw new Error('El servidor no devolvio una referencia de simulacion.');
+        setSimulationReference(paymentResult.simulationId);
+        setMethod(paymentMethod);
+        setResult(paymentResult);
+        return paymentResult.simulationId;
+      } finally {
+        busyRef.current = false;
+        setIsProcessing(false);
+      }
+    },
+    [paymentMode],
+  );
+
+  const cancelDemo = useCallback(async (reference: string) => {
+    if (busyRef.current) throw new Error('La simulacion ya se esta procesando.');
+    busyRef.current = true;
+    setIsProcessing(true);
+    try {
+      await paymentService.cancelSimulation(reference);
+      setSimulationReference(null);
+    } finally {
+      busyRef.current = false;
+      setIsProcessing(false);
+    }
+  }, []);
+
   const processDemo = useCallback(
-    async (paymentMethod: Exclude<PaymentMethodType, 'cash'>, items: CartItem[], userId: number | null = null) => {
+    async (
+      paymentMethod: Exclude<PaymentMethodType, 'cash'>,
+      items: CartItem[],
+      reference: string,
+      userId: number | null = null,
+    ) => {
       if (!address) throw new Error('Guarda la direccion antes de continuar con la simulacion.');
       if (paymentMode !== 'demo') throw new Error('El modo de simulacion no esta habilitado.');
+      if (!reference || reference !== simulationReference) throw new Error('Inicia una simulacion valida antes de confirmar.');
       if (busyRef.current) throw new Error('El pago ya se esta procesando.');
       busyRef.current = true;
       setIsProcessing(true);
       try {
-        const paymentResult = await paymentService.simulate(paymentMethod);
-        const created = await orderService.create(items, address, paymentMethod, userId);
-        created.simulatedPayment = true;
-        created.paymentSimulationId = paymentResult.simulationId;
+        const created = await orderService.createDemo(items, address, paymentMethod, reference, userId);
+        const paymentResult = {
+          success: true,
+          simulated: true,
+          paid: false,
+          simulationId: reference,
+          message: 'Transaccion aprobada solo dentro de la simulacion; no hubo cobro real.',
+        };
         setMethod(paymentMethod);
         setLastOrder(created);
         setResult(paymentResult);
@@ -123,7 +171,7 @@ export function usePaymentController() {
         setIsProcessing(false);
       }
     },
-    [address, paymentMode],
+    [address, paymentMode, simulationReference],
   );
 
   return {
@@ -136,6 +184,8 @@ export function usePaymentController() {
     lastOrder,
     paymentMode,
     processCash,
+    startDemo,
+    cancelDemo,
     processDemo,
     reset,
   };

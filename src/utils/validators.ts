@@ -96,3 +96,32 @@ export function isValidPhone(value: string): boolean {
 export function isNotEmpty(value: string): boolean {
   return value.trim().length > 0;
 }
+
+/** Mantiene un campo numérico dentro de su precisión mientras se escribe. */
+export function limitNumericInput(
+  value: string,
+  maxIntegerDigits: number,
+  maxDecimalPlaces = 0,
+): string {
+  const normalized = value.replace(',', '.').replace(/[^\d.]/g, '');
+  const decimalIndex = normalized.indexOf('.');
+  const integerPart = (decimalIndex < 0
+    ? normalized
+    : normalized.slice(0, decimalIndex)).slice(0, maxIntegerDigits);
+  if (maxDecimalPlaces === 0 || decimalIndex < 0) return integerPart;
+  const decimalPart = normalized
+    .slice(decimalIndex + 1)
+    .replace(/\./g, '')
+    .slice(0, maxDecimalPlaces);
+  return `${integerPart}.${decimalPart}`;
+}
+
+/** Acepta solo URL absolutas HTTP(S) con un host. */
+export function isValidHttpUrl(value: string): boolean {
+  try {
+    const url = new URL(value);
+    return (url.protocol === 'http:' || url.protocol === 'https:') && Boolean(url.hostname);
+  } catch {
+    return false;
+  }
+}

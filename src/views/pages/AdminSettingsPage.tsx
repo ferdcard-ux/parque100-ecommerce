@@ -118,7 +118,7 @@ export function AdminSettingsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <label className="block">
                 <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>NIT</span>
-                <input name="NIT" value={form.NIT} onChange={handleBusinessChange} maxLength={30} className={inputClass} />
+                <input name="NIT" value={form.NIT} onChange={handleBusinessChange} maxLength={30} pattern="[0-9-]{0,30}" title="Usa solo números y guiones" className={inputClass} />
               </label>
               <label className="block">
                 <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Teléfono *</span>
@@ -154,7 +154,7 @@ export function AdminSettingsPage() {
             </label>
             <label className="block">
               <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Correo *</span>
-              <input name="Email" type="email" value={form.Email} onChange={handleBusinessChange} required maxLength={80} className={inputClass} />
+              <input name="Email" type="email" autoComplete="email" value={form.Email} onChange={handleBusinessChange} required maxLength={80} className={inputClass} />
             </label>
             <label className="block">
               <span className="block text-[#212121] mb-1" style={{ fontSize: '0.8rem', fontWeight: 600 }}>Horario de atención *</span>

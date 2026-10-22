@@ -53,6 +53,21 @@ La aplicación se ejecuta **en el navegador**: no requiere instalar ningún prog
 
 **Dirección de acceso:** la que proporcione el administrador del sistema (por ejemplo, el dominio público, o `http://localhost:5173` en un entorno de desarrollo/pruebas).
 
+> Este es un sitio académico de demostración. Los productos, precios,
+> inventario, transacciones y pedidos no representan ofertas ni operaciones
+> comerciales reales. El uso está limitado a personas autorizadas; no ingreses
+> datos personales o financieros reales.
+
+### Acceso al sitio
+
+1. Abre `/access.html` e inicia sesión con la cuenta de acceso académico que te
+   haya asignado el responsable. No hay registro público.
+2. Lee y acepta el descargo obligatorio para habilitar la navegación. La
+   aceptación se registra para la sesión de acceso actual.
+3. Para probar las funciones de la tienda, inicia sesión aparte con una de las
+   cuentas demo indicadas a continuación. El acceso académico y la cuenta demo
+   de tienda son identidades independientes.
+
 ### Credenciales de prueba
 
 Si estás explorando el sistema en un entorno de demostración, puedes usar estas cuentas (los datos son ficticios):
@@ -81,31 +96,7 @@ El sistema reconoce tres roles. Cada uno ve únicamente las funciones que le cor
 
 ## 4. Primeros pasos
 
-### 4.1 Registro de una cuenta nueva
-
-1. En la pantalla de inicio de sesión, pulsa **"Crear cuenta nueva"** (también puedes entrar a `/register`).
-2. Completa **Información personal**:
-   - **Nombre** y **Apellido** (obligatorios).
-   - **Correo electrónico** (obligatorio; debe ser válido y único).
-   - **Teléfono** (obligatorio; exactamente **10 dígitos**, solo números).
-3. Completa **Seguridad**:
-   - **Contraseña** (mínimo **8 caracteres**).
-   - **Confirmar contraseña** (debe coincidir).
-4. Marca la casilla de **Términos y Condiciones** y **Política de Privacidad** (obligatorio para habilitar el botón).
-5. Pulsa **Registrarse**. Si todo es correcto, serás llevado a la pantalla de inicio de sesión.
-
-**Mensajes de validación frecuentes:**
-
-| Situación | Mensaje |
-|-----------|---------|
-| Correo con formato inválido | "Correo electrónico inválido" |
-| Teléfono distinto de 10 dígitos | "Ingresa un número de teléfono de 10 dígitos" |
-| Contraseña corta | "La contraseña debe tener al menos 8 caracteres" |
-| Contraseñas distintas | "Las contraseñas no coinciden" |
-| Correo ya registrado | "El correo electrónico ya está registrado" |
-| Teléfono ya registrado | "El número de teléfono ya está registrado" |
-
-### 4.2 Inicio de sesión
+### 4.1 Inicio de sesión de tienda
 
 1. Abre la pantalla **Iniciar Sesión** (`/login`).
 2. Escribe tu **correo** y **contraseña**.
@@ -116,12 +107,16 @@ Puedes mostrar u ocultar la contraseña con el **ícono del ojo**. Si ya estabas
 
 **Sesión de administrador:** en la parte inferior del formulario hay un enlace **"¿Eres administrador?"** que abre un modal de acceso administrativo con las mismas credenciales.
 
-### 4.3 Recuperar contraseña
+Las cuentas demo no se crean desde el sitio: solicita al administrador que
+registre una mediante la gestión de clientes. La ruta `/register` no habilita
+registro y redirige al acceso académico.
+
+### 4.2 Recuperar contraseña
 
 1. En el inicio de sesión, pulsa **"¿Olvidaste tu contraseña?"**.
 2. La recuperación automática está temporalmente deshabilitada. Pulsa **Contactar soporte** para solicitar ayuda sin enviar tu contraseña por el sitio.
 
-### 4.4 Cambiar de usuario (multisesión)
+### 4.3 Cambiar de usuario (multisesión)
 
 El sistema permite **tener varias cuentas abiertas a la vez** sin cerrar la anterior:
 
@@ -130,7 +125,7 @@ El sistema permite **tener varias cuentas abiertas a la vez** sin cerrar la ante
 3. En el mismo menú aparecerá la sección **"Otras sesiones activas"**, desde donde puedes alternar entre cuentas con un clic.
 4. **"Cerrar sesión"** cierra únicamente la cuenta activa; las demás siguen disponibles.
 
-### 4.5 La barra de navegación (navbar)
+### 4.4 La barra de navegación (navbar)
 
 | Elemento | Para qué sirve |
 |----------|----------------|
@@ -145,6 +140,28 @@ El sistema permite **tener varias cuentas abiertas a la vez** sin cerrar la ante
 | **Avatar / Iniciar Sesión** | Menú de usuario o acceso al login |
 
 En pantallas pequeñas aparece un **menú hamburguesa** con las mismas opciones.
+
+### 4.5 Límites y formatos de los formularios
+
+Los campos limitan la longitud durante la escritura y validan el formato antes
+de guardar. El servidor vuelve a validar los datos recibidos.
+
+| Datos | Límite o formato |
+|-------|-------------------|
+| Correo de cuenta | Máximo 50 caracteres; formato de correo electrónico |
+| Nombre y apellido de cuenta | Máximo 30 caracteres en conjunto |
+| Contraseñas | Entre 8 y 72 caracteres al crear o cambiar una contraseña |
+| Teléfono | Exactamente 10 dígitos al registrarse o guardar una dirección; de 7 a 10 dígitos en el perfil y en la gestión de usuarios (opcional en administración) |
+| Dirección de entrega | Torre, piso y apartamento solo numéricos; máximo 20 caracteres cada uno. Nombre del destinatario: 50 caracteres; notas: 500 |
+| Productos | Nombre: 50; descripción: 255; marca: 50. Stock y precios: enteros no negativos de hasta 10 dígitos, con el límite máximo admitido por la base de datos |
+| Contenido del producto | Hasta 10 dígitos enteros y 2 decimales; unidad, categoría y unidad de medida: 30 caracteres |
+| Reseñas y motivos de cancelación | Máximo 255 caracteres |
+| Datos del negocio (administración) | Nombre: 80; NIT: 30 (números y guiones); teléfono: exactamente 10 dígitos; dirección: 120; correo y horario: 80; descripción: 255 |
+| Imágenes y archivos | URL de imagen: máximo 2.048 caracteres; archivo local: imagen de hasta 2 MB; importación de inventario: CSV |
+| Búsquedas | Máximo 100 caracteres |
+
+Los pagos electrónicos son simulaciones académicas: no ingreses datos
+financieros reales. El monto de efectivo se limita a 6 dígitos.
 
 ---
 
@@ -212,14 +229,14 @@ El efectivo contra entrega está disponible. Tarjeta y Nequi solo se habilitan s
 
 **c) Pago (`/payment-card`)**
 
-- **Tarjeta y Nequi:** si aparecen como DEMO, no ingreses datos de tarjeta/CVV ni realices transferencias. El pedido queda marcado como no pagado, no reserva inventario y no puede despacharse. Si el demo está deshabilitado, el checkout no permite estos métodos.
+- **Tarjeta y Nequi:** si aparecen como DEMO, no ingreses datos de tarjeta/CVV, claves ni realices transferencias. Inicia el flujo, revisa la referencia ficticia y confirma. Se registra una transacción simulada y el pedido descuenta inventario en la base académica; no hay cobro ni compra reales. Si el modo demo está deshabilitado, el checkout no permite estos métodos.
 - **Efectivo** (`?method=cash`): escribe el **monto con el que pagarás**. El sistema calcula **tu cambio en vivo** y exige que el monto cubra el total.
 
 **d) Confirmación (`/payment-success`)**
 
 - Muestra la animación de éxito, el **número de pedido** asignado y el botón **"Ver mi pedido"**.
 - En efectivo, muestra lo recibido y el cambio.
-- En demo, informa que no hubo cobro y que el pedido no se despacha.
+- En demo, informa que no hubo cobro real y muestra la referencia simulada. El pedido y el cambio de inventario quedan registrados para las pruebas académicas.
 - Incluye la línea de tiempo del estado del pedido y un aviso de posible demora en el despacho.
 
 ### 5.7 Mis compras y detalle del pedido (`/compras`, `/compras/:id`)
@@ -272,9 +289,10 @@ El panel administrativo se abre desde el enlace **"Admin"** del navbar o entrand
 
 - **Estadísticas rápidas:** total, en stock, bajo stock y sin stock (clicables para filtrar).
 - **Tabla de productos** con búsqueda, filtro por estado y paginación.
-- **Agregar producto:** modal con nombre, categoría, cantidad, precio e imagen. La imagen puede ser una **URL web** o un **archivo local** (con vista previa).
+- **Agregar producto:** modal con nombre, categoría preestablecida, cantidad, precio, contenido/unidad de medida e imagen. La imagen puede ser una **URL web** o un **archivo local** (con vista previa). La categoría se selecciona de una lista sin nombres repetidos; **+ Agregar categoría** permite crear una opción sin salir del formulario.
 - **Editar producto:** abre el mismo modal con los datos precargados.
-- **Eliminar producto:** confirmación directa (no se puede eliminar un producto que tenga pedidos asociados).
+- **Administrar categorías de productos / unidades de medida:** botones para agregar, renombrar y eliminar opciones. No se pueden eliminar categorías con productos ni unidades todavía usadas; al renombrar una unidad se actualizan los productos vinculados.
+- **Eliminar producto:** muestra un diálogo de confirmación con el nombre antes de borrar; la acción se puede cancelar y no se puede eliminar un producto que tenga pedidos asociados.
 - **Importar / Exportar inventario:** usa la plantilla CSV oficial para cargar cambios de forma masiva (máximo 5 MB y 5.000 filas); también puedes exportar el inventario a CSV o PDF.
 
 ### 6.4 Pedidos pendientes (`/admin/pedidos-pendientes`)
@@ -288,7 +306,7 @@ El panel administrativo se abre desde el enlace **"Admin"** del navbar o entrand
 - Filtra y consulta pedidos por estado, con resumen por estado, **tracker compacto** y detalle con líneas del pedido.
 - **Avanzar estado:** Pendiente → Preparando → En envío → Entregado (el cambio se guarda).
 - **Cancelar pedido:** usa motivos **operativos** propios del administrador (distintos a los del cliente). Un pedido cancelado **no se puede reanudar**.
-- En pedidos históricos puede aparecer un comprobante Nequi. El modo demo de nuevos pedidos no acredita pagos ni habilita despacho.
+- En pedidos históricos puede aparecer un comprobante Nequi. Los nuevos flujos DEMO no aceptan comprobantes; sus pedidos llevan una referencia ficticia y pueden avanzar por los estados demostrativos.
 
 ### 6.6 Reportes (`/admin/reportes`)
 
@@ -299,7 +317,7 @@ El panel administrativo se abre desde el enlace **"Admin"** del navbar o entrand
 
 ### 6.7 Clientes (`/admin/clientes`)
 
-- **CRUD de usuarios:** agregar, editar datos y **rol** (cliente, domiciliario, administrador) y eliminar.
+- **CRUD de usuarios:** agregar, editar datos y **rol** (cliente, domiciliario, administrador) y eliminar mediante un diálogo de confirmación.
 - **Validaciones:** correo y teléfono son únicos (si ya existen, el sistema responde con error). No se puede eliminar un usuario que tenga pedidos.
 - **Búsqueda y filtro por rol**.
 
@@ -345,7 +363,7 @@ Puede **tomar pedidos**, **avanzar los estados** y **marcar la entrega**. **No**
 | Método | Cómo funciona | Datos requeridos |
 |--------|---------------|------------------|
 | **Efectivo** | Pedido contra entrega; el pago se realiza al recibirlo | Monto con el que se pagará (≥ total) |
-| **Tarjeta / Nequi demo** | Solo si el servidor activa explícitamente el modo `demo`; registra un pedido no pagado, sin inventario ni despacho | Ninguno; no ingreses datos financieros |
+| **Tarjeta / Nequi demo** | Solo si el servidor activa explícitamente el modo `demo`; crea una transacción y pedido ficticios, actualiza inventario y estados dentro de la BD académica, sin cobro real | Ninguno; no ingreses datos financieros ni hagas transferencias |
 
 El modo `demo` no procesa pagos reales. Para cualquier pago con dinero real se necesita una pasarela verificada; no envíes datos de tarjeta, CVV, transferencias ni comprobantes a través del sitio.
 
@@ -356,8 +374,10 @@ El modo `demo` no procesa pagos reales. Para cualquier pago con dinero real se n
 | Ruta | Vista | Quién accede |
 |------|-------|--------------|
 | `/` | Inicio | Todos |
-| `/login` · `/register` | Acceso y registro | Todos |
-| `/catalogo` · `/producto/:id` | Catálogo y detalle | Todos |
+| `/access.html` | Acceso académico | Personas autorizadas |
+| `/login` | Inicio de sesión demo de tienda | Acceso académico autorizado |
+| `/register` | Redirige al acceso académico; no hay registro público | Acceso académico autorizado |
+| `/` · `/catalogo` · `/producto/:id` | Inicio, catálogo y detalle | Acceso académico autorizado |
 | `/cart` | Carrito | Sesión |
 | `/address` · `/payment-method` · `/payment-card` · `/payment-success` | Flujo de compra | Sesión |
 | `/cuenta` · `/perfil` · `/direccion` | Cuenta y perfil | Sesión |
@@ -377,7 +397,9 @@ El modo `demo` no procesa pagos reales. Para cualquier pago con dinero real se n
 Explora el catálogo, agrega productos al carrito y confirma el pago siguiendo los pasos.
 
 **¿Necesito crear una cuenta para comprar?**
-Sí. Para agregar productos al carrito y comprar debes iniciar sesión (puedes registrarte gratis).
+Para usar el sitio necesitas primero una cuenta de acceso académico y aceptar el
+descargo. Para comprar en la demostración también debes iniciar sesión con una
+cuenta demo de tienda; no hay registro público.
 
 **¿Cuánto cuesta el envío?**
 El envío es **siempre sin costo**. El tiempo estimado de entrega se muestra al crear el pedido (aproximadamente 45–60 minutos).
@@ -409,9 +431,10 @@ Sí, el diseño es adaptable a teléfonos y tabletas.
 
 | Síntoma | Causa probable | Solución |
 |---------|----------------|----------|
+| No puedo abrir páginas del sitio | Falta una sesión académica autorizada o aceptar el descargo | Inicia sesión en `/access.html` y acepta el aviso; si no tienes cuenta, solicítala al responsable |
 | No aparece el botón "Añadir" o redirige al login | No has iniciado sesión | Inicia sesión; se te devolverá a la página anterior |
-| "El correo/teléfono ya está registrado" | Ya existe una cuenta con esos datos | Usa otros datos o recupera tu cuenta |
-| ¿Puedo pagar con tarjeta o Nequi? | Solo puede aparecer una simulación si el servidor habilitó `PAYMENTS_MODE=demo`; no hay pagos reales | Elige efectivo contra entrega. En demo no ingreses datos, no hay cobro y el pedido no se despacha |
+| No encuentro cómo crear una cuenta demo | El registro público está deshabilitado | Solicita al administrador que cree una cuenta demo de tienda |
+| ¿Puedo pagar con tarjeta o Nequi? | Solo aparece el flujo DEMO si el servidor habilitó `PAYMENTS_MODE=demo`; no hay cobros ni proveedores reales | Elige efectivo contra entrega o completa los pasos simulados sin ingresar datos financieros. El pedido DEMO sí afecta el inventario local y sus estados |
 | "El monto debe cubrir el total" | El efectivo ingresado es menor al total | Ingresa un monto igual o mayor |
 | El botón "Cancelar pedido" está deshabilitado | El pedido ya está en envío o entregado | El pedido ya no admite cancelación |
 | No veo la opción "Dejar una reseña" | El pedido aún no está entregado | Espera a que el pedido se marque como **Entregado** |

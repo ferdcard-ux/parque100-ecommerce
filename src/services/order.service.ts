@@ -1,7 +1,7 @@
 /**
  * @fileoverview Servicio de pedidos.
- * Calcula los totales del pedido en el cliente y lo persiste contra
- * el backend antes de devolver la confirmacion.
+ * Construye pedidos en el cliente y exige confirmacion de persistencia
+ * del backend para efectivo y simulaciones DEMO.
  */
 import type { Order, DeliveryAddress, PaymentMethodType, CartItem, ApiOrder, OrderEstado } from '../models';
 import { generateOrderId, calculateShipping } from '../utils';
@@ -18,19 +18,35 @@ export interface OrderExtras {
 /** Evita crear el mismo pedido dos veces ante doble clic. */
 let createInFlight = false;
 
+function buildOrderPayload(items: CartItem[], address: DeliveryAddress) {
+  return {
+    Tipo_Entrega: 'domicilio',
+    Destinatario: `${address.firstName} ${address.lastName}`.trim(),
+    Telefono: address.phone,
+    Torre: address.tower,
+    Piso: address.floor,
+    Apartamento: address.apartment,
+    Notas: address.notes?.trim() ? address.notes.trim() : null,
+    productos: items.map((item) => ({
+      ID_Producto: item.id,
+      Cantidad: item.quantity,
+    })),
+  };
+}
+
 /**
  * Servicio de pedidos.
  * @namespace orderService
  */
 export const orderService = {
   /**
-   * Crea un pedido a partir del carrito, la direccion y el metodo de pago.
+   * Crea un pedido de efectivo a partir del carrito y la direccion.
   * Construye el objeto `Order` local y lo retorna solo si el backend
   * confirma la persistencia.
    *
    * @param {CartItem[]} items - Lineas del carrito.
    * @param {DeliveryAddress} address - Direccion de entrega.
-   * @param {PaymentMethodType} paymentMethod - Metodo de pago elegido.
+   * @param {PaymentMethodType} paymentMethod - Debe ser efectivo.
   * @returns {Promise<Order>} Pedido confirmado con id generado localmente.
   * @throws {Error} Si el backend rechaza el pedido o no esta disponible.
    */
@@ -38,7 +54,7 @@ export const orderService = {
     items: CartItem[],
     address: DeliveryAddress,
     paymentMethod: PaymentMethodType,
-    userId: number | null = null,
+    _userId: number | null = null,
     extras: OrderExtras = {},
   ): Promise<Order> {
     if (createInFlight) throw new Error('El pedido ya se esta procesando.');
@@ -68,26 +84,10 @@ export const orderService = {
         headers: { 'Content-Type': 'application/json', ...authHeaders() },
         body: JSON.stringify({
           Total: Math.round(order.total),
-          Tipo_Entrega: 'domicilio',
-          ID_Usuario: userId ?? undefined,
-          Destinatario: `${address.firstName} ${address.lastName}`.trim(),
-          Telefono: address.phone,
-          Torre: address.tower,
-          Piso: address.floor,
-          Apartamento: address.apartment,
-          Metodo_Pago: paymentMethod === 'nequi'
-            ? 'Nequi (DEMO)'
-            : paymentMethod === 'card'
-              ? 'Tarjeta (DEMO)'
-              : 'Efectivo',
+          ...buildOrderPayload(items, address),
+          Metodo_Pago: 'Efectivo',
           Monto_Recibido: extras.tendered ?? null,
           Cambio: extras.change ?? null,
-          Notas: address.notes?.trim() ? address.notes.trim() : null,
-          productos: items.map((item) => ({
-            ID_Producto: item.id,
-            Cantidad: item.quantity,
-            Subtotal: Math.round(item.price * item.quantity),
-          })),
         }),
       });
     } catch {
@@ -103,6 +103,62 @@ export const orderService = {
     order.cashTendered = extras.tendered ?? null;
     order.cashChange = extras.change ?? null;
     return order;
+    } finally {
+      createInFlight = false;
+    }
+  },
+
+  async createDemo(
+    items: CartItem[],
+    address: DeliveryAddress,
+    paymentMethod: Exclude<PaymentMethodType, 'cash'>,
+    simulationId: string,
+    _userId: number | null = null,
+  ): Promise<Order> {
+    if (createInFlight) throw new Error('El pedido ya se esta procesando.');
+    createInFlight = true;
+    try {
+      const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+      const shipping = calculateShipping(subtotal);
+      const order: Order = {
+        id: generateOrderId(),
+        items: [...items],
+        subtotal,
+        shipping,
+        total: subtotal + shipping,
+        address,
+        paymentMethod,
+        status: 'confirmed',
+        createdAt: new Date(),
+      };
+
+      let response: Response;
+      try {
+        response = await fetch(`${API}/payments/confirm`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...authHeaders() },
+          body: JSON.stringify({ simulationId, order: buildOrderPayload(items, address) }),
+        });
+      } catch {
+        throw new Error('No fue posible conectar con el servidor. La simulacion sigue pendiente.');
+      }
+
+      const responseData = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(responseData?.error || 'No fue posible confirmar la simulacion.');
+      }
+      if (responseData?.success !== true || responseData?.simulated !== true
+        || responseData?.paid !== false || responseData?.approvedDemo !== true
+        || typeof responseData?.id !== 'number' || typeof responseData?.total !== 'number'
+        || responseData?.simulationId !== simulationId) {
+        throw new Error('El servidor devolvio una confirmacion de simulacion inesperada.');
+      }
+
+      order.backendId = responseData.id;
+      order.total = responseData.total;
+      order.simulatedPayment = true;
+      order.paymentSimulationId = simulationId;
+      return order;
     } finally {
       createInFlight = false;
     }

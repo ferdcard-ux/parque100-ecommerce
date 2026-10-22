@@ -6,6 +6,15 @@
  */
 import productModel from '../models/product.model.js';
 
+const MAX_INT = 2147483647;
+const MAX_CONTENT_QTY = 9999999999.99;
+
+function isIsoDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 /**
  * Valida y sanea los campos editables de un producto.
  *
@@ -45,16 +54,16 @@ function validateProduct(body, requireId) {
     out.Descripcion = descripcion;
   }
   const precio = Number(body.Precio_Venta);
-  if (!Number.isFinite(precio) || precio < 0) return null;
+  if (!Number.isInteger(precio) || precio < 0 || precio > MAX_INT) return null;
   out.Precio_Venta = precio;
   if (body.Precio_Anterior !== undefined && body.Precio_Anterior !== null && body.Precio_Anterior !== '') {
     const prev = Number(body.Precio_Anterior);
-    if (!Number.isFinite(prev) || prev < 0) return null;
+    if (!Number.isInteger(prev) || prev < 0 || prev > MAX_INT) return null;
     out.Precio_Anterior = prev;
   } else {
     out.Precio_Anterior = null;
   }
-  if (!Number.isInteger(Number(body.Stock_Minimo)) || Number(body.Stock_Minimo) < 0) return null;
+  if (!Number.isInteger(Number(body.Stock_Minimo)) || Number(body.Stock_Minimo) < 0 || Number(body.Stock_Minimo) > MAX_INT) return null;
   out.Stock_Minimo = Number(body.Stock_Minimo);
   if (!Number.isInteger(Number(body.ID_Categoria)) || Number(body.ID_Categoria) <= 0) return null;
   out.ID_Categoria = Number(body.ID_Categoria);
@@ -69,14 +78,24 @@ function validateProduct(body, requireId) {
     if (imagen && !imagen.startsWith('data:image/') && !/^https?:\/\//.test(imagen)) return null;
     out.Imagen = imagen;
   }
-  for (const field of ['Marca', 'Contenido_Unidad', 'Embalaje', 'Ingredientes', 'Conservacion', 'Promo_Desde', 'Promo_Hasta']) {
-    const value = str(body[field], 255);
+  const fieldLengths = {
+    Marca: 50,
+    Contenido_Unidad: 30,
+    Embalaje: 60,
+    Ingredientes: 255,
+    Conservacion: 255,
+    Promo_Desde: 10,
+    Promo_Hasta: 10,
+  };
+  for (const [field, max] of Object.entries(fieldLengths)) {
+    const value = str(body[field], max);
     if (value === undefined) return null;
+    if (value && field.startsWith('Promo_') && !isIsoDate(value)) return null;
     out[field] = value;
   }
   if (body.Contenido_Cantidad !== undefined && body.Contenido_Cantidad !== null && body.Contenido_Cantidad !== '') {
     const qty = Number(body.Contenido_Cantidad);
-    if (!Number.isFinite(qty) || qty < 0) return null;
+    if (!Number.isFinite(qty) || qty < 0 || qty > MAX_CONTENT_QTY || !/^\d{1,10}(\.\d{1,2})?$/.test(String(body.Contenido_Cantidad))) return null;
     out.Contenido_Cantidad = qty;
   } else {
     out.Contenido_Cantidad = null;

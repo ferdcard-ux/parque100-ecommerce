@@ -6,7 +6,7 @@
  * servicios.
  */
 import { useState, useEffect, useCallback } from 'react';
-import type { Product, Category, AdminProduct, ProductUpsert, ProductCreate } from '../models';
+import type { Product, Category, UnitOfMeasure, AdminProduct, ProductUpsert, ProductCreate } from '../models';
 import { productService } from '../services';
 
 /**
@@ -27,6 +27,8 @@ import { productService } from '../services';
 export function useProductController() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [units, setUnits] = useState<UnitOfMeasure[]>([]);
+  const [unitCatalogError, setUnitCatalogError] = useState<string | null>(null);
   const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -44,6 +46,13 @@ export function useProductController() {
       setProducts(allProducts);
       setCategories(allCategories);
       setAdminProducts(allAdmin);
+      try {
+        setUnits(await productService.getUnits());
+        setUnitCatalogError(null);
+      } catch (unitError) {
+        setUnits([]);
+        setUnitCatalogError(unitError instanceof Error ? unitError.message : 'No fue posible cargar las unidades de medida.');
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No fue posible cargar los productos.');
     } finally {
@@ -70,6 +79,36 @@ export function useProductController() {
 
   const updateProduct = useCallback(async (id: string, data: ProductUpsert) => {
     await productService.updateProduct(id, data);
+    await loadProducts();
+  }, [loadProducts]);
+
+  const createCategory = useCallback(async (name: string) => {
+    await productService.createCategory(name);
+    await loadProducts();
+  }, [loadProducts]);
+
+  const updateCategory = useCallback(async (id: number, name: string) => {
+    await productService.updateCategory(id, name);
+    await loadProducts();
+  }, [loadProducts]);
+
+  const deleteCategory = useCallback(async (id: number) => {
+    await productService.deleteCategory(id);
+    await loadProducts();
+  }, [loadProducts]);
+
+  const createUnit = useCallback(async (name: string) => {
+    await productService.createUnit(name);
+    await loadProducts();
+  }, [loadProducts]);
+
+  const updateUnit = useCallback(async (id: number, name: string) => {
+    await productService.updateUnit(id, name);
+    await loadProducts();
+  }, [loadProducts]);
+
+  const deleteUnit = useCallback(async (id: number) => {
+    await productService.deleteUnit(id);
     await loadProducts();
   }, [loadProducts]);
 
@@ -104,6 +143,8 @@ export function useProductController() {
   return {
     products,
     categories,
+    units,
+    unitCatalogError,
     adminProducts,
     isLoading,
     error,
@@ -113,6 +154,12 @@ export function useProductController() {
     deleteProduct,
     createProduct,
     updateProduct,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    createUnit,
+    updateUnit,
+    deleteUnit,
     reload: loadProducts,
   };
 }

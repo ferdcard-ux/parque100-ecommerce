@@ -1,4 +1,4 @@
-import type { Product, Category, AdminProduct, ProductUpsert, ProductCreate } from '../models';
+import type { Product, Category, UnitOfMeasure, AdminProduct, ProductUpsert, ProductCreate } from '../models';
 import { API_BASE as API, authHeaders } from './api';
 
 const PEXELS = (id: number, file?: string) =>
@@ -100,6 +100,7 @@ function mapAdminProduct(row: any): AdminProduct {
     id: row.ID_Producto || row.id,
     name: row.Nombre || row.name,
     category: normalizeCategory(rawCategory),
+    categoryId: Number(row.ID_Categoria),
     quantity: row.Stock_Minimo || row.quantity || 0,
     price: row.Precio_Venta || row.price,
     status: stock <= 0 ? 'out_of_stock' : stock < 10 ? 'low_stock' : 'in_stock',
@@ -150,11 +151,59 @@ export const productService = {
     if (!res.ok) throw new Error('No fue posible cargar las categorias.');
     const data = await res.json().catch(() => null);
     if (!Array.isArray(data)) throw new Error('Respuesta inesperada del servidor.');
-    return data.map((row: any, i: number) => {
+    const uniqueCategories = new Map<string, Category>();
+    data.forEach((row: any) => {
       const name = normalizeCategory(row.Nombre_Categoria);
       const style = CATEGORY_MAP[name] || { emoji: '📦', color: 'bg-gray-100 text-gray-700', border: 'border-gray-200' };
-      return { id: i + 1, name, ...style };
+      const key = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
+      if (!uniqueCategories.has(key)) {
+        uniqueCategories.set(key, { id: Number(row.ID_Categoria), name, ...style });
+      }
     });
+    return [...uniqueCategories.values()];
+  },
+
+  async getUnits(): Promise<UnitOfMeasure[]> {
+    let res: Response;
+    try {
+      res = await fetch(`${API}/units`);
+    } catch {
+      throw new Error('No fue posible conectar con el servidor.');
+    }
+    if (!res.ok) throw new Error('No fue posible cargar las unidades de medida.');
+    const data = await res.json().catch(() => null);
+    if (!Array.isArray(data)) throw new Error('Respuesta inesperada del servidor.');
+    const uniqueUnits = new Map<string, UnitOfMeasure>();
+    data.forEach((row: any) => {
+      const name = String(row.Nombre_Unidad);
+      const key = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toLocaleLowerCase();
+      if (!uniqueUnits.has(key)) uniqueUnits.set(key, { id: Number(row.ID_Unidad), name });
+    });
+    return [...uniqueUnits.values()];
+  },
+
+  async createCategory(name: string): Promise<void> {
+    await saveCatalogOption(`${API}/categories`, 'POST', { Nombre_Categoria: name }, 'No fue posible crear la categoría.');
+  },
+
+  async updateCategory(id: number, name: string): Promise<void> {
+    await saveCatalogOption(`${API}/categories/${id}`, 'PUT', { Nombre_Categoria: name }, 'No fue posible actualizar la categoría.');
+  },
+
+  async deleteCategory(id: number): Promise<void> {
+    await deleteCatalogOption(`${API}/categories/${id}`, 'No fue posible eliminar la categoría.');
+  },
+
+  async createUnit(name: string): Promise<void> {
+    await saveCatalogOption(`${API}/units`, 'POST', { Nombre_Unidad: name }, 'No fue posible crear la unidad de medida.');
+  },
+
+  async updateUnit(id: number, name: string): Promise<void> {
+    await saveCatalogOption(`${API}/units/${id}`, 'PUT', { Nombre_Unidad: name }, 'No fue posible actualizar la unidad de medida.');
+  },
+
+  async deleteUnit(id: number): Promise<void> {
+    await deleteCatalogOption(`${API}/units/${id}`, 'No fue posible eliminar la unidad de medida.');
   },
 
   async getAdminProducts(): Promise<AdminProduct[]> {
@@ -236,3 +285,33 @@ export const productService = {
     }
   },
 };
+
+async function saveCatalogOption(url: string, method: 'POST' | 'PUT', data: object, fallback: string): Promise<void> {
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
+      body: JSON.stringify(data),
+    });
+  } catch {
+    throw new Error('No fue posible conectar con el servidor.');
+  }
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    throw new Error(payload?.error || fallback);
+  }
+}
+
+async function deleteCatalogOption(url: string, fallback: string): Promise<void> {
+  let res: Response;
+  try {
+    res = await fetch(url, { method: 'DELETE', headers: authHeaders() });
+  } catch {
+    throw new Error('No fue posible conectar con el servidor.');
+  }
+  if (!res.ok) {
+    const payload = await res.json().catch(() => null);
+    throw new Error(payload?.error || fallback);
+  }
+}

@@ -7,6 +7,7 @@
  * lista y la sesion invitado (sin usuario) usa una lista aparte.
  */
 import { useState, useCallback, useEffect } from 'react';
+import { activityService } from '../services/activity.service';
 
 const GUEST_STORAGE_KEY = 'parque100_favorites_guest';
 const USER_STORAGE_PREFIX = 'parque100_favorites_user_';
@@ -64,7 +65,8 @@ export function useFavoritesController(userId?: number | null) {
   const toggleFavorite = useCallback((id: string | number) => {
     const key = String(id);
     const current = readStored(storageKey);
-    const next = current.includes(key) ? current.filter((x) => x !== key) : [...current, key];
+    const wasFavorite = current.includes(key);
+    const next = wasFavorite ? current.filter((x) => x !== key) : [...current, key];
     try {
       localStorage.setItem(storageKey, JSON.stringify(next));
     } catch {
@@ -72,6 +74,10 @@ export function useFavoritesController(userId?: number | null) {
     }
     setStore({ key: storageKey, ids: next });
     window.dispatchEvent(new Event(CHANGE_EVENT));
+    activityService.recordInteraction(
+      wasFavorite ? 'favorite.remove' : 'favorite.add',
+      key,
+    );
   }, [storageKey]);
 
   const isFavorite = useCallback(
