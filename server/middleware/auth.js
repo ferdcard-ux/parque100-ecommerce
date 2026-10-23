@@ -5,7 +5,7 @@
  * La secret se lee de `JWT_SECRET` y no tiene un valor por defecto.
  */
 import jwt from 'jsonwebtoken';
-import { randomUUID } from 'node:crypto';
+import { createHmac, randomUUID } from 'node:crypto';
 import siteAccessModel from '../models/site-access.model.js';
 import userModel from '../models/user.model.js';
 
@@ -43,14 +43,26 @@ export function isStaffRole(rol) {
 }
 
 /**
+ * Huella de la contrasena vigente: cambia cuando cambia el hash, de modo que
+ * los tokens emitidos antes de un cambio de contrasena dejan de ser validos.
+ *
+ * @param {string} hash - Hash bcrypt almacenado.
+ * @returns {string} Huella corta (no reversible) ligada a `JWT_SECRET`.
+ */
+export function passwordFingerprint(hash) {
+  return createHmac('sha256', process.env.JWT_SECRET).update(String(hash || '')).digest('base64url').slice(0, 22);
+}
+
+/**
  * Firma un token JWT con la identidad minima del usuario.
  *
- * @param {Object} user - Fila de `usuario` (usa `ID_Usuario`).
+ * @param {Object} user - Fila de `usuario` (usa `ID_Usuario` y `Contrasena`).
  * @returns {string} Token JWT firmado.
  */
 export function signToken(user) {
   assertJwtSecret();
-  return jwt.sign({ kind: 'store', id: user.ID_Usuario, jti: randomUUID() }, process.env.JWT_SECRET, {
+  const payload = { kind: 'store', id: user.ID_Usuario, jti: randomUUID(), pv: passwordFingerprint(user.Contrasena) };
+  return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
     algorithm: 'HS256',
   });
@@ -101,6 +113,8 @@ export async function authenticateRequest(req) {
 
   const user = await userModel.findAuthById(Number(payload.id));
   if (!user) return null;
+  // Un cambio de contrasena invalida los tokens emitidos con la anterior.
+  if (payload.pv !== passwordFingerprint(user.Contrasena)) return null;
   return {
     id: Number(user.ID_Usuario),
     rol: user.Rol || null,
@@ -231,6 +245,7 @@ export function requireSelfOrAdmin(param = 'id') {
 }
 
 export default {
+  passwordFingerprint,
   signToken,
   signSiteAccessToken,
   authenticateRequest,

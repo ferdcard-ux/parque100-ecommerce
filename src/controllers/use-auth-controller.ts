@@ -141,12 +141,16 @@ export function useAuthController() {
     setActiveId(id);
   }, []);
 
-  /** Cambia la contrasena validando la actual. */
+  /**
+   * Cambia la contrasena de la cuenta en uso validando la actual y
+   * conserva la sesion con el token nuevo que emite el backend.
+   */
   const changePassword = useCallback(
-    async (email: string, currentPassword: string, newPassword: string): Promise<void> => {
-      await authService.changePassword(email, currentPassword, newPassword);
+    async (_email: string, currentPassword: string, newPassword: string): Promise<void> => {
+      const token = await authService.changePassword(currentPassword, newPassword);
+      setSessions((prev) => prev.map((s) => (s.id === activeId ? { ...s, token } : s)));
     },
-    [],
+    [activeId],
   );
 
   /**

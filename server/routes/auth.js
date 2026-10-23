@@ -4,6 +4,7 @@
  */
 import { Router } from 'express';
 import authController from '../controllers/auth.controller.js';
+import { requireAuth } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -16,7 +17,7 @@ router.post('/auth/register', authController.register);
 /** POST /api/auth/recover - Genera una clave temporal para el correo. */
 router.post('/auth/recover', authController.recover);
 
-/** PUT /api/auth/password - Cambia la contrasena validando la actual. */
-router.put('/auth/password', authController.updatePassword);
+/** PUT /api/auth/password - Cambia la contrasena de la cuenta autenticada. */
+router.put('/auth/password', requireAuth, authController.updatePassword);
 
 export default router;

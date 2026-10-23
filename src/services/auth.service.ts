@@ -6,7 +6,7 @@
  */
 import type { User, UserRole, LoginCredentials, RegisterData } from '../models';
 import { normalizeUserRole } from '../models';
-import { API_BASE as API, setAuthToken } from './api';
+import { API_BASE as API, authHeaders, setAuthToken } from './api';
 
 /**
  * Normaliza el rol crudo del backend a `UserRole`.
@@ -117,21 +117,23 @@ export const authService = {
   },
 
   /**
-   * Cambia la contrasena del usuario autenticado.
+   * Cambia la contrasena del usuario autenticado (identidad del token).
+   * El backend invalida los tokens anteriores y devuelve uno nuevo.
    *
-   * @param {string} email - Correo de la cuenta.
    * @param {string} currentPassword - Contrasena actual.
    * @param {string} newPassword - Nueva contrasena.
-   * @returns {Promise<void>}
+   * @returns {Promise<string>} Token nuevo de la sesion.
    * @throws {Error} Si la actual no coincide o el cambio falla.
    */
-  async changePassword(email: string, currentPassword: string, newPassword: string): Promise<void> {
+  async changePassword(currentPassword: string, newPassword: string): Promise<string> {
     const res = await fetch(`${API}/auth/password`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ Correo: email, ContrasenaActual: currentPassword, ContrasenaNueva: newPassword }),
+      headers: authHeaders({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify({ ContrasenaActual: currentPassword, ContrasenaNueva: newPassword }),
     });
     const data = await res.json().catch(() => null);
     if (!res.ok) throw new Error(data?.error || 'No fue posible actualizar la contrasena.');
+    if (typeof data?.token !== 'string') throw new Error('Respuesta invalida del servidor.');
+    return data.token;
   },
 };

@@ -84,6 +84,30 @@ export const userModel = {
   },
 
   /**
+   * Busca la fila completa (con hash) de un usuario por su identificador.
+   * Solo para validar credenciales en el controlador.
+   *
+   * @param {number} id - Identificador del usuario.
+   * @returns {Promise<Object|null>} Fila del usuario o null.
+   */
+  async findCredentialsById(id) {
+    const [rows] = await pool.query('SELECT * FROM usuario WHERE ID_Usuario = ?', [id]);
+    return rows[0] || null;
+  },
+
+  /**
+   * Actualiza la contrasena de un usuario por su identificador.
+   *
+   * @param {number} id - Identificador del usuario.
+   * @param {string} hash - Contrasena ya hasheada (bcrypt).
+   * @returns {Promise<boolean>} true si actualizo una fila.
+   */
+  async updatePasswordById(id, hash) {
+    const [result] = await pool.query('UPDATE usuario SET Contrasena = ? WHERE ID_Usuario = ?', [hash, id]);
+    return result.affectedRows === 1;
+  },
+
+  /**
    * Registra un nuevo usuario con rol 'usuario'.
    *
    * @async
@@ -182,7 +206,7 @@ export const userModel = {
    */
   async findAuthById(id) {
     const [rows] = await pool.query(
-      'SELECT ID_Usuario, Rol FROM usuario WHERE ID_Usuario = ?',
+      'SELECT ID_Usuario, Rol, Contrasena FROM usuario WHERE ID_Usuario = ?',
       [id],
     );
     return rows[0] || null;

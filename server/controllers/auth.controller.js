@@ -12,7 +12,13 @@ import userModel from '../models/user.model.js';
 import { signToken } from '../middleware/auth.js';
 
 /** Coste del hash bcrypt. */
-const BCRYPT_ROUNDS = 10;
+const BCRYPT_ROUNDS = 12;
+
+/**
+ * Hash de relleno con el mismo coste: el login compara siempre contra un hash
+ * para que el tiempo de respuesta no revele si el correo existe.
+ */
+const DUMMY_HASH = bcrypt.hashSync('parque100-dummy-password', BCRYPT_ROUNDS);
 
 /**
  * Hashea una contrasena en texto plano.
@@ -60,8 +66,8 @@ export const authController = {
         return res.status(401).json({ error: 'Credenciales invalidas' });
       }
       const user = await userModel.findByEmail(Correo.trim());
-      const ok = user ? await verifyPassword(Contrasena, user.Contrasena) : false;
-      if (!ok) return res.status(401).json({ error: 'Credenciales invalidas' });
+      const ok = await verifyPassword(Contrasena, user?.Contrasena || DUMMY_HASH);
+      if (!user || !ok) return res.status(401).json({ error: 'Credenciales invalidas' });
       const token = signToken(user);
       // Permite que el registro de actividad identifique la cuenta de tienda.
       req.user = { id: user.ID_Usuario, rol: user.Rol };
@@ -90,28 +96,33 @@ export const authController = {
 
   /**
    * PUT /api/auth/password
-   * Cambia la contrasena validando la actual.
+   * Cambia la contrasena de la cuenta autenticada (identidad del token,
+   * nunca del cuerpo) validando la actual. Los tokens emitidos con la
+   * contrasena anterior dejan de ser validos; se responde uno nuevo para
+   * conservar la sesion en uso.
    *
    * @async
-   * @param {import('express').Request} req - Cuerpo con `{ Correo, ContrasenaActual, ContrasenaNueva }`.
+   * @param {import('express').Request} req - Cuerpo con `{ ContrasenaActual, ContrasenaNueva }`.
    * @param {import('express').Response} res - Respuesta HTTP.
    * @returns {Promise<void>}
    */
   async updatePassword(req, res) {
     try {
-      const { Correo, ContrasenaActual, ContrasenaNueva } = req.body || {};
-      if (!Correo || !ContrasenaActual || !ContrasenaNueva) {
+      const { ContrasenaActual, ContrasenaNueva } = req.body || {};
+      if (typeof ContrasenaActual !== 'string' || !ContrasenaActual || typeof ContrasenaNueva !== 'string' || !ContrasenaNueva) {
         return res.status(400).json({ error: 'Todos los campos son obligatorios' });
       }
-      if (typeof ContrasenaNueva !== 'string' || ContrasenaNueva.length < 8 || ContrasenaNueva.length > 72) {
+      if (ContrasenaNueva.length < 8 || ContrasenaNueva.length > 72) {
         return res.status(400).json({ error: 'La nueva contrasena debe tener entre 8 y 72 caracteres' });
       }
-      const user = await userModel.findByEmail(String(Correo).trim());
+      const user = await userModel.findCredentialsById(Number(req.user.id));
       if (!user || !(await verifyPassword(ContrasenaActual, user.Contrasena))) {
         return res.status(401).json({ error: 'La contrasena actual no es correcta' });
       }
-      await userModel.updatePasswordByEmail(user.Correo, await hashPassword(ContrasenaNueva));
-      res.json({ message: 'Contrasena actualizada' });
+      const hash = await hashPassword(ContrasenaNueva);
+      await userModel.updatePasswordById(user.ID_Usuario, hash);
+      res.setHeader('Cache-Control', 'no-store');
+      res.json({ message: 'Contrasena actualizada', token: signToken({ ...user, Contrasena: hash }) });
     } catch {
       res.status(500).json({ error: 'Error al actualizar la contrasena' });
     }
@@ -149,14 +160,15 @@ export const authController = {
       if (phone !== null && await userModel.existsByPhone(phone)) {
         return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
       }
+      const hash = await hashPassword(Contrasena);
       const id = await userModel.create({
         Nombre: Nombre.trim(),
         Correo: Correo.trim(),
-        Contrasena: await hashPassword(Contrasena),
+        Contrasena: hash,
         Telefono: phone,
         Direccion: typeof Direccion === 'string' ? Direccion : '',
       });
-      res.status(201).json({ id, token: signToken({ ID_Usuario: id, Rol: 'usuario' }), message: 'Usuario registrado' });
+      res.status(201).json({ id, token: signToken({ ID_Usuario: id, Rol: 'usuario', Contrasena: hash }), message: 'Usuario registrado' });
     } catch (err) {
       if (err.code === 'ER_DUP_ENTRY') {
         const message = String(err.message || '');
