@@ -9,9 +9,11 @@ interface AddressFormProps {
   onSubmit: (address: DeliveryAddress) => Promise<void>;
   /** Texto del boton de envio. */
   submitLabel?: string;
+  /** Muestra las notas para el domiciliario (solo durante el checkout). */
+  showNotes?: boolean;
 }
 
-export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit, submitLabel = 'Guardar dirección y continuar' }: AddressFormProps) {
+export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit, submitLabel = 'Guardar dirección y continuar', showNotes = true }: AddressFormProps) {
   const [form, setForm] = useState<DeliveryAddress>(initialAddress);
   const [validationError, setValidationError] = useState<string | null>(null);
 
@@ -125,19 +127,21 @@ export function AddressForm({ initialAddress, lockRecipient, isSaving, onSubmit,
           </div>
         </div>
 
-        <div className="mb-6">
-          <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Notas adicionales (opcional)</label>
-          <textarea
-            name="notes"
-            value={form.notes}
-            onChange={handleChange}
-            maxLength={500}
-            rows={2}
-            placeholder="Indicaciones especiales para el domiciliario..."
-            className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink resize-none"
-            style={{ fontSize: '0.9rem' }}
-          />
-        </div>
+        {showNotes && (
+          <div className="mb-6">
+            <label className="block text-brand-ink mb-1.5" style={{ fontSize: '0.875rem' }}>Notas adicionales (opcional)</label>
+            <textarea
+              name="notes"
+              value={form.notes}
+              onChange={handleChange}
+              maxLength={500}
+              rows={2}
+              placeholder="Indicaciones especiales para el domiciliario..."
+              className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink resize-none"
+              style={{ fontSize: '0.9rem' }}
+            />
+          </div>
+        )}
 
         <button
           type="submit"

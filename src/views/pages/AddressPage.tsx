@@ -108,6 +108,7 @@ export function AddressPage({
               lockRecipient={user !== null}
               isSaving={isSaving}
               submitLabel={mode === 'account' ? 'Guardar cambios' : undefined}
+              showNotes={mode === 'checkout'}
               onSubmit={handleSubmit}
             />
             {isSaving && <p role="status" className="mt-3 text-center text-gray-600">Guardando datos de entrega...</p>}
