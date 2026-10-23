@@ -9,6 +9,8 @@ import { ProductImageInput } from './ProductImageInput';
 const MAX_INT = 2147483647;
 const MAX_CONTENT_QTY = 9999999999.99;
 const INTEGER_PATTERN = '[0-9]{1,10}';
+const EDIT_QTY_MAX_DIGITS = 4;
+const EDIT_QTY_PATTERN = '[0-9]{1,4}';
 const DECIMAL_PATTERN = '[0-9]{1,10}(\\.[0-9]{1,2})?';
 
 interface EditProductModalProps {
@@ -146,7 +148,7 @@ export function EditProductModal({ product, products, categories, units, onClose
           </div>
           <div>
             <label htmlFor="edit-cantidad" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Cantidad</label>
-            <input id="edit-cantidad" type="text" inputMode="numeric" pattern={INTEGER_PATTERN} maxLength={10} title="Ingresa un entero entre 0 y 2147483647" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(limitNumericInput(e.target.value, 10))}
+            <input id="edit-cantidad" type="text" inputMode="numeric" pattern={EDIT_QTY_PATTERN} maxLength={EDIT_QTY_MAX_DIGITS} title="Ingresa un entero entre 0 y 9999" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(limitNumericInput(e.target.value, EDIT_QTY_MAX_DIGITS))}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
               style={{ fontSize: '0.9rem' }}
             />
