@@ -17,6 +17,9 @@ interface AddProductModalProps {
 
 const MAX_INT = 2147483647;
 const MAX_CONTENT_QTY = 9999999999.99;
+const MAX_INITIAL_STOCK = 9999;
+const INITIAL_STOCK_MAX_DIGITS = 4;
+const INITIAL_STOCK_PATTERN = '[0-9]{1,4}';
 const INTEGER_PATTERN = '[0-9]{1,10}';
 const DECIMAL_PATTERN = '[0-9]{1,10}(\\.[0-9]{1,2})?';
 
@@ -45,7 +48,7 @@ export function AddProductModal({ isOpen, onClose, onCreate, categories, units, 
     const previousPriceValue = precioAnterior ? Number(precioAnterior) : null;
     const contentValue = contQty ? Number(contQty) : null;
     if (
-      !Number.isInteger(stockValue) || stockValue < 0 || stockValue > MAX_INT ||
+      !Number.isInteger(stockValue) || stockValue < 0 || stockValue > MAX_INITIAL_STOCK ||
       !Number.isInteger(priceValue) || priceValue < 0 || priceValue > MAX_INT ||
       (previousPriceValue !== null && (
         !Number.isInteger(previousPriceValue) ||
@@ -135,7 +138,7 @@ export function AddProductModal({ isOpen, onClose, onCreate, categories, units, 
           </div>
           <div>
             <label htmlFor="prod-cantidad" className="block text-brand-ink mb-1" style={{ fontSize: '0.875rem' }}>Cantidad inicial</label>
-            <input id="prod-cantidad" type="text" inputMode="numeric" pattern={INTEGER_PATTERN} maxLength={10} title="Ingresa un entero entre 0 y 2147483647" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(limitNumericInput(e.target.value, 10))}
+            <input id="prod-cantidad" type="text" inputMode="numeric" pattern={INITIAL_STOCK_PATTERN} maxLength={INITIAL_STOCK_MAX_DIGITS} title="Ingresa un entero entre 0 y 9999" placeholder="Ej: 50" value={cantidad} onChange={(e) => setCantidad(limitNumericInput(e.target.value, INITIAL_STOCK_MAX_DIGITS))}
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink"
               style={{ fontSize: '0.9rem' }}
             />
@@ -190,7 +193,7 @@ export function AddProductModal({ isOpen, onClose, onCreate, categories, units, 
             >
               Cancelar
             </button>
-            <button onClick={handleSubmit} disabled={saving || !nombre.trim() || !descripcion.trim() || !categoria || !cantidad || !precio || !Number.isInteger(Number(cantidad)) || Number(cantidad) > MAX_INT || !Number.isInteger(Number(precio)) || Number(precio) > MAX_INT || (precioAnterior !== '' && (!Number.isInteger(Number(precioAnterior)) || Number(precioAnterior) > MAX_INT)) || (contQty !== '' && (!Number.isFinite(Number(contQty)) || Number(contQty) > MAX_CONTENT_QTY)) || (imagen !== '' && !imagen.startsWith('data:') && !isValidHttpUrl(imagen))}
+            <button onClick={handleSubmit} disabled={saving || !nombre.trim() || !descripcion.trim() || !categoria || !cantidad || !precio || !Number.isInteger(Number(cantidad)) || Number(cantidad) > MAX_INITIAL_STOCK || !Number.isInteger(Number(precio)) || Number(precio) > MAX_INT || (precioAnterior !== '' && (!Number.isInteger(Number(precioAnterior)) || Number(precioAnterior) > MAX_INT)) || (contQty !== '' && (!Number.isFinite(Number(contQty)) || Number(contQty) > MAX_CONTENT_QTY)) || (imagen !== '' && !imagen.startsWith('data:') && !isValidHttpUrl(imagen))}
               className="flex-1 py-2.5 rounded-xl bg-brand-red text-white font-semibold hover:bg-brand-red-dark transition-colors shadow-sm disabled:opacity-50"
               style={{ fontSize: '0.9rem' }}
             >
