@@ -7,6 +7,7 @@
  *
  * Uso: node scripts/migrate-passwords.mjs
  */
+import './admin-db-env.mjs';
 import bcrypt from 'bcryptjs';
 import mysql from 'mysql2/promise';
 

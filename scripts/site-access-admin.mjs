@@ -1,3 +1,4 @@
+import './admin-db-env.mjs';
 import bcrypt from 'bcryptjs';
 import mysql from 'mysql2';
 import mysqlPromise from 'mysql2/promise';
@@ -37,7 +38,7 @@ function loadLocalEnv() {
 
 function adminConnectionOptions({ multipleStatements = true } = {}) {
   if (!process.env.DB_USER) {
-    throw new Error('Falta DB_USER en el .env local para aprovisionar la base privada.');
+    throw new Error('Falta DB_ADMIN_USER (o DB_USER) para aprovisionar la base privada.');
   }
   const host = process.env.DB_HOST || '127.0.0.1';
   if (!['localhost', '127.0.0.1', '::1'].includes(host.toLowerCase())) {

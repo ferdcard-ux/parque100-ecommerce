@@ -1,5 +1,25 @@
 import '../server/config/load-env.js';
+import './admin-db-env.mjs';
 import mysql from 'mysql2/promise';
+
+/**
+ * Credenciales de las cuentas demo: se leen del entorno (no se publican en
+ * el repositorio). Ej.: $env:SMOKE_ADMIN_PASSWORD='...'.
+ */
+const SMOKE = {
+  adminEmail: process.env.SMOKE_ADMIN_EMAIL || 'admin@parque100.com',
+  adminPassword: process.env.SMOKE_ADMIN_PASSWORD,
+  userEmail: process.env.SMOKE_USER_EMAIL || 'usuario@ejemplo.com',
+  userPassword: process.env.SMOKE_USER_PASSWORD,
+  deliveryEmail: process.env.SMOKE_DELIVERY_EMAIL || 'domiciliario@parque100.com',
+  deliveryPassword: process.env.SMOKE_DELIVERY_PASSWORD,
+};
+for (const key of ['adminPassword', 'userPassword', 'deliveryPassword']) {
+  if (!SMOKE[key]) {
+    console.error('Define SMOKE_ADMIN_PASSWORD, SMOKE_USER_PASSWORD y SMOKE_DELIVERY_PASSWORD antes de ejecutar la bateria.');
+    process.exit(1);
+  }
+}
 
 /**
  * @fileoverview Pruebas automatizadas del lote 1 y 2 (API + BD).
@@ -201,13 +221,13 @@ try {
 }
 
 await test('Login admin emite token', async () => {
-  adminToken = await login('admin@parque100.com', 'admin123');
+  adminToken = await login(SMOKE.adminEmail, SMOKE.adminPassword);
 });
 
 await test('Login cliente emite token y conserva rol', async () => {
   const { status, data } = await call('POST', '/auth/login', {
-    Correo: 'usuario@ejemplo.com',
-    Contrasena: '12345678',
+    Correo: SMOKE.userEmail,
+    Contrasena: SMOKE.userPassword,
   });
   assert(status === 200 && data.rol !== 'admin', `status ${status}`);
   assert(typeof data.token === 'string' && data.token.length > 10, 'sin token');
@@ -215,7 +235,7 @@ await test('Login cliente emite token y conserva rol', async () => {
 });
 
 await test('Login domiciliario emite token', async () => {
-  deliveryToken = await login('domiciliario@parque100.com', 'domiciliario123');
+  deliveryToken = await login(SMOKE.deliveryEmail, SMOKE.deliveryPassword);
 });
 
 await test('Login con clave erronea es 401', async () => {
@@ -902,7 +922,7 @@ await test('Limpieza del pedido de prueba en BD', async () => {
   ].filter((c) => c && existsSync(c));
   assert(candidates.length > 0, 'sin cliente mysql');
   execSync(
-    `"${candidates[0]}" -u root -e "DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${cancelOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${cancelOrderId};"`,
+    `"${candidates[0]}" -u ${process.env.DB_ADMIN_USER || 'root'} -e "DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${cancelOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${cancelOrderId};"`,
   );
 });
 
@@ -918,7 +938,7 @@ await test('Limpieza del pedido de la resena en BD (restaura stock)', async () =
   ].filter((c) => c && existsSync(c));
   assert(candidates.length > 0, 'sin cliente mysql');
   execSync(
-    `"${candidates[0]}" -u root -e "UPDATE parque100.productos SET Stock_Minimo = Stock_Minimo + 1 WHERE ID_Producto='${REVIEW_PRODUCT}'; DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${reviewOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${reviewOrderId};"`,
+    `"${candidates[0]}" -u ${process.env.DB_ADMIN_USER || 'root'} -e "UPDATE parque100.productos SET Stock_Minimo = Stock_Minimo + 1 WHERE ID_Producto='${REVIEW_PRODUCT}'; DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${reviewOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${reviewOrderId};"`,
   );
 });
 
@@ -934,7 +954,7 @@ await test('Limpieza del pedido ajeno en BD (restaura stock)', async () => {
   ].filter((c) => c && existsSync(c));
   assert(candidates.length > 0, 'sin cliente mysql');
   execSync(
-    `"${candidates[0]}" -u root -e "UPDATE parque100.productos SET Stock_Minimo = Stock_Minimo + 1 WHERE ID_Producto='P010'; DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${ownedOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${ownedOrderId};"`,
+    `"${candidates[0]}" -u ${process.env.DB_ADMIN_USER || 'root'} -e "UPDATE parque100.productos SET Stock_Minimo = Stock_Minimo + 1 WHERE ID_Producto='P010'; DELETE FROM parque100.detalle_pedido WHERE ID_Pedido=${ownedOrderId}; DELETE FROM parque100.pedidos WHERE ID_Pedido=${ownedOrderId};"`,
   );
 });
 
@@ -951,7 +971,7 @@ await test('Limpieza de pedidos de integridad en BD (restaura stock)', async () 
   assert(candidates.length > 0, 'sin cliente mysql');
   const ids = [tamperOrderId, stateOrderId, foreignOrderId].join(',');
   execSync(
-    `"${candidates[0]}" -u root -e "UPDATE parque100.productos SET Stock_Minimo = Stock_Minimo + 3 WHERE ID_Producto='P010'; DELETE FROM parque100.detalle_pedido WHERE ID_Pedido IN (${ids}); DELETE FROM parque100.pedidos WHERE ID_Pedido IN (${ids});"`,
+    `"${candidates[0]}" -u ${process.env.DB_ADMIN_USER || 'root'} -e "UPDATE parque100.productos SET Stock_Minimo = Stock_Minimo + 3 WHERE ID_Producto='P010'; DELETE FROM parque100.detalle_pedido WHERE ID_Pedido IN (${ids}); DELETE FROM parque100.pedidos WHERE ID_Pedido IN (${ids});"`,
   );
 });
 

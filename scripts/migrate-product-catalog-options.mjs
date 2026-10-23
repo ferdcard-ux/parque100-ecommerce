@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import '../server/config/load-env.js';
+import './admin-db-env.mjs';
 
 if ((process.env.DB_NAME || 'parque100').toLowerCase() === 'parque100_acceso') {
   throw new Error('La migración de catálogos no se debe ejecutar en la base privada parque100_acceso.');
