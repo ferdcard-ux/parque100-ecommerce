@@ -228,7 +228,7 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
                 <label htmlFor="admin-email" className="block text-brand-ink mb-1.5" style={{ fontSize: '0.85rem' }}>Correo</label>
                 <div className="relative">
                   <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input id="admin-email" type="email" required maxLength={50} autoComplete="username" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="admin@ejemplo.com"
+                  <input id="admin-email" type="email" required maxLength={50} autoComplete="username" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} placeholder="admin@ejemplo.com" data-autofocus
                     className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
                     style={{ fontSize: '0.875rem' }}
                   />

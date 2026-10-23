@@ -3,7 +3,7 @@
  * Cierra con `Escape`, mueve el foco al abrir, lo restaura al cerrar
  * y mantiene el foco ciclando dentro del panel (trampa de foco simple).
  */
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useRef, type RefObject } from 'react';
 
 /** Selectores considerados enfocables dentro del panel. */
 const FOCUSABLE =
@@ -22,6 +22,9 @@ export function useDialogBehavior(
   onClose: () => void,
   panelRef: RefObject<HTMLElement | null>,
 ) {
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
@@ -34,7 +37,7 @@ export function useDialogBehavior(
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== 'Tab' || !panel) return;
@@ -57,5 +60,5 @@ export function useDialogBehavior(
       document.removeEventListener('keydown', onKeyDown);
       previous?.focus?.();
     };
-  }, [open, onClose, panelRef]);
+  }, [open, panelRef]);
 }

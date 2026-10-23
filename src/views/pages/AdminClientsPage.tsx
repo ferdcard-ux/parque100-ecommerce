@@ -2,8 +2,8 @@
  * @fileoverview Gestion de clientes (panel admin).
  * CRUD completo: crear, editar (incluido rol) y eliminar usuarios.
  */
-import { useState, useRef } from 'react';
-import { Pencil, Trash2, Plus, X } from 'lucide-react';
+import { useId, useState, useRef } from 'react';
+import { Pencil, Trash2, Plus, X, Eye, EyeOff } from 'lucide-react';
 import { AdminPageShell } from '../components/admin/AdminPageShell';
 import type { ApiUserRow, AdminUserData } from '../../services/user.service';
 import { normalizeUserRole as normalizeRole } from '../../models';
@@ -33,6 +33,8 @@ interface UserModalProps {
 
 function UserModal({ title, initial, showPassword, error, saving, onClose, onSubmit }: UserModalProps) {
   const [form, setForm] = useState(initial);
+  const [showFormPassword, setShowFormPassword] = useState(false);
+  const passwordId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogBehavior(true, onClose, panelRef);
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -58,7 +60,7 @@ function UserModal({ title, initial, showPassword, error, saving, onClose, onSub
         <form onSubmit={(e) => { e.preventDefault(); onSubmit(form); }} className="flex flex-col gap-3">
           <label className="block">
             <span className="text-gray-500 block mb-1" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Nombre</span>
-            <input value={form.Nombre} onChange={set('Nombre')} maxLength={30} required
+            <input value={form.Nombre} onChange={set('Nombre')} maxLength={30} required data-autofocus
               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-red" />
           </label>
           <label className="block">
@@ -81,11 +83,23 @@ function UserModal({ title, initial, showPassword, error, saving, onClose, onSub
             </label>
           </div>
           {showPassword && (
-            <label className="block">
-              <span className="text-gray-500 block mb-1" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Contrasena inicial (min. 8)</span>
-              <input type="password" value={form.Contrasena} onChange={set('Contrasena')} minLength={8} maxLength={72} autoComplete="new-password" required
-                className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-red" />
-            </label>
+            <div className="block">
+              <label htmlFor={passwordId} className="text-gray-500 block mb-1" style={{ fontSize: '0.75rem', fontWeight: 600 }}>Contrasena inicial (min. 8)</label>
+              <div className="relative">
+                <input id={passwordId} type={showFormPassword ? 'text' : 'password'} value={form.Contrasena} onChange={set('Contrasena')} minLength={8} maxLength={72} autoComplete="new-password" required
+                  className="w-full pl-4 pr-12 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:border-brand-red" />
+                <button
+                  type="button"
+                  onClick={() => setShowFormPassword((current) => !current)}
+                  aria-label={showFormPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-controls={passwordId}
+                  aria-pressed={showFormPassword}
+                  className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:text-brand-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/40"
+                >
+                  {showFormPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+                </button>
+              </div>
+            </div>
           )}
           <button type="submit" disabled={saving}
             className="mt-2 w-full py-2.5 rounded-full text-white font-semibold bg-brand-red hover:bg-brand-red-dark disabled:opacity-60 transition-colors">

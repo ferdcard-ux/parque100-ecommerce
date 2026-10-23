@@ -1,8 +1,8 @@
 /**
  * @fileoverview Pagina de informacion del perfil.
  */
-import { useEffect, useRef, useState } from 'react';
-import { User, Mail, Phone, Lock } from 'lucide-react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
 import { useApp } from '../../App';
 import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
@@ -21,34 +21,54 @@ interface FieldProps {
   inputMode?: React.HTMLAttributes<HTMLInputElement>['inputMode'];
   pattern?: string;
   autoComplete?: string;
+  autoFocus?: boolean;
 }
 
 function ProfileField({
   label, icon, value, editing, onChange, type = 'text', maxLength,
-  minLength, inputMode, pattern, autoComplete,
+  minLength, inputMode, pattern, autoComplete, autoFocus,
 }: FieldProps) {
+  const inputId = useId();
+  const [visible, setVisible] = useState(false);
+  const isPassword = type === 'password';
+  const inputType = isPassword && visible ? 'text' : type;
+
   return (
-    <label className="block">
-      <span className="text-gray-500 block mb-1" style={{ fontSize: '0.75rem', fontWeight: 600 }}>{label}</span>
-      <span className="relative block">
+    <div className="block">
+      <label htmlFor={inputId} className="text-gray-500 block mb-1" style={{ fontSize: '0.75rem', fontWeight: 600 }}>{label}</label>
+      <div className="relative">
         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">{icon}</span>
         <input
-          type={type}
+          id={inputId}
+          type={inputType}
           value={value}
           maxLength={maxLength}
           minLength={minLength}
           inputMode={inputMode}
           pattern={pattern}
           autoComplete={autoComplete}
+          data-autofocus={autoFocus ? '' : undefined}
           readOnly={!editing}
           onChange={(e) => onChange(e.target.value)}
-          className={`w-full pl-10 pr-4 py-2.5 rounded-xl border transition-colors ${
+          className={`w-full pl-10 ${isPassword ? 'pr-12' : 'pr-4'} py-2.5 rounded-xl border transition-colors ${
             editing ? 'border-brand-red bg-white' : 'border-gray-200 bg-brand-surface'
           } focus:outline-none`}
           style={{ fontSize: '0.9rem' }}
         />
-      </span>
-    </label>
+        {isPassword && (
+          <button
+            type="button"
+            onClick={() => setVisible((current) => !current)}
+            aria-label={visible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+            aria-controls={inputId}
+            aria-pressed={visible}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:text-brand-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/40"
+          >
+            {visible ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -78,7 +98,7 @@ function ChangePasswordDialog({ pwdError, pwdSuccess, pwdLoading, pwdCurrent, pw
         <form onSubmit={handleChangePassword} className="flex flex-col gap-4">
           {pwdError && <div role="alert" className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600" style={{ fontSize: '0.85rem' }}>{pwdError}</div>}
           {pwdSuccess && <div role="status" className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700" style={{ fontSize: '0.85rem' }}>Contrasena actualizada.</div>}
-          <ProfileField label="Contrasena actual" icon={<Lock size={16} />} type="password" autoComplete="current-password" maxLength={72} value={pwdCurrent} editing onChange={setPwdCurrent} />
+          <ProfileField label="Contrasena actual" icon={<Lock size={16} />} type="password" autoComplete="current-password" maxLength={72} value={pwdCurrent} editing onChange={setPwdCurrent} autoFocus />
           <ProfileField label="Nueva contrasena" icon={<Lock size={16} />} type="password" autoComplete="new-password" minLength={8} maxLength={72} value={pwdNew} editing onChange={setPwdNew} />
           <ProfileField label="Confirmar nueva contrasena" icon={<Lock size={16} />} type="password" autoComplete="new-password" minLength={8} maxLength={72} value={pwdConfirm} editing onChange={setPwdConfirm} />
           <div className="flex gap-2 mt-2">
