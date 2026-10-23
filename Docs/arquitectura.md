@@ -42,7 +42,7 @@ src/
 │
 ├── models/                   # Capa Modelo
 │   ├── index.ts              # Re-exportaciones (+ `normalizeUserRole`)
-│   ├── product.ts            # Producto, Categoría, Inventario
+│   ├── product.ts            # Producto, categoría, inventario y más vendido semanal
 │   ├── cart.ts               # Item del carrito
 │   ├── user.ts               # Usuario, autenticación y roles
 │   ├── order.ts              # Pedido, dirección de entrega
@@ -53,7 +53,7 @@ src/
 ├── services/                 # Capa de acceso a datos
 │   ├── index.ts              # Re-exportaciones
 │   ├── api.ts                # URL base (`VITE_API_URL`) + token JWT (`Bearer`)
-│   ├── product.service.ts    # CRUD de productos
+│   ├── product.service.ts    # CRUD de productos y más vendido semanal
 │   ├── auth.service.ts       # Autenticación (login/register/cambio de clave)
 │   ├── order.service.ts      # Gestión de pedidos
 │   ├── user.service.ts       # Usuarios, perfiles y permisos
@@ -89,7 +89,7 @@ src/
 │   │   └── HelpPage.tsx, SitemapPage.tsx, TermsPage.tsx, PrivacyPage.tsx
 │   └── components/           # Componentes atómicos
 │       ├── layout/           # Navbar, Footer, RootLayout, UserNotifications
-│       ├── home/             # HeroBanner, CategoryGrid, CategoryModal, AllCategoriesModal, etc.
+│       ├── home/             # HeroBanner, HeroProductSlider, TopSellerBanner, CategoryGrid, CategoryModal, etc.
 │       ├── shop/             # product-card
 │       ├── cart/             # CartItemCard, RecommendedList
 │       ├── checkout/         # AddressForm, PaymentOptions, checkout-steps/summary
@@ -121,44 +121,50 @@ server/
 ├── index.js                    # Bootstrap: middleware, montaje de routers, puerto 3001
 │
 ├── config/
-│   └── db.js                   # Pool MySQL (host/puerto/usuario/BD por entorno, `.env`)
+│   ├── db.js                   # Pool MySQL de la tienda (host/puerto/usuario/BD por entorno, `.env`)
+│   └── site-access-db.js       # Pool separado de `parque100_acceso` (acceso académico)
 │
 ├── middleware/
-│   └── auth.js                 # JWT: `signToken`, `requireAuth`, `requireRole`, `requireSelfOrAdmin`
+│   └── auth.js                 # JWT de tienda y acceso, roles y validación de sesión académica
 │
 ├── models/                     # Capa Modelo — única capa que ejecuta SQL
-│   ├── product.model.js        # Consultas CRUD sobre productos
+│   ├── product.model.js        # CRUD y consulta del más vendido semanal
 │   ├── category.model.js       # Consultas de categorías
 │   ├── user.model.js           # Búsqueda/creación de usuarios (bcrypt en controladores)
 │   ├── permission.model.js     # Permisos delegables (`puede_cancelar`)
 │   ├── order.model.js          # Pedidos + detalle (transaccional, totales autoritativos)
 │   ├── business.model.js       # Ficha del negocio
-│   └── rating.model.js         # Calificaciones (compra verificada, autoría)
+│   ├── rating.model.js         # Calificaciones (compra verificada, autoría)
+│   └── site-access.model.js    # Cuentas, sesiones por dispositivo y descargo académicos
 │
 ├── controllers/                # Capa Controlador — lógica de negocio y HTTP
-│   ├── product.controller.js   # Listar, crear, editar, eliminar productos (validado)
+│   ├── product.controller.js   # CRUD de productos y top-selling-week
 │   ├── category.controller.js  # Listar categorías
 │   ├── auth.controller.js      # Login / registro / recuperación deshabilitada / cambio de clave (JWT + bcrypt)
 │   ├── users.controller.js     # Gestión admin, perfil propio y datos de entrega
 │   ├── order.controller.js     # Listado por rol, detalle, creación y cancelación (identidad del token)
 │   ├── business.controller.js  # Ficha del negocio
 │   ├── rating.controller.js    # Calificaciones (autor del token)
-│   └── payment.controller.js   # Simulación académica DEMO, sin pasarela ni datos financieros
+│   ├── payment.controller.js   # Simulación académica DEMO, sin pasarela ni datos financieros
+│   └── site-access.controller.js # Login, descargo, estado y logout del acceso académico
 │
 └── routes/                     # Capa de enrutamiento (routers delgados con autorización)
-    ├── products.js             # /api/products (escritura: admin)
+    ├── products.js             # /api/products (lectura; top-selling; escritura: admin)
     ├── categories.js           # /api/categories
     ├── auth.js                 # /api/auth (con rate-limit)
     ├── users.js                # /api/users (admin o propio-según-ruta)
     ├── business.js             # /api/business (escritura: admin)
     ├── orders.js               # /api/orders (sesión; staff para estados)
     ├── ratings.js              # /api/ratings (escritura con sesión; borrado: admin)
-    └── payments.js             # /api/payments (con sesión)
+    ├── payments.js             # /api/payments (con sesión)
+    └── site-access.js          # /api/site-access (login, estado, descargo, logout)
 ```
 
 **Regla de dependencias del backend:** `routes → controllers → models → db`. Las rutas solo delegan (más middleware de sesión/rol); los controladores nunca ejecutan SQL; los modelos nunca conocen HTTP.
 
 **Autenticación:** login/registro emiten JWT (`Authorization: Bearer`, 8 h por defecto); las contraseñas se guardan y comparan con bcrypt; la identidad (usuario/rol) siempre sale del token, nunca del cuerpo.
+
+**Acceso académico:** es una autenticación independiente basada en cookie `HttpOnly` y en la base privada `parque100_acceso`. Cada login inserta una fila en `sesiones_acceso` cuyo `ID_Sesion` es el `jti` del JWT; una cuenta puede tener varias filas activas, una por dispositivo. El middleware compara el `jti` con una fila no revocada de la cuenta y rechaza el token si falta o está revocado. El panel administrativo lista las filas con `User_Agent`, IP e instantes de creación/actividad y puede revocar una o todas. Logout revoca la fila actual; cambio de contraseña, desactivación y eliminación revocan/borran las demás. La migración `20261023-multi-session.sql` conserva la sesión vigente de las columnas legacy `usuarios_acceso.Sesion_*`, que quedan solo como respaldo de despliegue.
 
 La creación de pedidos es **transaccional**: `beginTransaction` → validar stock (`FOR UPDATE`), recalcular totales con precios vigentes, insertar pedido e ítems → `commit`; ante cualquier error, `rollback` garantiza que no queden pedidos parciales.
 
@@ -175,6 +181,12 @@ La creación de pedidos es **transaccional**: `beginTransaction` → validar sto
 ```
 views → controllers → services ──HTTP──▶ routes → controllers → models ──SQL──▶ MySQL
 ```
+
+### Home: hero y más vendido semanal
+
+`HomePage` obtiene `products` y `weeklyTopSeller` desde `useProductController`. `HeroBanner` compone dos tarjetas independientes: `TopSellerBanner`, con el producto más vendido de los últimos 7 días, y `HeroProductSlider`, un carrusel Embla con hasta seis productos reales que prioriza promociones y variedad de categorías.
+
+El panel solo se renderiza cuando el endpoint devuelve un producto. La consulta `productModel.findTopSellingSince(7)` agrega `detalle_pedido` y `pedidos`, excluye pedidos cancelados y pagos DEMO, y desempata por unidades, pedidos, última venta e ID. Si no hay ventas válidas, la API responde `product: null` y el panel se oculta. La respuesta se sirve con `Cache-Control: no-store` para reflejar las ventas del momento.
 
 ## Principios aplicados
 

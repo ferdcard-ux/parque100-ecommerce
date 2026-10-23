@@ -93,7 +93,7 @@ npm run build
 
 ### Esquema
 
-La base de demostración `parque100` consta de 10 tablas: `categorias`, `productos`, `unidades_medida`, `usuario`, `pedidos`, `detalle_pedido`, `transacciones_pago_demo`, `negocio`, `permisos_usuario` y `calificaciones`. Las credenciales del equipo y las aceptaciones del descargo residen en la base privada local independiente `parque100_acceso`, aprovisionada con `npm run access:provision`; nunca se agregan a `setup.sql` ni a `.BD/parque100.sql`.
+La base de demostración `parque100` consta de 10 tablas: `categorias`, `productos`, `unidades_medida`, `usuario`, `pedidos`, `detalle_pedido`, `transacciones_pago_demo`, `negocio`, `permisos_usuario` y `calificaciones`. Las credenciales del equipo, las sesiones y las aceptaciones del descargo residen en la base privada local independiente `parque100_acceso`, aprovisionada con `npm run access:provision`; nunca se agregan a `setup.sql` ni a `.BD/parque100.sql`. Sus tablas son `usuarios_acceso`, `aceptaciones_descargo` y `sesiones_acceso`.
 
 La tabla `productos` incluye una columna `Imagen MEDIUMTEXT` opcional para almacenar URLs web o imagenes locales en dataURL al crear/editar productos desde el panel administrativo (el backend acepta cuerpos JSON de hasta 10 MB).
 
@@ -105,12 +105,14 @@ Los pedidos se fechan en horario del servidor (fecha local, sin desfase UTC). El
 
 En bases ya instaladas aplica `npm run migrate:demo-payments` antes de activar `PAYMENTS_MODE=demo`; el comando crea únicamente `transacciones_pago_demo` y requiere permisos DDL MySQL. La tabla registra usuario, método DEMO, estado, importe calculado en servidor y referencia ficticia; no contiene PAN, CVV, OTP, datos de transferencia ni comprobantes. La aceptación de la transacción permanece en `paid: false`.
 
+La tabla `sesiones_acceso` de `parque100_acceso` mantiene una fila por inicio de sesión y dispositivo. Su clave primaria es el `jti` del JWT (`ID_Sesion`); `ID_Acceso` referencia la cuenta y se elimina en cascada. Guarda `Creada_En`, `Ultima_Actividad`, `Revocada_En`, `User_Agent` y `Direccion_IP`. El backend valida en cada petición protegida que el `jti` corresponda a una fila no revocada de esa cuenta; el cierre de sesión revoca solo la fila actual y el panel puede revocar una o todas. Cambiar la contraseña o desactivar la cuenta revoca todas las filas. La migración `scripts/migrations/20261023-multi-session.sql` crea la tabla y copia la sesión vigente de las columnas antiguas `usuarios_acceso.Sesion_*`; esas columnas se conservan como respaldo de despliegue, pero no son la fuente autoritativa. La tabla se crea automáticamente al listar desde el panel o al aprovisionar; el usuario MySQL de la aplicación solo necesita `SELECT`, `INSERT` y `UPDATE`.
+
 ### Sincronización entre equipos
 
 Los datos del proyecto son ficticios (creados para pruebas), por lo que el estado completo de la BD se comparte con los commits mediante el dump `.BD/parque100.sql`:
 
 - **Exportar** (tras cambios en la BD local): `npm run db:dump` → guarda esquema + datos en `.BD/parque100.sql`; hay que commitear ese archivo.
-- **Importar** (tras hacer pull): `npm run db:restore` → reemplaza las 9 tablas del proyecto por las del dump (idempotente).
+- **Importar** (tras hacer pull): `npm run db:restore` → reemplaza las 10 tablas del proyecto por las del dump (idempotente).
 - Ambos comandos (`scripts/db.mjs`) son multi-entorno (Windows, Linux, macOS) y localizan el cliente MySQL o MariaDB así: `MYSQL_BIN` → rutas por defecto de la plataforma (`C:\Program Files\MySQL\MySQL Server 8.4\bin`, `/usr/bin`, `/usr/local/bin`, `/usr/local/mysql/bin`, `/opt/homebrew/bin`) → `mysql`/`mysqldump` o `mariadb`/`mariadb-dump` en el PATH. Autenticación por entorno (`DB_USER`, `DB_PASSWORD`, `DB_NAME`, ver `.env.example`).
 - Para una BD nueva sin datos compartidos basta el esquema de `setup.sql`.
 
@@ -141,6 +143,7 @@ Corre en el puerto 3001 con las siguientes rutas:
 | Endpoint | Descripción |
 |----------|-------------|
 | `GET /api/products` | Listar productos con categoría |
+| `GET /api/products/top-selling-week` | Producto con más unidades vendidas en los últimos 7 días |
 | `GET /api/products/:id` | Producto por ID |
 | `POST /api/products` | Crear producto (admin, validado) |
 | `PUT /api/products/:id` | Actualizar producto (admin, validado; 404 si no existe) |
@@ -153,11 +156,12 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `POST /api/units` | Crear unidad de medida (admin) |
 | `PUT /api/units/:id` | Renombrar unidad y actualizar productos asociados (admin) |
 | `DELETE /api/units/:id` | Eliminar unidad no utilizada (admin) |
-| `POST /api/site-access/login` | Autenticar al equipo y establecer cookie HttpOnly independiente |
+| `POST /api/site-access/login` | Autenticar al equipo, crear una sesión de dispositivo y establecer cookie HttpOnly independiente |
+| `POST /api/site-access/logout` | Revocar solo la sesión actual y borrar su cookie |
 | `GET /api/site-access/disclaimer/status` | Consultar aceptación vigente para la sesión |
 | `POST /api/site-access/disclaimer/accept` | Registrar aceptación del descargo |
 | `POST /api/auth/login` | Iniciar sesión demo (emite JWT; requiere acceso web autorizado) |
-| `POST /api/auth/register` | Registro de cuentas demo deshabilitado |
+| `POST /api/auth/register` | Registrar cuenta demo (requiere acceso académico y descargo; correo y teléfono únicos) |
 | `POST /api/auth/recover` | 503 hasta configurar un canal verificado de recuperacion; no modifica ni registra contrasenas temporales |
 | `PUT /api/auth/password` | Cambiar contraseña (valida la actual) |
 | `GET /api/users` | Listar usuarios registrados (admin) |
@@ -184,9 +188,22 @@ Corre en el puerto 3001 con las siguientes rutas:
 | `POST /api/ratings` | Calificar (sesión; compra/propiedad verificada, 409 duplicada) |
 | `PUT /api/ratings/:id` | Editar reseña (solo el autor) |
 | `DELETE /api/ratings/:id` | Eliminar calificación (admin) |
-| `POST /api/payments/process` | 503 hasta integrar una pasarela real con verificacion server-to-server |
 
 > Salvo lectura pública (catálogo, negocio, reseñas), los endpoints exigen `Authorization: Bearer <JWT>`; la escritura sensible y los datos ajenos exigen rol `admin` o staff según la ruta.
+
+### Producto más vendido semanal
+
+`GET /api/products/top-selling-week` es una lectura pública dentro de la sesión académica. Devuelve el producto líder y sus métricas:
+
+```json
+{
+  "product": { "ID_Producto": "P399", "Nombre": "Pollo PROMOCION entero despresado (1800 gr)" },
+  "unitsSold": 2,
+  "ordersCount": 1
+}
+```
+
+El cálculo usa `detalle_pedido` y `pedidos` de los últimos 7 días (`DATE_SUB(CURDATE(), INTERVAL 7 DAY)`), agrupa por producto, suma `Cantidad` y cuenta pedidos distintos. Excluye pedidos cancelados y pagos DEMO. El desempate es por unidades vendidas, pedidos, última venta e ID. Si no hay ventas válidas, responde `product: null`, `unitsSold: 0` y `ordersCount: 0`; el frontend no renderiza el panel. La ruta se registra antes de `/products/:id` y la respuesta se sirve con `Cache-Control: no-store`.
 
 ### Registro de actividad del sitio
 
@@ -232,9 +249,11 @@ El sistema maneja imágenes en este orden de prioridad:
 Batería automatizada API + BD: `scripts/smoke-lote2.mjs` (73 comprobaciones; requiere backend, MySQL, terminal interactiva y cuenta de acceso del equipo; solicita credenciales localmente, acepta el descargo solo para la sesión de prueba y limpia datos de prueba al finalizar). Crea y modifica pedidos, negocio, permisos, productos e información de prueba durante la ejecución: úsela solo contra una base de datos desechable aislada, nunca contra la base viva del demo.
 
 ```bash
-npm test            # destructiva: solo backend y MySQL de pruebas aislados
+npm test              # destructiva: solo backend y MySQL de pruebas aislados
 npm run test:payments # pruebas unitarias de pagos/modelos; no modifica la BD
-npm run typecheck   # tsc --noEmit (strict + noUnusedLocals/Parameters)
+npm run test:catalog  # pruebas unitarias de categorías/unidades; no modifica la BD
+npm run test:activity # pruebas unitarias del registro de actividad; no modifica la BD
+npm run typecheck     # tsc --noEmit (strict + noUnusedLocals/Parameters)
 ```
 
 ## Despliegue

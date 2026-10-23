@@ -182,6 +182,15 @@ mantén `PAYMENTS_MODE=disabled` hasta integrar y verificar una pasarela real.
 equipo local con `npm run access:provision`; no copies sus credenciales ni sus
 datos al repositorio o a un dump compartido.
 
+Para habilitar sesiones independientes por dispositivo, aplica
+`scripts/migrations/20261023-multi-session.sql` sobre `parque100_acceso` antes
+de desplegar el backend actualizado. La migración crea `sesiones_acceso` y copia
+la sesión vigente de las columnas legacy, de modo que los usuarios no pierden el
+acceso. También se aplica automáticamente al listar cuentas desde el panel o al
+ejecutar `npm run access:provision`; requiere un usuario MySQL con permisos
+DDL sobre esa base. El usuario de la aplicación solo necesita
+`SELECT, INSERT, UPDATE` sobre `parque100_acceso`.
+
 MySQL debe escuchar solo en `127.0.0.1` para los protocolos clásico y X
 (`--bind-address=127.0.0.1 --mysqlx-bind-address=127.0.0.1`). No habilites
 reglas de entrada del firewall para `mysqld` ni publiques los puertos 3306/33060.

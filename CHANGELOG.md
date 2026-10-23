@@ -4,7 +4,16 @@
 
 ## [Sin publicar]
 
+### Inicio y catálogo
+- El hero ocupa el ancho disponible y compone dos tarjetas independientes con borde, sombra y separación: el panel **Más vendido de la semana** y el carrusel `HeroProductSlider`.
+- El carrusel usa `embla-carousel-react` y muestra hasta seis productos reales con imagen y stock, priorizando promociones y variedad de categorías; conserva flechas, puntos, autoplay, gestos y el acceso a la ficha.
+- El panel reemplaza la antigua oferta especial y muestra el producto con más unidades vendidas en los últimos 7 días, con precio, descuento, unidades y enlace a `/producto/:id`; si no hay ventas válidas no se renderiza.
+- Nuevo endpoint `GET /api/products/top-selling-week`, registrado antes de `/products/:id`, con `Cache-Control: no-store`. Agrega `detalle_pedido` y `pedidos`, excluye pedidos cancelados y pagos DEMO y desempata por unidades, pedidos, última venta e ID.
+- `GET /api/products/top-selling-week` devuelve `product: null`, `unitsSold: 0` y `ordersCount: 0` cuando no hay ventas válidas en la ventana.
+- Se actualizan README, arquitectura, manual técnico, guía de uso y manual de usuario; los documentos internos de identidad visual y bitácora registran el mismo cambio.
+
 ### Seguridad y acceso
+- El acceso académico pasa a sesiones múltiples por cuenta, una por dispositivo. La nueva tabla `sesiones_acceso` usa el `jti` del JWT como identificador, guarda dispositivo/IP/actividad y permite revocar una sesión o todas desde el panel. Logout revoca solo la sesión actual; cambiar la contraseña, desactivar o eliminar la cuenta revoca todas. La migración `20261023-multi-session.sql` conserva la sesión activa durante el despliegue y el backend mantiene el respaldo temporal de las columnas legacy `Sesion_*`.
 - Se separan los limitadores de login de tienda y acceso académico; cada flujo permite hasta 30 fallos HTTP 401 por IP en una ventana de 15 minutos. Los accesos exitosos no consumen intentos.
 - El login de tienda conserva y presenta el mensaje HTTP del backend, distinguiendo credenciales incorrectas del límite 429 y de errores del servidor.
 - La pantalla académica es autocontenida y mantiene contraste legible con el modo oscuro del dispositivo; incorpora el control accesible de mostrar/ocultar contraseña mediante iconos de ojo.

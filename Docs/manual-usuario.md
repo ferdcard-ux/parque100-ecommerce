@@ -61,12 +61,19 @@ La aplicación se ejecuta **en el navegador**: no requiere instalar ningún prog
 ### Acceso al sitio
 
 1. Abre `/access.html` e inicia sesión con la cuenta de acceso académico que te
-   haya asignado el responsable. No hay registro público.
+   haya asignado el responsable. No hay registro abierto al público.
 2. Lee y acepta el descargo obligatorio para habilitar la navegación. La
-   aceptación se registra para la sesión de acceso actual.
+   aceptación se registra para esa sesión; al iniciar sesión en otro dispositivo
+   debes aceptarlo de nuevo allí.
 3. Para probar las funciones de la tienda, inicia sesión aparte con una de las
    cuentas demo indicadas a continuación. El acceso académico y la cuenta demo
    de tienda son identidades independientes.
+
+La misma cuenta académica puede usarse en varios dispositivos a la vez: cada
+inicio de sesión crea una sesión independiente. El responsable puede revocar la
+sesión de un dispositivo concreto o todas desde **GESTIÓN DE USUARIOS** del
+panel local. Cambiar la contraseña o desactivar la cuenta cierra todas las
+sesiones, por lo que habrá que iniciar sesión de nuevo en cada dispositivo.
 
 ### Credenciales de prueba
 
@@ -111,9 +118,9 @@ Puedes mostrar u ocultar la contraseña con el **ícono del ojo**. Si ya estabas
 
 **Sesión de administrador:** en la parte inferior del formulario hay un enlace **"¿Eres administrador?"** que abre un modal de acceso administrativo con las mismas credenciales.
 
-Las cuentas demo no se crean desde el sitio: solicita al administrador que
-registre una mediante la gestión de clientes. La ruta `/register` no habilita
-registro y redirige al acceso académico.
+Después del acceso académico y el descargo, la ruta `/register` permite crear
+una cuenta demo de tienda. El administrador también puede crearla o gestionarla
+desde la sección de clientes del panel.
 
 ### 4.2 Recuperar contraseña
 
@@ -173,10 +180,12 @@ financieros reales. El monto de efectivo se limita a 6 dígitos.
 
 ### 5.1 Página de inicio (`/`)
 
-- **Hero Banner:** ofertas destacadas; los botones **"Comprar ahora"** y **"Ver ofertas"** llevan al catálogo.
-- **Categorías:** 8 categorías con ícono. Al pulsar una, se abre una ventana con los productos filtrados (imagen y nombre llevan al detalle). Si la categoría no tiene productos, muestra "Categoría sin productos". El botón **"Ver todas"** abre un panel con todas las categorías.
+- **Hero Banner:** carrusel de seis productos reales con categoría, precio, descuento, flechas, puntos y botón **"Añadir"**. El botón exige sesión y redirige al login si no la hay. Los botones **"Comprar ahora"** y **"Ver ofertas"** llevan al catálogo.
+- **Más vendido de la semana:** panel sobre el carrusel con el producto que más unidades vendió en los últimos 7 días, su precio, descuento y enlace a la ficha. Si no hubo ventas válidas, el panel no se muestra.
+- **Categorías:** 8 categorías con ilustración SVG propia. Al pulsar una, se abre una ventana con los productos filtrados (imagen y nombre llevan al detalle). Si la categoría no tiene productos, muestra "Categoría sin productos". El botón **"Ver todas"** abre un panel con todas las categorías.
+- **Ofertas de la semana:** carril con los productos en promoción.
 - **Productos Destacados:** cuadrícula con imagen, precio, botón de favorito y **"Añadir"** al carrito.
-- **Oferta Especial:** banner promocional con acceso al catálogo.
+- **Frescos del día:** carril con frutas y verduras destacadas.
 - **Pie de página (footer):** enlaces a categorías, centro de ayuda, redes, privacidad/cookies y mapa del sitio.
 
 ### 5.2 Catálogo (`/catalogo`)
@@ -380,7 +389,7 @@ El modo `demo` no procesa pagos reales. Para cualquier pago con dinero real se n
 | `/` | Inicio | Todos |
 | `/access.html` | Acceso académico | Personas autorizadas |
 | `/login` | Inicio de sesión demo de tienda | Acceso académico autorizado |
-| `/register` | Redirige al acceso académico; no hay registro público | Acceso académico autorizado |
+| `/register` | Alta de cuenta demo de tienda | Acceso académico autorizado |
 | `/` · `/catalogo` · `/producto/:id` | Inicio, catálogo y detalle | Acceso académico autorizado |
 | `/cart` | Carrito | Sesión |
 | `/address` · `/payment-method` · `/payment-card` · `/payment-success` | Flujo de compra | Sesión |
@@ -403,7 +412,8 @@ Explora el catálogo, agrega productos al carrito y confirma el pago siguiendo l
 **¿Necesito crear una cuenta para comprar?**
 Para usar el sitio necesitas primero una cuenta de acceso académico y aceptar el
 descargo. Para comprar en la demostración también debes iniciar sesión con una
-cuenta demo de tienda; no hay registro público.
+cuenta demo de tienda. Puedes crearla en `/register` después del acceso y el
+descargo, o solicitarla al administrador; no hay registro abierto al público.
 
 **¿Cuánto cuesta el envío?**
 El envío es **siempre sin costo**. El tiempo estimado de entrega se muestra al crear el pedido (aproximadamente 45–60 minutos).
@@ -426,6 +436,11 @@ Usa **"¿Olvidaste tu contraseña?"** en el login para contactar soporte. La rec
 **¿Puedo usar varias cuentas al mismo tiempo?**
 Sí, con **"Cambiar de usuario"** puedes mantener más de una sesión activa y alternar entre ellas.
 
+**¿Puedo usar la misma cuenta académica en varios dispositivos?**
+Sí. Cada inicio de sesión crea una sesión independiente y el descargo se acepta
+en cada dispositivo. El administrador puede consultar cada sesión y revocar solo
+una o todas; si cambia tu contraseña o desactiva la cuenta, se cierran todas.
+
 **¿La app funciona en el celular?**
 Sí, el diseño es adaptable a teléfonos y tabletas.
 
@@ -436,8 +451,9 @@ Sí, el diseño es adaptable a teléfonos y tabletas.
 | Síntoma | Causa probable | Solución |
 |---------|----------------|----------|
 | No puedo abrir páginas del sitio | Falta una sesión académica autorizada o aceptar el descargo | Inicia sesión en `/access.html` y acepta el aviso; si no tienes cuenta, solicítala al responsable |
+| Me cerró la sesión de acceso de repente | El administrador revocó ese dispositivo o todas las sesiones, cambió la contraseña, desactivó la cuenta o venció el token de 8 horas | Vuelve a iniciar sesión en `/access.html`; si persiste, consulta con el responsable |
 | No aparece el botón "Añadir" o redirige al login | No has iniciado sesión | Inicia sesión; se te devolverá a la página anterior |
-| No encuentro cómo crear una cuenta demo | El registro público está deshabilitado | Solicita al administrador que cree una cuenta demo de tienda |
+| No encuentro cómo crear una cuenta demo | El registro solo se habilita después del acceso académico y el descargo | Abre `/register` con la sesión académica activa o solicita al administrador que cree la cuenta |
 | ¿Puedo pagar con tarjeta o Nequi? | Solo aparece el flujo DEMO si el servidor habilitó `PAYMENTS_MODE=demo`; no hay cobros ni proveedores reales | Elige efectivo contra entrega o completa los pasos simulados sin ingresar datos financieros. El pedido DEMO sí afecta el inventario local y sus estados |
 | "El monto debe cubrir el total" | El efectivo ingresado es menor al total | Ingresa un monto igual o mayor |
 | El botón "Cancelar pedido" está deshabilitado | El pedido ya está en envío o entregado | El pedido ya no admite cancelación |

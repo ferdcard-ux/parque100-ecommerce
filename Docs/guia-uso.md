@@ -5,9 +5,10 @@
 Este proyecto es una demostración académica para personas autorizadas. Entra
 por `/access.html`, autentícate con la cuenta del equipo y acepta el descargo
 obligatorio. Para probar las funciones de la tienda, inicia sesión después con
-una cuenta demo independiente. No hay registro público; las cuentas las crea el
-responsable desde el panel local. No introduzcas datos financieros ni datos
-personales reales.
+una cuenta demo independiente. No hay registro abierto al público: tras el
+acceso académico y el descargo puedes crear una cuenta demo en `/register`, o
+solicitarla al responsable desde el panel local. No introduzcas datos
+financieros ni datos personales reales.
 
 ## Credenciales de prueba
 
@@ -24,10 +25,12 @@ personales reales.
 ## Funcionalidades por pantalla
 
 ### Inicio (`/`)
-- **Hero Banner**: llamativo con ofertas del día; "Comprar ahora" y "Ver ofertas" navegan al catálogo
-- **Categorías**: 8 categorías con emoji único. Cada categoría es clickeable y abre un modal con los productos filtrados (imagen y nombre enlazan al detalle). Si la categoría no tiene productos, muestra mensaje "Categoría sin productos". Botón "Ver todas" abre un modal con las 8 categorías como botones funcionales
+- **Hero Banner**: ocupa el ancho disponible e incluye un carrusel de seis productos reales con categoría, precio, descuento, flechas, puntos y botón "Añadir". Si no hay sesión, "Añadir" redirige al login. Los botones "Comprar ahora" y "Ver ofertas" navegan al catálogo
+- **Más vendido de la semana**: panel sobre el carrusel con el producto que más unidades vendió en los últimos 7 días, su precio, descuento y enlace a la ficha. No aparece si no hubo ventas válidas
+- **Categorías**: 8 categorías con ilustración SVG propia. Cada categoría es clickeable y abre un modal con los productos filtrados (imagen y nombre enlazan al detalle). Si la categoría no tiene productos, muestra mensaje "Categoría sin productos". Botón "Ver todas" abre un modal con las 8 categorías como botones funcionales
+- **Ofertas de la semana**: carril con productos en promoción
 - **Productos Destacados**: cuadrícula con productos, cada uno con imagen única, precio, favorito y botón "Añadir" al carrito (imagen y nombre enlazan al detalle)
-- **Oferta Especial**: banner promocional con descuento, CTA al catálogo
+- **Frescos del día**: carril con frutas y verduras destacadas
 - **Footer**: categorías enlazan al catálogo filtrado, ayuda al centro de ayuda, redes a sitios externos, Privacidad/Cookies y Mapa del sitio a sus páginas
 
 ### Login (`/login`)
@@ -38,7 +41,7 @@ personales reales.
 - "¿Olvidaste tu contraseña?": muestra el canal de soporte; la recuperación automática está deshabilitada hasta configurar entrega verificada
 - Retorno post-login con `?next=`: tras ingresar vuelve a la página solicitada
 - Modo multisesión con `?mode=switch`: agrega otra cuenta sin cerrar la actual
-- No hay registro público; `/register` redirige al acceso académico
+- Alta de cuenta demo en `/register` después del acceso académico y el descargo
 - Modal de inicio de sesión para administradores (link "¿Eres administrador?")
 
 ### Navegación — Menú de usuario y notificaciones
@@ -55,9 +58,11 @@ personales reales.
 
 ### Acceso académico (`/access.html`)
 - Autenticación independiente para integrantes autorizados del equipo
-- Aceptación obligatoria del descargo antes de navegar; la aceptación se asocia a la sesión
+- Aceptación obligatoria del descargo antes de navegar; la aceptación se asocia a cada sesión/dispositivo
+- Una misma cuenta puede tener varias sesiones activas, una por dispositivo
+- El panel local lista cada sesión con dispositivo, IP y actividad, y permite revocar una o todas; cambiar la contraseña o desactivar la cuenta revoca todas
 - Las cuentas se administran desde la pestaña **ACCESO ACADÉMICO** del panel local
-- No hay registro público; `/register` redirige al acceso académico
+- `/register` crea cuentas demo de la tienda, no cuentas de acceso académico
 
 ### Catálogo (`/catalogo`)
 - Chips por categoría sincronizados con `?cat=`, buscador del navbar con `?q=`, orden (relevancia, precio, nombre)
@@ -171,7 +176,7 @@ requieren además iniciar sesión con una cuenta demo de tienda.
 | `/` | Home | Página principal |
 | `/login` | Login | Inicio de sesión |
 | `/access.html` | Acceso académico | Inicio de sesión del equipo autorizado |
-| `/register` | Acceso académico | Redirección; registro público deshabilitado |
+| `/register` | Registro | Alta de cuenta demo de tienda (requiere acceso y descargo) |
 | `/cart` | Cart | Carrito de compras |
 | `/address` | Address | Dirección de entrega |
 | `/payment-method` | Payment Method | Selección de pago |

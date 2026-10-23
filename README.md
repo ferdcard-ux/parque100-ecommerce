@@ -44,7 +44,7 @@ Convenciones completas en [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md)
 # 1. Instalar dependencias
 npm install
 
-# 2. Restaurar la BD (esquema + datos de prueba). Reemplaza las 9 tablas.
+# 2. Restaurar la BD (esquema + datos de prueba). Reemplaza las 10 tablas.
 npm run db:restore
 
 # 3. Terminal 1 — Backend API en http://localhost:3001
@@ -64,14 +64,17 @@ El sitio está destinado exclusivamente a usuarios autorizados del equipo y
 muestra un descargo obligatorio antes de habilitar la navegación y las API.
 Primero se inicia sesión en `/access.html` con una cuenta creada desde el panel
 local; después se acepta el descargo y, cuando corresponda, se inicia sesión
-con una cuenta demo de tienda. Son identidades y sesiones independientes. No
-hay registro público. Cada cuenta admite una sola sesión web vigente: un login
-nuevo reemplaza la anterior y el panel puede revocarla para forzar la
-reautenticación. Tras 5 intentos fallidos en 15 minutos, la cuenta se bloquea
-15 minutos (HTTP 423), además del límite por IP. La base privada
-`parque100_acceso` no se comparte en el repositorio ni en los dumps de
-`parque100`. La administración de cuentas se documenta internamente en el
-equipo.
+con una cuenta demo de tienda. Son identidades y sesiones independientes. La
+cuenta demo puede crearse en `/register` después del acceso y el descargo, o
+desde el panel local. No hay registro abierto al público. Cada cuenta admite
+varias sesiones simultáneas, una por dispositivo; el panel muestra cada
+dispositivo/IP y permite revocar una o todas. Cambiar la contraseña o desactivar
+la cuenta revoca todas sus sesiones. La migración
+`20261023-multi-session.sql` conserva la sesión activa durante la actualización.
+Tras 5 intentos fallidos en 15 minutos, la cuenta se bloquea 15 minutos
+(HTTP 423), además del límite por IP. La base privada `parque100_acceso` no se
+comparte en el repositorio ni en los dumps de `parque100`. La administración de
+cuentas se documenta internamente en el equipo.
 
 En el servidor remoto, usa el dominio HTTPS y comprueba que el navegador valide
 el certificado. El acceso local de desarrollo (`http://localhost`) no usa TLS;
@@ -128,6 +131,8 @@ Tras `npm run db:restore`, las cuentas demo usan estas claves de desarrollo:
 | `npm test` | Smoke API + BD (73 comprobaciones); requiere backend, MySQL, terminal interactiva y cuenta autorizada. Crea/modifica datos durante la ejecución: úselo solo contra una BD desechable aislada |
 | `npm run typecheck` | Verificación de tipos (`tsc --noEmit`) |
 | `npm run test:payments` | Pruebas unitarias de pagos y pedidos, sin modificar la BD |
+| `npm run test:catalog` | Pruebas unitarias de categorías y unidades de medida, sin modificar la BD |
+| `npm run test:activity` | Pruebas unitarias del registro de actividad, sin modificar la BD |
 
 ## API REST
 
@@ -135,10 +140,10 @@ Base URL: `http://localhost:3001/api`
 
 | Recurso | Endpoints |
 |---------|-----------|
-| Productos | `GET/POST /products`, `GET/PUT/DELETE /products/:id` |
+| Productos | `GET/POST /products`, `GET /products/top-selling-week`, `GET/PUT/DELETE /products/:id` |
 | Categorías | `GET /categories` |
 | Acceso académico | `POST /site-access/login`, `GET /site-access/disclaimer/status`, `POST /site-access/disclaimer/accept` |
-| Autenticación | `POST /auth/login`, `POST /auth/register` (deshabilitado), `POST /auth/recover` (503 hasta configurar recuperación verificada), `PUT /auth/password` |
+| Autenticación | `POST /auth/login`, `POST /auth/register` (requiere acceso académico y descargo), `POST /auth/recover` (503 hasta configurar recuperación verificada), `PUT /auth/password` |
 | Usuarios | `GET /users`, `POST /users`, `PUT /users/:id/admin`, `PUT /users/:id/profile` (perfil propio), `DELETE /users/:id`, `GET/PUT /users/:id/permissions` (delegar `puede_cancelar`) |
 | Datos de entrega de usuario | `GET /users/:id`, `PUT /users/:id` |
 | Negocio | `GET /business`, `PUT /business` |
@@ -147,6 +152,8 @@ Base URL: `http://localhost:3001/api`
 | Pagos | `GET /payments/mode`; con `PAYMENTS_MODE=demo`, `POST /payments/process` inicia un intento y `POST /payments/confirm` registra atómicamente transacción DEMO, pedido y descuento de inventario; `PUT /payments/:reference/cancel` cierra intentos pendientes. Sin cobros ni datos financieros; efectivo contra entrega disponible |
 | Actividad del sitio | `POST /activity/interactions` recibe solo eventos permitidos de carrito, favoritos y cierre de sesión; el backend registra además operaciones de catálogo, pedidos, pagos y administración, y eventos de login/cierre/bloqueo/revocación en un JSONL local rotado, con detalle seguro y sin credenciales, búsquedas, IP ni cuerpos |
 
+> `GET /products/top-selling-week` devuelve el producto con más unidades vendidas en los últimos 7 días, excluyendo pedidos cancelados y pagos DEMO. Si no hay ventas válidas responde `product: null`, `unitsSold: 0` y `ordersCount: 0`; su respuesta se sirve con `Cache-Control: no-store`.
+>
 > Los endpoints de escritura y los datos ajenos requieren `Authorization: Bearer <JWT>` (se obtiene en `POST /auth/login`); el rol `admin` gestiona usuarios, productos, negocio y moderación.
 
 ## Documentación
@@ -159,9 +166,10 @@ Base URL: `http://localhost:3001/api`
 | [`Docs/manual-usuario.md`](Docs/manual-usuario.md) | Manual de usuario completo: roles, flujo de compra, panel administrativo y FAQ |
 | [`Docs/guia-uso.md`](Docs/guia-uso.md) | Guía rápida de uso: funcionalidades y rutas |
 | [`Docs/CODING_STANDARDS.md`](Docs/CODING_STANDARDS.md) | Estándares de codificación obligatorios |
+| [`Docs/index.md`](Docs/index.md) | Índice general de la documentación |
 | [`CHANGELOG.md`](CHANGELOG.md) | Historial de cambios del proyecto |
 
-> Los documentos internos de auditoría y acceso académico no se publican en el repositorio.
+> Los documentos internos de auditoría, acceso académico, identidad visual y bitácora no se publican en el repositorio.
 
 ## Herramientas externas
 
