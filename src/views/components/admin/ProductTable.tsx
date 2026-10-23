@@ -1,7 +1,13 @@
 import { useMemo, useRef, useState } from 'react';
 import { Search, ChevronDown, Upload, Download, Plus, Edit2, Trash2, Package, ChevronLeft, ChevronRight as ChevRight, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
-import type { AdminProduct, InventoryStatus, ProductCreate, ProductUpsert } from '../../../models';
+import type { AdminProduct, Category, InventoryStatus, ProductCreate, ProductUpsert, UnitOfMeasure } from '../../../models';
 import { formatPrice, STATUS_LABELS } from '../../../utils';
+import {
+  createInventoryWorkbook,
+  inventoryDateValue,
+  readInventoryWorkbook,
+  type InventorySpreadsheetRow,
+} from '../../../utils/inventory-spreadsheet';
 
 interface ProductTableProps {
   products: AdminProduct[];
@@ -15,30 +21,24 @@ interface ProductTableProps {
   onImported?: () => Promise<void>;
   /** Lee las filas crudas del inventario (exportar/importar). */
   onFetchRows: () => Promise<any[]>;
+  categories: Category[];
+  units: UnitOfMeasure[];
   /** Crea un producto (importación masiva). */
   onCreateProduct: (data: ProductCreate) => Promise<void>;
   /** Actualiza un producto (importación masiva). */
   onUpdateProduct: (id: string, data: ProductUpsert) => Promise<void>;
 }
 
-/** Columnas exactas de la tabla `productos` (plantilla de importación). */
-const TEMPLATE_HEADERS = [
-  'ID_Producto', 'Nombre', 'Descripcion', 'Precio_Venta', 'Precio_Anterior', 'Marca',
-  'Contenido_Cantidad', 'Contenido_Unidad', 'Embalaje', 'Ingredientes', 'Conservacion',
-  'Promo_Desde', 'Promo_Hasta', 'Stock_Minimo', 'ID_Categoria',
-] as const;
-
-type TemplateRow = Record<(typeof TEMPLATE_HEADERS)[number], unknown>;
 const MAX_INT = 2147483647;
 const MAX_CONTENT_QTY = 9999999999.99;
 
-function isValidCsvDate(value: string): boolean {
+function isValidDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const date = new Date(`${value}T00:00:00.000Z`);
   return Number.isFinite(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
-function toTemplateRow(r: any): TemplateRow {
+function toInventoryRow(r: any): InventorySpreadsheetRow {
   return {
     ID_Producto: r.ID_Producto ?? '',
     Nombre: r.Nombre ?? '',
@@ -69,73 +69,12 @@ function downloadBlob(blob: Blob, filename: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function parseCsvRows(text: string): string[][] {
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = '';
-  let quoted = false;
-  let closedQuote = false;
-
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (quoted) {
-      if (char === '"' && text[i + 1] === '"') {
-        field += '"';
-        i += 1;
-      } else if (char === '"') {
-        quoted = false;
-        closedQuote = true;
-      } else {
-        field += char;
-      }
-      continue;
-    }
-
-    if (char === '"') {
-      if (field.length > 0 || closedQuote) throw new Error('El archivo CSV tiene comillas invalidas.');
-      quoted = true;
-    } else if (char === ',') {
-      row.push(field);
-      field = '';
-      closedQuote = false;
-    } else if (char === '\n' || char === '\r') {
-      row.push(field);
-      if (row.some((value) => value.length > 0)) rows.push(row);
-      row = [];
-      field = '';
-      closedQuote = false;
-      if (char === '\r' && text[i + 1] === '\n') i += 1;
-    } else {
-      if (closedQuote) throw new Error('El archivo CSV tiene contenido despues de una comilla de cierre.');
-      field += char;
-    }
-  }
-
-  if (quoted) throw new Error('El archivo CSV contiene una celda sin cerrar.');
-  row.push(field);
-  if (row.some((value) => value.length > 0)) rows.push(row);
-  return rows;
-}
-
-function createCsv(rows: Record<string, unknown>[]): string {
-  const escape = (value: unknown) => {
-    let text = String(value ?? '');
-    if (/^[\s]*[=+\-@]/.test(text)) text = `'${text}`;
-    return `"${text.replace(/"/g, '""')}"`;
-  };
-  const lines = [
-    TEMPLATE_HEADERS.map(escape).join(','),
-    ...rows.map((row) => TEMPLATE_HEADERS.map((header) => escape(row[header])).join(',')),
-  ];
-  return `\uFEFF${lines.join('\r\n')}`;
-}
-
-export function ProductTable({ products, onDelete, onAddClick, onEditClick, statusFilter, onStatusFilterChange, onImported, onFetchRows, onCreateProduct, onUpdateProduct }: ProductTableProps) {
+export function ProductTable({ products, onDelete, onAddClick, onEditClick, statusFilter, onStatusFilterChange, onImported, onFetchRows, categories, units, onCreateProduct, onUpdateProduct }: ProductTableProps) {
   const [search, setSearch] = useState('');
   const [innerFilter, setInnerFilter] = useState<'all' | InventoryStatus>('all');
   const [page, setPage] = useState(1);
   const [exportOpen, setExportOpen] = useState(false);
-  const [busy, setBusy] = useState<'csv' | 'pdf' | 'template' | 'import' | null>(null);
+  const [busy, setBusy] = useState<'xlsx' | 'pdf' | 'template' | 'import' | null>(null);
   const [notice, setNotice] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const perPage = 8;
@@ -161,14 +100,21 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
     return onFetchRows();
   };
 
-  const handleExportCsv = async () => {
-    setBusy('csv');
+  const downloadWorkbook = async (rows: InventorySpreadsheetRow[], filename: string) => {
+    const bytes = await createInventoryWorkbook(rows, categories, units);
+    downloadBlob(
+      new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }),
+      filename,
+    );
+  };
+
+  const handleExportWorkbook = async () => {
+    setBusy('xlsx');
     setNotice(null);
     try {
       const rows = await fetchRawRows();
-      const csv = createCsv(rows.map(toTemplateRow));
-      downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'inventario-parque100.csv');
-      setNotice({ kind: 'ok', text: `CSV exportado (${rows.length} productos) con formato de la BD.` });
+      await downloadWorkbook(rows.map(toInventoryRow), 'inventario-parque100.xlsx');
+      setNotice({ kind: 'ok', text: `Libro Excel exportado (${rows.length} productos), con filtros, formatos y validaciones.` });
     } catch (e) {
       setNotice({ kind: 'err', text: e instanceof Error ? e.message : 'No fue posible exportar.' });
     } finally {
@@ -181,15 +127,8 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
     setBusy('template');
     setNotice(null);
     try {
-      const example = {
-        ID_Producto: 'P011', Nombre: 'Ejemplo Café 500g', Descripcion: 'Descripción corta',
-        Precio_Venta: 8500, Precio_Anterior: '', Marca: 'Parque100',
-        Contenido_Cantidad: 500, Contenido_Unidad: 'g', Embalaje: '', Ingredientes: '', Conservacion: '',
-        Promo_Desde: '', Promo_Hasta: '', Stock_Minimo: 20, ID_Categoria: 4,
-      };
-      const csv = createCsv([example]);
-      downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8' }), 'plantilla-inventario-parque100.csv');
-      setNotice({ kind: 'ok', text: 'Plantilla CSV descargada. Úsala para importar sin errores.' });
+      await downloadWorkbook([], 'plantilla-inventario-parque100.xlsx');
+      setNotice({ kind: 'ok', text: 'Plantilla Excel descargada con listas, formatos y validaciones.' });
     } catch (e) {
       setNotice({ kind: 'err', text: e instanceof Error ? e.message : 'No fue posible generar la plantilla.' });
     } finally {
@@ -230,36 +169,29 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
     setBusy('import');
     setNotice(null);
     try {
-      if (file.size > 5 * 1024 * 1024) throw new Error('El archivo CSV no puede superar los 5 MB.');
-      const rows = parseCsvRows((await file.text()).replace(/^\uFEFF/, ''));
-      const headers = rows.shift() || [];
-      if (rows.length > 5000) throw new Error('El archivo CSV no puede superar las 5.000 filas.');
-      if (headers.length !== TEMPLATE_HEADERS.length || new Set(headers).size !== headers.length) {
-        throw new Error('La plantilla debe tener las 15 columnas oficiales, sin encabezados duplicados.');
-      }
-      const json = rows.map((values) => {
-        if (values.length !== headers.length) throw new Error('Todas las filas deben tener la misma cantidad de columnas.');
-        return Object.fromEntries(headers.map((header, index) => [header, values[index]])) as Record<string, unknown>;
-      });
-      if (json.length === 0) throw new Error('El archivo no tiene filas para importar.');
-      const missing = TEMPLATE_HEADERS.filter((h) => !headers.includes(h));
-      const extra = headers.filter((h) => !(TEMPLATE_HEADERS as readonly string[]).includes(h));
-      if (missing.length > 0 || extra.length > 0) {
-        throw new Error(`La plantilla no coincide. Faltan: ${missing.join(', ') || '—'}. Sobran: ${extra.join(', ') || '—'}. Descarga la plantilla oficial.`);
-      }
+      if (!file.name.toLowerCase().endsWith('.xlsx')) throw new Error('Solo se admiten libros de Excel .xlsx. Descarga la plantilla oficial para importar.');
+      if (file.size > 5 * 1024 * 1024) throw new Error('El libro de Excel no puede superar los 5 MB.');
+      const rows = await readInventoryWorkbook(await file.arrayBuffer());
       const existing: any[] = await onFetchRows();
-      const existingIds = new Set(existing.map((r) => String(r.ID_Producto)));
-      let created = 0;
-      let updated = 0;
+      const existingIds = new Set(existing.map((r) => String(r.ID_Producto).trim().toLocaleLowerCase()));
+      const categoryIds = new Set(categories.map((category) => category.id));
+      const unitNames = new Set(units.map((unit) => unit.name.trim().toLocaleLowerCase()));
       const errors: string[] = [];
-      for (let i = 0; i < json.length; i++) {
-        const row = json[i] as TemplateRow;
-        const line = i + 2;
+      const incomingIds = new Set<string>();
+      const validRows: Array<{ id: string; payload: ProductUpsert; createPayload: ProductCreate }> = [];
+      for (const { excelRow, values: row } of rows) {
+        const line = excelRow;
         try {
-          const id = String(row.ID_Producto ?? '').trim();
+          if (typeof row.ID_Producto !== 'string') {
+            throw new Error(`fila ${line}: ID_Producto debe estar guardado como texto para conservar el identificador`);
+          }
+          const id = row.ID_Producto.trim();
           const nombre = String(row.Nombre ?? '').trim();
           const descripcion = String(row.Descripcion ?? '').trim();
           if (!id || id.length > 30) throw new Error(`fila ${line}: ID_Producto es obligatorio y admite hasta 30 caracteres`);
+          const normalizedId = id.toLocaleLowerCase();
+          if (incomingIds.has(normalizedId)) throw new Error(`fila ${line}: ID_Producto está duplicado en el libro`);
+          incomingIds.add(normalizedId);
           if (!nombre || nombre.length > 50) throw new Error(`fila ${line}: Nombre es obligatorio y admite hasta 50 caracteres`);
           if (descripcion.length > 255) throw new Error(`fila ${line}: Descripcion admite hasta 255 caracteres`);
           const parseInteger = (value: unknown, field: string, optional = false) => {
@@ -279,16 +211,20 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
           const precioAnterior = parseInteger(row.Precio_Anterior, 'Precio_Anterior', true);
           const stock = parseRequiredInteger(row.Stock_Minimo, 'Stock_Minimo');
           const cat = parseRequiredInteger(row.ID_Categoria, 'ID_Categoria');
-          if (!cat || cat < 1) throw new Error(`fila ${line}: ID_Categoria debe ser mayor que cero`);
+          if (!categoryIds.has(cat)) throw new Error(`fila ${line}: ID_Categoria no existe en el catálogo actual`);
           const strOrNull = (v: unknown) => {
             const s = String(v ?? '').trim();
             return s ? s : null;
           };
+          const unit = strOrNull(row.Contenido_Unidad);
+          if (unit && !unitNames.has(unit.toLocaleLowerCase())) {
+            throw new Error(`fila ${line}: Contenido_Unidad no existe en el catálogo actual`);
+          }
           const contenidoRaw = String(row.Contenido_Cantidad ?? '').trim();
           if (contenidoRaw && (!/^\d{1,10}(\.\d{1,2})?$/.test(contenidoRaw) || Number(contenidoRaw) > MAX_CONTENT_QTY)) {
             throw new Error(`fila ${line}: Contenido_Cantidad admite hasta 10 enteros y 2 decimales`);
           }
-          const textLimits: Array<[keyof TemplateRow, number]> = [
+          const textLimits: Array<[keyof InventorySpreadsheetRow, number]> = [
             ['Marca', 50], ['Contenido_Unidad', 30], ['Embalaje', 60],
             ['Ingredientes', 255], ['Conservacion', 255],
           ];
@@ -297,10 +233,10 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
               throw new Error(`fila ${line}: ${field} admite hasta ${max} caracteres`);
             }
           }
-          const promoFrom = String(row.Promo_Desde ?? '').trim();
-          const promoTo = String(row.Promo_Hasta ?? '').trim();
-          if ((promoFrom && !isValidCsvDate(promoFrom)) || (promoTo && !isValidCsvDate(promoTo))) {
-            throw new Error(`fila ${line}: las fechas promocionales deben tener formato YYYY-MM-DD y ser fechas válidas`);
+          const promoFrom = inventoryDateValue(row.Promo_Desde);
+          const promoTo = inventoryDateValue(row.Promo_Hasta);
+          if ((promoFrom && !isValidDate(promoFrom)) || (promoTo && !isValidDate(promoTo))) {
+            throw new Error(`fila ${line}: las fechas promocionales deben ser fechas válidas`);
           }
           if (promoFrom && promoTo && promoFrom > promoTo) {
             throw new Error(`fila ${line}: Promo_Desde no puede ser posterior a Promo_Hasta`);
@@ -311,7 +247,7 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
             Precio_Anterior: precioAnterior,
             Marca: strOrNull(row.Marca),
             Contenido_Cantidad: contenidoRaw ? Number(contenidoRaw) : null,
-            Contenido_Unidad: strOrNull(row.Contenido_Unidad),
+            Contenido_Unidad: unit,
             Embalaje: strOrNull(row.Embalaje),
             Ingredientes: strOrNull(row.Ingredientes),
             Conservacion: strOrNull(row.Conservacion),
@@ -320,26 +256,61 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
             Stock_Minimo: stock,
             ID_Categoria: cat,
           };
-          // La descripción solo se envía si el CSV trae un valor: así una
-          // actualización sin descripción conserva la existente en vez de
-          // reemplazarla por el nombre.
           if (descripcion) payload.Descripcion = descripcion;
-          if (existingIds.has(id)) {
-            await onUpdateProduct(id, payload);
-            updated += 1;
-          } else {
-            await onCreateProduct({ ID_Producto: id, ...payload, Descripcion: descripcion || nombre });
-            created += 1;
-          }
+          validRows.push({
+            id,
+            payload,
+            createPayload: { ID_Producto: id, ...payload, Descripcion: descripcion || nombre },
+          });
         } catch (e) {
           errors.push(e instanceof Error ? e.message : `fila ${line}: error`);
         }
       }
-      await onImported?.();
-      setNotice({
-        kind: errors.length > 0 ? 'err' : 'ok',
-        text: `Importación: ${created} creados, ${updated} actualizados.${errors.length > 0 ? ` Errores (${errors.length}): ${errors.slice(0, 3).join(' | ')}${errors.length > 3 ? '…' : ''}` : ''}`,
-      });
+      if (errors.length > 0) {
+        setNotice({
+          kind: 'err',
+          text: `No se importó ningún producto. Corrige ${errors.length} error(es): ${errors.slice(0, 5).join(' | ')}${errors.length > 5 ? '…' : ''}`,
+        });
+        return;
+      }
+
+      let created = 0;
+      let updated = 0;
+      let saveFailure: string | null = null;
+      for (const row of validRows) {
+        try {
+          if (existingIds.has(row.id.toLocaleLowerCase())) {
+            await onUpdateProduct(row.id, row.payload);
+            updated += 1;
+          } else {
+            await onCreateProduct(row.createPayload);
+            created += 1;
+          }
+        } catch (e) {
+          saveFailure = e instanceof Error ? e.message : 'Error desconocido al guardar el producto.';
+          break;
+        }
+      }
+      if (created + updated > 0) {
+        try {
+          await onImported?.();
+        } catch (e) {
+          const refreshError = e instanceof Error ? e.message : 'Error desconocido al recargar el inventario.';
+          setNotice({
+            kind: 'err',
+            text: `Los cambios se guardaron (${created} creados y ${updated} actualizados), pero no se pudo recargar la tabla: ${refreshError}`,
+          });
+          return;
+        }
+      }
+      if (saveFailure) {
+        setNotice({
+          kind: 'err',
+          text: `Importación detenida por un error del servidor: ${created} creados y ${updated} actualizados antes de detenerse. ${saveFailure}`,
+        });
+      } else {
+        setNotice({ kind: 'ok', text: `Importación completada: ${created} creados y ${updated} actualizados.` });
+      }
     } catch (e) {
       setNotice({ kind: 'err', text: e instanceof Error ? e.message : 'No fue posible importar.' });
     } finally {
@@ -380,30 +351,30 @@ export function ProductTable({ products, onDelete, onAddClick, onEditClick, stat
         </div>
 
         <div className="flex gap-2">
-          <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImportFile(f); }} />
+          <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void handleImportFile(f); }} />
           <button onClick={() => fileRef.current?.click()} disabled={busy === 'import'}
-            title="Importar CSV con la plantilla oficial"
+            title="Importar un libro Excel con la plantilla oficial"
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-brand-ink hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
             {busy === 'import' ? <Loader2 size={15} className="animate-spin" /> : <Upload size={15} />} Importar
           </button>
           <div className="relative">
             <button onClick={() => setExportOpen((v) => !v)} disabled={busy !== null}
-              title="Exportar inventario en PDF o CSV"
+              title="Exportar el inventario como libro Excel o PDF"
               aria-expanded={exportOpen}
               className="flex items-center gap-2 px-4 py-2 rounded-xl border border-gray-200 bg-white text-brand-ink hover:bg-gray-50 transition-colors font-medium disabled:opacity-50" style={{ fontSize: '0.875rem' }}>
-              {busy === 'csv' || busy === 'pdf' || busy === 'template' ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Exportar
+              {busy === 'xlsx' || busy === 'pdf' || busy === 'template' ? <Loader2 size={15} className="animate-spin" /> : <Download size={15} />} Exportar
             </button>
             {exportOpen && (
               <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden z-30">
-                <button onClick={handleExportCsv} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-brand-surface text-left transition-colors">
+                <button onClick={handleExportWorkbook} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-brand-surface text-left transition-colors">
                   <FileSpreadsheet size={16} className="text-green-600 shrink-0" />
-                  <span><span className="block text-brand-ink font-semibold" style={{ fontSize: '0.82rem' }}>CSV (.csv)</span>
-                  <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Columnas exactas de la BD</span></span>
+                  <span><span className="block text-brand-ink font-semibold" style={{ fontSize: '0.82rem' }}>Inventario Excel (.xlsx)</span>
+                  <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Tabla con filtros y formatos</span></span>
                 </button>
                 <button onClick={handleExportTemplate} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-brand-surface text-left transition-colors border-t border-gray-50">
                   <FileSpreadsheet size={16} className="text-blue-500 shrink-0" />
-                  <span><span className="block text-brand-ink font-semibold" style={{ fontSize: '0.82rem' }}>Plantilla CSV</span>
-                  <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Formato oficial para importar</span></span>
+                  <span><span className="block text-brand-ink font-semibold" style={{ fontSize: '0.82rem' }}>Plantilla Excel (.xlsx)</span>
+                  <span className="block text-gray-400" style={{ fontSize: '0.72rem' }}>Listas y validación de celdas</span></span>
                 </button>
                 <button onClick={handleExportPdf} className="w-full flex items-center gap-3 px-4 py-3 hover:bg-brand-surface text-left transition-colors border-t border-gray-50">
                   <FileText size={16} className="text-brand-red shrink-0" />

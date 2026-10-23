@@ -92,7 +92,7 @@ export function AdminInventoryPage({ products, catalogProducts, categories, unit
             setDeleteError(null);
             setDeletingProduct(product);
           }
-        }} onAddClick={() => setShowAddModal(true)} onEditClick={(p) => setEditingProduct(p)} statusFilter={stockFilter} onStatusFilterChange={setStockFilter} onImported={onImported} onFetchRows={onFetchRows} onCreateProduct={onCreate} onUpdateProduct={onUpdate} />
+        }} onAddClick={() => setShowAddModal(true)} onEditClick={(p) => setEditingProduct(p)} statusFilter={stockFilter} onStatusFilterChange={setStockFilter} onImported={onImported} onFetchRows={onFetchRows} categories={categories} units={units} onCreateProduct={onCreate} onUpdateProduct={onUpdate} />
       </AdminPageShell>
 
       <AddProductModal isOpen={showAddModal} onClose={() => setShowAddModal(false)} onCreate={onCreate} categories={categories} units={units} onManageCategories={() => setCatalogModal('category')} />

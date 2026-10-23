@@ -104,6 +104,7 @@ src/
 │   ├── constants.ts          # Constantes globales
 │   ├── formatters.ts         # Formateo de precios, tarjetas
 │   ├── validators.ts         # Validación de formularios (+ `isSafeRedirectPath`)
+│   ├── inventory-spreadsheet.ts # Plantillas, lectura y validación de inventario XLSX (ExcelJS)
 │   ├── useScrollLock.ts      # Bloqueo de scroll del body en modales
 │   └── useDialog.ts          # Escape, foco inicial, trampa y restauración de foco
 │
@@ -181,6 +182,11 @@ La creación de pedidos es **transaccional**: `beginTransaction` → validar sto
 ```
 views → controllers → services ──HTTP──▶ routes → controllers → models ──SQL──▶ MySQL
 ```
+
+La gestión del inventario también utiliza `src/utils/inventory-spreadsheet.ts` desde la vista
+administrativa: genera y valida libros `.xlsx` en el navegador con ExcelJS, cargado bajo demanda.
+La importación valida la hoja, los encabezados, los catálogos y todas las filas antes de iniciar
+las altas o actualizaciones; CSV y `.xls` no forman parte de este flujo.
 
 ### Home: hero y más vendido semanal
 

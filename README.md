@@ -134,6 +134,22 @@ Tras `npm run db:restore`, las cuentas demo usan estas claves de desarrollo:
 | `npm run test:catalog` | Pruebas unitarias de categorías y unidades de medida, sin modificar la BD |
 | `npm run test:activity` | Pruebas unitarias del registro de actividad, sin modificar la BD |
 
+## Inventario administrativo
+
+En `/admin/inventario`, **Importar** y **Exportar** manejan libros Excel `.xlsx`; CSV y `.xls`
+no son formatos admitidos para esta función. La exportación incluye todos los productos y
+catálogos actuales. La plantilla oficial incluye las hojas `Inventario`, `Catalogos` e
+`Instrucciones`, con tabla filtrable, encabezado inmovilizado, formatos de moneda/números/fechas,
+listas para categorías y unidades, y alertas visuales para datos inválidos.
+
+La importación acepta libros de hasta 5 MB y 5.000 productos. Conserva el nombre de la hoja
+`Inventario` y sus 15 encabezados oficiales. Los IDs existentes se actualizan y los nuevos se
+crean. Se comprueban duplicados, campos obligatorios, límites, categorías/unidades válidas,
+precios, cantidades y fechas. Las fórmulas, enlaces y valores enriquecidos se rechazan. El
+libro se valida completo antes de guardar: un error de datos impide aplicar cualquiera de las
+filas. Si la API falla durante la escritura, el mensaje informa los cambios que alcanzaron a
+guardarse antes del error.
+
 ## API REST
 
 Base URL: `http://localhost:3001/api`

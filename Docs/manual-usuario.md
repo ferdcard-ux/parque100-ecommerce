@@ -168,7 +168,7 @@ de guardar. El servidor vuelve a validar los datos recibidos.
 | Contenido del producto | Hasta 10 dígitos enteros y 2 decimales; unidad, categoría y unidad de medida: 30 caracteres |
 | Reseñas y motivos de cancelación | Máximo 255 caracteres |
 | Datos del negocio (administración) | Nombre: 80; NIT: 30 (números y guiones); teléfono: exactamente 10 dígitos; dirección: 120; correo y horario: 80; descripción: 255 |
-| Imágenes y archivos | URL de imagen: máximo 2.048 caracteres; archivo local: imagen de hasta 2 MB; importación de inventario: CSV |
+| Imágenes y archivos | URL de imagen: máximo 2.048 caracteres; archivo local: imagen de hasta 2 MB; importación de inventario: libro Excel `.xlsx`, máximo 5 MB y 5.000 filas |
 | Búsquedas | Máximo 100 caracteres |
 
 Los pagos electrónicos son simulaciones académicas: no ingreses datos
@@ -306,7 +306,7 @@ El panel administrativo se abre desde el enlace **"Admin"** del navbar o entrand
 - **Editar producto:** abre el mismo modal con los datos precargados.
 - **Administrar categorías de productos / unidades de medida:** botones para agregar, renombrar y eliminar opciones. No se pueden eliminar categorías con productos ni unidades todavía usadas; al renombrar una unidad se actualizan los productos vinculados.
 - **Eliminar producto:** muestra un diálogo de confirmación con el nombre antes de borrar; la acción se puede cancelar y no se puede eliminar un producto que tenga pedidos asociados.
-- **Importar / Exportar inventario:** usa la plantilla CSV oficial para cargar cambios de forma masiva (máximo 5 MB y 5.000 filas); también puedes exportar el inventario a CSV o PDF.
+- **Importar / Exportar inventario:** usa la plantilla Excel `.xlsx` oficial, con tabla, filtros, listas de categorías/unidades, formatos numéricos y alertas condicionales. Solo se importan libros `.xlsx` de hasta 5 MB y 5.000 filas. El libro completo se valida antes de guardar: si hay errores de datos no se aplica ninguna fila. Los IDs existentes se actualizan y los nuevos se crean. También puedes exportar la tabla del inventario a Excel o el resumen visible a PDF.
 
 ### 6.4 Pedidos pendientes (`/admin/pedidos-pendientes`)
 

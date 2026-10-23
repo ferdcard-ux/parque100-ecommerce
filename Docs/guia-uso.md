@@ -129,7 +129,7 @@ financieros ni datos personales reales.
 - Tabla de productos con búsqueda, filtro por estado y paginación
 - **CRUD completo**: agregar (modal con nombre, categoría preestablecida, cantidad, precio, contenido/unidad e imagen por URL web o archivo local con vista previa), editar (modal precargado), eliminar (confirmación con nombre del producto, cancelable antes de ejecutar)
 - Botones **Administrar categorías de productos** y **Administrar unidades de medida** con opciones para agregar, renombrar y eliminar. La lista desplegable de categorías evita nombres duplicados y ofrece **+ Agregar categoría**; no se eliminan opciones que sigan en uso.
-- Importación desde la plantilla CSV oficial y exportación en CSV o PDF
+- Importación desde la plantilla oficial `.xlsx` y exportación del inventario a Excel o PDF. La plantilla incorpora listas de categorías/unidades, formatos de fecha/moneda/número, validaciones y alertas para datos incompletos o IDs duplicados; el libro se valida completo antes de aplicar cambios.
 
 ### Pedidos admin (`/admin/pedidos-pendientes`, `/admin/pedidos`, `/admin/pedidos/:id`)
 - Pendientes con botón "Tomar pedido" (pendiente → preparando)

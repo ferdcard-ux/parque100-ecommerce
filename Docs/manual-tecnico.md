@@ -89,6 +89,20 @@ npm run build
 - Variables CSS personalizadas en `theme.css` para el tema
 - `style={{}}` inline solo para valores dinámicos o gradientes
 
+## Importación y exportación del inventario
+
+El inventario administrativo intercambia datos exclusivamente mediante libros `.xlsx` con
+ExcelJS, cargado de forma diferida en el navegador. CSV y `.xls` no se aceptan; el PDF de
+consulta es una función independiente y se conserva.
+
+La plantilla tiene las hojas `Inventario`, `Catalogos` e `Instrucciones`. La hoja de datos
+mantiene los 15 encabezados oficiales y ofrece filtros, encabezado inmovilizado, formatos de
+celda y listas para los catálogos vigentes. La importación se limita a 5 MB y 5.000 filas,
+rechaza fórmulas y contenido enriquecido, valida campos, IDs, precios, cantidades, fechas,
+categorías y unidades, y no inicia escrituras si hay errores en los datos. Las altas y
+actualizaciones se envían a la API individualmente; si hay un error del servidor durante esa
+fase, algunos cambios anteriores pueden haberse aplicado y la interfaz informa cuántos.
+
 ## Base de datos
 
 ### Esquema

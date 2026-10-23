@@ -4,6 +4,11 @@
 
 ## [Sin publicar]
 
+### Inventario
+- La importación y exportación de datos del inventario administrativo usan libros Excel `.xlsx`; CSV y `.xls` ya no se aceptan para este flujo. El PDF de consulta se conserva.
+- La plantilla incluye tablas con filtros, formatos, catálogos, listas desplegables, instrucciones y alertas visuales. Se validan hasta 5 MB y 5.000 filas antes de iniciar cambios; las fórmulas y los datos inválidos se rechazan.
+- Se corrigió la estructura del libro exportado para que Excel lo abra sin reparar la hoja de catálogos.
+
 ### Inicio y catálogo
 - El hero ocupa el ancho disponible y compone dos tarjetas independientes con borde, sombra y separación: el panel **Más vendido de la semana** y el carrusel `HeroProductSlider`.
 - El carrusel usa `embla-carousel-react` y muestra hasta seis productos reales con imagen y stock, priorizando promociones y variedad de categorías; conserva flechas, puntos, autoplay, gestos y el acceso a la ficha.
