@@ -41,7 +41,10 @@ export function AdminOrdersPage() {
   ];
   const [estadoFilter, setEstadoFilter] = useState<OrderEstado | null>(null);
 
-  const visibleOrders = estadoFilter ? orders.filter((o) => o.Estado === estadoFilter) : orders;
+  const visibleOrders = useMemo(
+    () => (estadoFilter ? orders.filter((o) => o.Estado === estadoFilter) : orders),
+    [orders, estadoFilter],
+  );
 
   /** Agrupa por fecha (YYYY-MM-DD). Solo el día actual inicia expandido. */
   const groups = useMemo(() => {
@@ -66,8 +69,14 @@ export function AdminOrdersPage() {
   useEffect(() => {
     setCollapsed((prev) => {
       const next: Record<string, boolean> = {};
-      for (const [key] of groups) next[key] = prev[key] ?? key !== todayKey;
-      return next;
+      let changed = false;
+      for (const [key] of groups) {
+        const value = prev[key] ?? key !== todayKey;
+        next[key] = value;
+        if (!(key in prev) || prev[key] !== value) changed = true;
+      }
+      if (Object.keys(prev).length !== Object.keys(next).length) changed = true;
+      return changed ? next : prev;
     });
   }, [groups, todayKey]);
 
