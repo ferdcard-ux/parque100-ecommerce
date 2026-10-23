@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { useNavigate } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { Mail, Lock, Eye, EyeOff, Store, UserCog, X } from 'lucide-react';
 import type { LoginCredentials } from '../../../models';
 import { isValidEmail } from '../../../utils';
@@ -39,6 +39,9 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
   const adminPanelRef = useRef<HTMLDivElement>(null);
   useDialogBehavior(adminModalOpen, () => setAdminModalOpen(false), adminPanelRef);
   const navigate = useNavigate();
+  const registerPath = nextPath !== '/'
+    ? `/register?next=${encodeURIComponent(nextPath)}`
+    : '/register';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,12 +119,11 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
                 <div className="relative">
                   <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input id="login-password" type={showPassword ? 'text' : 'password'} required maxLength={72} autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••"
-                    className="w-full pl-10 pr-36 py-3 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
+                    className="w-full pl-10 pr-14 py-3 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
                     style={{ fontSize: '0.9rem' }}
                   />
-                  <button type="button" onClick={() => setShowPassword(!showPassword)} aria-pressed={showPassword} className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs text-gray-500 transition-colors hover:text-brand-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/40">
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-controls="login-password" aria-pressed={showPassword} className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 transition-colors hover:text-brand-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/40">
                     {showPassword ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}
-                    <span>{showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
                   </button>
                 </div>
               </div>
@@ -144,7 +146,18 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
               </button>
             </form>
 
-            <div className="mt-5 flex justify-center">
+            <div className="mt-5 text-center">
+              <p className="text-gray-500" style={{ fontSize: '0.85rem' }}>¿No tienes una cuenta?</p>
+              <Link
+                to={registerPath}
+                className="mt-1 inline-block font-semibold text-brand-red hover:underline"
+                style={{ fontSize: '0.9rem' }}
+              >
+                Crea tu cuenta
+              </Link>
+            </div>
+
+            <div className="mt-3 flex justify-center">
               <button type="button" onClick={() => setAdminModalOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 rounded-lg text-gray-500 hover:text-brand-red hover:bg-brand-surface transition-all"
                 style={{ fontSize: '0.82rem' }}
@@ -226,12 +239,11 @@ export function LoginForm({ onLogin, onAdminLogin, error, nextPath = '/', switch
                 <div className="relative">
                   <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input id="admin-password" type={showAdminPassword ? 'text' : 'password'} required maxLength={72} autoComplete="current-password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} placeholder="••••••••"
-                    className="w-full pl-10 pr-36 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
+                    className="w-full pl-10 pr-14 py-2.5 rounded-xl border border-gray-200 bg-brand-surface focus:outline-none focus:border-brand-red focus:ring-2 focus:ring-brand-red/20 text-brand-ink transition-all"
                     style={{ fontSize: '0.875rem' }}
                   />
-                  <button type="button" onClick={() => setShowAdminPassword(!showAdminPassword)} aria-pressed={showAdminPassword} className="absolute right-2 top-1/2 -translate-y-1/2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-xs text-gray-500 transition-colors hover:text-brand-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/40">
+                  <button type="button" onClick={() => setShowAdminPassword(!showAdminPassword)} aria-label={showAdminPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} aria-controls="admin-password" aria-pressed={showAdminPassword} className="absolute right-1.5 top-1/2 -translate-y-1/2 inline-flex h-11 w-11 items-center justify-center rounded-lg text-gray-500 transition-colors hover:text-brand-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-red/40">
                     {showAdminPassword ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}
-                    <span>{showAdminPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}</span>
                   </button>
                 </div>
               </div>
