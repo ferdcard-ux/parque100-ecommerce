@@ -3,6 +3,7 @@
  */
 import orderModel from '../models/order.model.js';
 import { getPaymentMode, isDemoPaymentsEnabled } from '../config/payment-mode.js';
+import { sendError } from '../utils/http-error.js';
 
 const ORDER_FIELDS = new Set([
   'Tipo_Entrega', 'Destinatario', 'Telefono', 'Torre', 'Piso', 'Apartamento', 'Notas', 'productos',
@@ -74,7 +75,7 @@ export const paymentController = {
         message: 'Simulacion iniciada; no se realizo ningun cobro.',
       });
     } catch (error) {
-      return res.status(error.statusCode || 500).json({ success: false, error: error.message });
+      return sendError(res, error, { success: false });
     }
   },
 
@@ -122,7 +123,7 @@ export const paymentController = {
         message: 'Transaccion aprobada unicamente en la simulacion academica; no hubo cobro real.',
       });
     } catch (error) {
-      return res.status(error.statusCode || 500).json({ success: false, error: error.message });
+      return sendError(res, error, { success: false });
     }
   },
 
@@ -135,7 +136,7 @@ export const paymentController = {
       if (res.locals) res.locals.activityDetail = `Referencia: ${req.params.reference.slice(0, 12)}…`;
       return res.json({ success: true, state: 'cancelada_demo' });
     } catch (error) {
-      return res.status(error.statusCode || 500).json({ success: false, error: error.message });
+      return sendError(res, error, { success: false });
     }
   },
 };

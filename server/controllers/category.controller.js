@@ -4,6 +4,7 @@
  * frontend (patron MVC - Controller).
  */
 import categoryModel from '../models/category.model.js';
+import { sendError } from '../utils/http-error.js';
 
 /**
  * Controlador de categorias.
@@ -24,7 +25,7 @@ export const categoryController = {
       const categories = await categoryModel.findAll();
       res.json(categories);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 

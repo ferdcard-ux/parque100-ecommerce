@@ -5,6 +5,7 @@
  * `productModel` (patron MVC - Controller).
  */
 import productModel from '../models/product.model.js';
+import { sendError } from '../utils/http-error.js';
 
 const MAX_INT = 2147483647;
 const MAX_CONTENT_QTY = 9999999999.99;
@@ -122,7 +123,7 @@ export const productController = {
       const products = await productModel.findAll();
       res.json(products);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -143,7 +144,7 @@ export const productController = {
         ? `«${product.Nombre}» (#${req.params.id})` : null;
       res.json(product);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 

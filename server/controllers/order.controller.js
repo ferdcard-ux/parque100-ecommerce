@@ -10,6 +10,7 @@
 import orderModel from '../models/order.model.js';
 import { isAdminRole, isStaffRole } from '../middleware/auth.js';
 import { isDemoPaymentMethod, isDemoPaymentsEnabled } from '../config/payment-mode.js';
+import { sendError } from '../utils/http-error.js';
 
 /** Traduce el rol almacenado al actor usado por las reglas de cancelacion. */
 function roleToActor(rol) {
@@ -46,7 +47,7 @@ export const orderController = {
       }
       res.json(visible);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -74,7 +75,7 @@ export const orderController = {
       }
       res.json(order);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -102,7 +103,7 @@ export const orderController = {
       if (res.locals) res.locals.activityDetail = `Nuevo estado: ${Estado}`;
       res.json({ message: 'Estado actualizado', estado: Estado });
     } catch (err) {
-      res.status(err.statusCode || 500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -153,7 +154,7 @@ export const orderController = {
       if (res.locals) res.locals.activityDetail = `Actor: ${actor}`;
       res.json({ message: 'Pedido cancelado' });
     } catch (err) {
-      res.status(err.statusCode || 500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -194,7 +195,7 @@ export const orderController = {
         ? ` · ${lines} producto(s)` : '');
       res.status(201).json({ id, message: 'Pedido creado' });
     } catch (err) {
-      res.status(err.statusCode || 500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 };

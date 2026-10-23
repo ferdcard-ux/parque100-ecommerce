@@ -74,9 +74,6 @@ app.use(
   }),
 );
 
-/** Permite interpretar cuerpos JSON (limite ampliado para imagenes en dataURL). */
-app.use(express.json({ limit: '10mb' }));
-
 function createLoginLimiter() {
   return rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -94,6 +91,20 @@ function createLoginLimiter() {
 
 const storeLoginLimiter = createLoginLimiter();
 const siteAccessLoginLimiter = createLoginLimiter();
+const passwordChangeLimiter = createLoginLimiter();
+
+/**
+ * Limita la creacion de pedidos por cuenta de acceso (no por IP: el equipo
+ * puede compartir red) para evitar agotar el inventario en rafaga.
+ */
+const orderCreateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  keyGenerator: (req) => `site-access:${req.siteAccess?.id ?? 'anon'}`,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Demasiados pedidos en poco tiempo. Intenta de nuevo en unos minutos.' },
+});
 
 /**
  * Website access has an identity store separate from the demo-shop users.
@@ -113,12 +124,23 @@ app.use('/api', async (req, res, next) => {
   return requireSiteSession(req, res, next);
 });
 
+/**
+ * Permite interpretar cuerpos JSON (limite ampliado para imagenes en dataURL).
+ * Se registra despues de la puerta de acceso: un visitante sin sesion no
+ * puede forzar el analisis de cuerpos grandes; los endpoints publicos de
+ * acceso solo aceptan cuerpos pequenos.
+ */
+app.use('/api/site-access', express.json({ limit: '10kb' }));
+app.use(express.json({ limit: '10mb' }));
+
 app.use('/api', activityLogMiddleware);
 app.use('/api', activityRouter);
 
 /** Registro de routers por modulo. */
 app.post('/api/auth/login', storeLoginLimiter);
 app.post('/api/site-access/login', siteAccessLoginLimiter);
+app.put('/api/auth/password', passwordChangeLimiter);
+app.post('/api/orders', orderCreateLimiter);
 app.use('/api', siteAccessRouter);
 app.use('/api', productsRouter);
 app.use('/api', categoriesRouter);

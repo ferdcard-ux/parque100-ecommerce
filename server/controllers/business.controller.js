@@ -5,6 +5,7 @@
  * (patron MVC - Controller).
  */
 import businessModel from '../models/business.model.js';
+import { sendError } from '../utils/http-error.js';
 
 /**
  * Controlador de datos del negocio.
@@ -26,7 +27,7 @@ export const businessController = {
       if (!business) return res.status(404).json({ error: 'Datos del negocio no encontrados' });
       res.json(business);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -106,7 +107,7 @@ export const businessController = {
       if (res.locals) res.locals.activityDetail = business?.Nombre ? `«${business.Nombre}»` : null;
       res.json(business);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 };

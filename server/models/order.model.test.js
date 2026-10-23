@@ -27,10 +27,16 @@ function createConnection(queryHandler) {
     release() { events.push('release'); },
     async query(sql, parameters) {
       queries.push({ sql, parameters });
+      if (sql.includes("AS total FROM pedidos WHERE ID_Usuario = ? AND Estado = 'pendiente'")) {
+        return [[{ total: pendingOrders }], []];
+      }
       return queryHandler(sql, parameters);
     },
   };
 }
+
+/** Pedidos pendientes que reporta la conexion simulada (tope anti-abuso). */
+let pendingOrders = 0;
 
 test('starting a demo payment persists an idempotent reference without an amount', async () => {
   const restoreMode = setDemoMode();
@@ -133,6 +139,66 @@ test('cash order creation still persists the order and deducts stock', async () 
     assert.ok(connection.queries.some(({ sql }) => sql.includes('UPDATE productos SET Stock_Minimo = Stock_Minimo -')));
     assert.deepEqual(connection.events, ['begin', 'commit', 'release']);
   } finally {
+    pool.getConnection = originalGetConnection;
+  }
+});
+
+test('cash orders compute the change on the server and ignore the client date', async () => {
+  const originalGetConnection = pool.getConnection;
+  const connection = createConnection((sql) => {
+    if (sql.includes('SELECT Nombre, Precio_Venta')) {
+      return [[{ Nombre: 'Producto demo', Precio_Venta: 1000, Stock_Minimo: 5 }], []];
+    }
+    if (sql.includes('INSERT INTO pedidos')) return [{ insertId: 52 }, []];
+    if (sql.includes('INSERT INTO detalle_pedido')) return [{ affectedRows: 1 }, []];
+    if (sql.includes('UPDATE productos SET Stock_Minimo = Stock_Minimo -')) return [{ affectedRows: 1 }, []];
+    throw new Error(`Consulta inesperada: ${sql}`);
+  });
+  pool.getConnection = async () => connection;
+  try {
+    await orderModel.createWithDetails({
+      ID_Usuario: 1,
+      Metodo_Pago: 'Efectivo',
+      Fecha: '1999-01-01',
+      Monto_Recibido: 5000,
+      Cambio: 999999,
+      productos: [{ ID_Producto: 'P001', Cantidad: 2 }],
+    });
+    const insert = connection.queries.find(({ sql }) => sql.includes('INSERT INTO pedidos'));
+    assert.notEqual(insert.parameters[0], '1999-01-01');
+    assert.equal(insert.parameters[2], 2000);
+    assert.equal(insert.parameters[12], 3000);
+  } finally {
+    pool.getConnection = originalGetConnection;
+  }
+});
+
+test('orders over the per-product cap or the pending limit are rejected', async () => {
+  const originalGetConnection = pool.getConnection;
+  const connection = createConnection((sql) => {
+    throw new Error(`La validacion debia rechazar antes de consultar: ${sql}`);
+  });
+  pool.getConnection = async () => connection;
+  try {
+    await assert.rejects(
+      orderModel.createWithDetails({
+        ID_Usuario: 1,
+        Metodo_Pago: 'Efectivo',
+        productos: [{ ID_Producto: 'P001', Cantidad: 30 }, { ID_Producto: 'P001', Cantidad: 21 }],
+      }),
+      (error) => error.statusCode === 400 && /como maximo 50 unidades/.test(error.message),
+    );
+    pendingOrders = 5;
+    await assert.rejects(
+      orderModel.createWithDetails({
+        ID_Usuario: 1,
+        Metodo_Pago: 'Efectivo',
+        productos: [{ ID_Producto: 'P001', Cantidad: 1 }],
+      }),
+      (error) => error.statusCode === 429,
+    );
+  } finally {
+    pendingOrders = 0;
     pool.getConnection = originalGetConnection;
   }
 });

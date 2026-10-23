@@ -4,6 +4,7 @@
 import userModel from '../models/user.model.js';
 import permissionModel from '../models/permission.model.js';
 import { hashPassword } from './auth.controller.js';
+import { sendError } from '../utils/http-error.js';
 
 const MAX_USER_ID = 2147483647;
 
@@ -92,7 +93,7 @@ export const usersController = {
       const users = await userModel.findAll();
       res.json(users);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -128,7 +129,7 @@ export const usersController = {
         }
         return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
       }
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -163,7 +164,7 @@ export const usersController = {
         }
         return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
       }
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -187,7 +188,7 @@ export const usersController = {
       if (!deleted) return res.status(404).json({ error: 'Usuario no encontrado' });
       res.json({ message: 'Usuario eliminado' });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -225,7 +226,7 @@ export const usersController = {
         }
         return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
       }
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -245,7 +246,7 @@ export const usersController = {
       if (!details) return res.status(404).json({ error: 'Usuario no encontrado' });
       res.json(details);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -272,7 +273,7 @@ export const usersController = {
       await userModel.updateDeliveryDetailsById(id, details);
       res.json(details);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -290,7 +291,7 @@ export const usersController = {
     try {
       res.json(await permissionModel.findByUser(id));
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -312,7 +313,7 @@ export const usersController = {
     try {
       res.json(await permissionModel.upsert(id, { puede_cancelar }));
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 };

@@ -4,6 +4,7 @@
  * estrellas delegando en `ratingModel` (patron MVC - Controller).
  */
 import ratingModel from '../models/rating.model.js';
+import { sendError } from '../utils/http-error.js';
 
 /**
  * Controlador de calificaciones.
@@ -28,7 +29,7 @@ export const ratingController = {
       });
       res.json(ratings);
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -47,7 +48,7 @@ export const ratingController = {
       if (!productId) return res.status(400).json({ error: 'Indica el producto.' });
       res.json(await ratingModel.summaryByProduct(productId));
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -72,7 +73,7 @@ export const ratingController = {
       if (res.locals) res.locals.activityDetail = parts.join(' · ') || null;
       res.status(201).json({ id, message: 'Calificacion guardada' });
     } catch (err) {
-      res.status(err.statusCode || 500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -98,7 +99,7 @@ export const ratingController = {
         && stars >= 1 && stars <= 5 ? `${stars}★` : null;
       res.json({ message: 'Resena actualizada' });
     } catch (err) {
-      res.status(err.statusCode || 500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 
@@ -121,7 +122,7 @@ export const ratingController = {
       if (!deleted) return res.status(404).json({ error: 'Calificacion no encontrada' });
       res.json({ message: 'Calificacion eliminada' });
     } catch (err) {
-      res.status(500).json({ error: err.message });
+      sendError(res, err);
     }
   },
 };

@@ -29,6 +29,11 @@ const VALID_PAYMENT = ['Efectivo', 'Tarjeta (DEMO)', 'Nequi (DEMO)'];
 /** Longitud maxima de las notas del cliente. */
 const MAX_NOTES_LENGTH = 500;
 
+/** Topes anti-abuso de inventario (configurables por entorno). */
+const MAX_UNITS_PER_PRODUCT = Number(process.env.ORDER_MAX_UNITS_PER_PRODUCT) || 50;
+const MAX_LINES_PER_ORDER = Number(process.env.ORDER_MAX_LINES) || 50;
+const MAX_PENDING_ORDERS = Number(process.env.ORDER_MAX_PENDING) || 5;
+
 /** Fecha actual en horario del servidor (YYYY-MM-DD), sin desfase UTC. */
 function localDate() {
   const now = new Date();
@@ -54,13 +59,17 @@ function orderNumberOrNull(value, name) {
 }
 
 async function insertOrder(connection, data, payMethod) {
+  // La fecha y el cambio los fija el servidor; se ignoran los del cliente.
   const {
-    Fecha, Tipo_Entrega, ID_Usuario, productos,
+    Tipo_Entrega, ID_Usuario, productos,
     Destinatario, Telefono, Torre, Piso, Apartamento,
-    Monto_Recibido, Cambio, Comprobante, Notas,
+    Monto_Recibido, Comprobante, Notas,
   } = data;
   if (!Array.isArray(productos) || productos.length === 0) {
     throw createOrderError('El pedido debe incluir al menos un producto', 400);
+  }
+  if (productos.length > MAX_LINES_PER_ORDER) {
+    throw createOrderError(`El pedido admite como maximo ${MAX_LINES_PER_ORDER} productos distintos.`, 400);
   }
   if (!VALID_PAYMENT.includes(payMethod)) {
     throw createOrderError(`Metodo de pago invalido. Usa: ${VALID_PAYMENT.join(', ')}`, 400);
@@ -89,11 +98,8 @@ async function insertOrder(connection, data, payMethod) {
     throw createOrderError('Los comprobantes de pago electronico no estan habilitados.', 400);
   }
   const receivedAmount = orderNumberOrNull(Monto_Recibido, 'Monto recibido');
-  const changeAmount = orderNumberOrNull(Cambio, 'Cambio');
-  for (const [value, name] of [[receivedAmount, 'Monto recibido'], [changeAmount, 'Cambio']]) {
-    if (value !== null && (!Number.isInteger(value) || value < 0 || value > 999999)) {
-      throw createOrderError(`${name} debe ser un entero entre 0 y 999999.`, 400);
-    }
+  if (receivedAmount !== null && (!Number.isInteger(receivedAmount) || receivedAmount < 0 || receivedAmount > 999999)) {
+    throw createOrderError('Monto recibido debe ser un entero entre 0 y 999999.', 400);
   }
 
   const stockPorProducto = new Map();
@@ -103,10 +109,24 @@ async function insertOrder(connection, data, payMethod) {
     }
     const productId = String(item.ID_Producto);
     const existing = stockPorProducto.get(productId);
-    stockPorProducto.set(productId, {
-      ID_Producto: item.ID_Producto,
-      Cantidad: (existing?.Cantidad || 0) + item.Cantidad,
-    });
+    const quantity = (existing?.Cantidad || 0) + item.Cantidad;
+    if (quantity > MAX_UNITS_PER_PRODUCT) {
+      throw createOrderError(`Puedes pedir como maximo ${MAX_UNITS_PER_PRODUCT} unidades de cada producto.`, 400);
+    }
+    stockPorProducto.set(productId, { ID_Producto: item.ID_Producto, Cantidad: quantity });
+  }
+
+  if (ID_Usuario != null) {
+    const [[pending]] = await connection.query(
+      "SELECT COUNT(*) AS total FROM pedidos WHERE ID_Usuario = ? AND Estado = 'pendiente'",
+      [ID_Usuario],
+    );
+    if (Number(pending?.total) >= MAX_PENDING_ORDERS) {
+      throw createOrderError(
+        `Tienes ${MAX_PENDING_ORDERS} pedidos pendientes; espera a que se procesen antes de crear otro.`,
+        429,
+      );
+    }
   }
 
   let orderTotal = 0;
@@ -134,14 +154,20 @@ async function insertOrder(connection, data, payMethod) {
     }
   }
 
+  const roundedTotal = Math.round(orderTotal);
+  if (receivedAmount !== null && receivedAmount < roundedTotal) {
+    throw createOrderError('El monto recibido es menor que el total del pedido; revisa el carrito.', 409);
+  }
+  const changeAmount = receivedAmount === null ? null : receivedAmount - roundedTotal;
+
   const [result] = await connection.query(
     `INSERT INTO pedidos
       (Fecha, Estado, Total, Tipo_Entrega, ID_Usuario, Destinatario, Telefono, Torre, Piso, Apartamento, Metodo_Pago, Monto_Recibido, Cambio, Comprobante, Notas)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
-      Fecha || localDate(),
+      localDate(),
       'pendiente',
-      Math.round(orderTotal),
+      roundedTotal,
       delivery,
       ID_Usuario ?? null,
       orderText(Destinatario, 50, 'Destinatario'),
