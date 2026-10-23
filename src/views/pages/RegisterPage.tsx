@@ -8,7 +8,7 @@ export function RegisterPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const rawNext = searchParams.get('next');
-  const nextPath = isSafeRedirectPath(rawNext) ? rawNext : '/login';
+  const nextPath = isSafeRedirectPath(rawNext) ? rawNext : '/';
 
   const handleRegister = async (data: { firstName: string; lastName: string; email: string; phone: string; password: string; confirmPassword: string }) => {
     await register(data);

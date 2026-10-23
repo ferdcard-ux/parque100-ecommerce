@@ -18,6 +18,7 @@ import { RootLayout } from './views/components/layout/RootLayout';
 import { HomePage } from './views/pages/HomePage';
 import { CartPage } from './views/pages/CartPage';
 import { LoginPage } from './views/pages/LoginPage';
+import { RegisterPage } from './views/pages/RegisterPage';
 import { AddressPage } from './views/pages/AddressPage';
 import { PaymentMethodPage } from './views/pages/PaymentMethodPage';
 import { CardPaymentPage } from './views/pages/CardPaymentPage';
@@ -403,7 +404,7 @@ export default function App() {
             },
             { path: '/login', Component: LoginPage },
             { path: '/index.html', Component: IndexRedirect },
-            { path: '/register', Component: () => <Navigate to="/access.html" replace /> },
+            { path: '/register', Component: RegisterPage },
             { path: '/payment-success', Component: PaymentSuccessWrapper },
             { path: '/admin', Component: () => <RequireStaff><AdminDashboardPage /></RequireStaff> },
             { path: '/admin/inventario', Component: () => <RequireAdmin><AdminWrapper /></RequireAdmin> },

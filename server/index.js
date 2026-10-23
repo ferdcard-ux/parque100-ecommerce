@@ -97,12 +97,12 @@ const siteAccessLoginLimiter = createLoginLimiter();
 
 /**
  * Website access has an identity store separate from the demo-shop users.
- * Store account login is available only after the site disclaimer is accepted.
+ * Store account login and registration are available only after the site
+ * disclaimer is accepted.
  */
 app.use('/api', async (req, res, next) => {
   const path = req.originalUrl.split('?')[0];
   const publicEndpoints = new Set([
-    'POST /api/auth/register',
     'POST /api/site-access/login',
     'GET /api/site-access/proxy-access',
     'POST /api/site-access/logout',

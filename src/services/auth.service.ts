@@ -82,6 +82,7 @@ export const authService = {
   async register(data: RegisterData): Promise<User> {
     const res = await fetch(`${API}/auth/register`, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         Nombre: `${data.firstName} ${data.lastName}`.trim(),

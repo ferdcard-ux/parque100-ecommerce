@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
+import { Link } from 'react-router';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowLeft, Store } from 'lucide-react';
 import type { RegisterData } from '../../../models';
 import { isValidEmail, isValidPassword } from '../../../utils';
@@ -14,7 +14,6 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
   const [terms, setTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   const [form, setForm] = useState({
     firstName: '',
@@ -67,7 +66,6 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
         password: form.password,
         confirmPassword: form.confirm,
       });
-      navigate('/login');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrarse');
     } finally {

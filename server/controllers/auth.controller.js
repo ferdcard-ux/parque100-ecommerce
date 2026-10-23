@@ -128,9 +128,45 @@ export const authController = {
    * @returns {Promise<void>} 201 con `{ id, token }`, 409 si correo o telefono ya existen.
    */
   async register(req, res) {
-    return res.status(403).json({
-      error: 'El registro esta deshabilitado. Solicita autorizacion al responsable del sitio.',
-    });
+    const { Nombre, Correo, Contrasena, Telefono, Direccion } = req.body || {};
+    if (typeof Nombre !== 'string' || Nombre.trim().length === 0 || Nombre.trim().length > 30) {
+      return res.status(400).json({ error: 'Nombre invalido' });
+    }
+    if (typeof Correo !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(Correo) || Correo.length > 50) {
+      return res.status(400).json({ error: 'Correo electronico invalido' });
+    }
+    if (typeof Contrasena !== 'string' || Contrasena.length < 8 || Contrasena.length > 72) {
+      return res.status(400).json({ error: 'La contrasena debe tener entre 8 y 72 caracteres' });
+    }
+    const phone = Telefono === '' || Telefono === undefined || Telefono === null ? null : String(Telefono);
+    if (phone !== null && !/^\d{7,20}$/.test(phone)) {
+      return res.status(400).json({ error: 'Telefono invalido' });
+    }
+    try {
+      if (await userModel.existsByEmail(Correo.trim())) {
+        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
+      }
+      if (phone !== null && await userModel.existsByPhone(phone)) {
+        return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
+      }
+      const id = await userModel.create({
+        Nombre: Nombre.trim(),
+        Correo: Correo.trim(),
+        Contrasena: await hashPassword(Contrasena),
+        Telefono: phone,
+        Direccion: typeof Direccion === 'string' ? Direccion : '',
+      });
+      res.status(201).json({ id, token: signToken({ ID_Usuario: id, Rol: 'usuario' }), message: 'Usuario registrado' });
+    } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        const message = String(err.message || '');
+        if (message.includes('Telefono')) {
+          return res.status(409).json({ error: 'El numero de telefono ya esta registrado' });
+        }
+        return res.status(409).json({ error: 'El correo electronico ya esta registrado' });
+      }
+      res.status(500).json({ error: 'Error al registrar el usuario' });
+    }
   },
 };
 
