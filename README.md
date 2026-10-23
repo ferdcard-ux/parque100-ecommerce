@@ -54,7 +54,7 @@ npm run server
 npm run dev
 ```
 
-> Si tu MySQL tiene otras credenciales o base, cópialas en un archivo `.env` (ver `.env.example`: `DB_USER`, `DB_PASSWORD`, `DB_NAME`, además de `PORT`, `JWT_SECRET` y `CORS_ORIGIN`).
+> Si tu MySQL tiene otras credenciales o base, cópialas en un archivo `.env` (ver `.env.example`: `DB_USER`, `DB_PASSWORD`, `DB_NAME`, además de `PORT`, `JWT_SECRET` y `CORS_ORIGIN`). El backend debe usar una cuenta con privilegios mínimos (`SELECT/INSERT/UPDATE/DELETE` sobre `parque100`), no `root`.
 > Windows: si el cliente no está en `C:\Program Files\MySQL\MySQL Server 8.4\bin`, define `MYSQL_BIN` con su directorio `bin`.
 > Linux/macOS: instala el cliente (`sudo apt install mysql-client`, o `mariadb-client`) y usa los mismos comandos; si el binario no está en el PATH, define `MYSQL_BIN` (p. ej. `MYSQL_BIN=/usr/local/mysql/bin npm run db:dump`). El script también acepta clientes MariaDB (`mariadb`/`mariadb-dump`).
 
@@ -91,17 +91,32 @@ git add .BD/parque100.sql && git commit -m "chore(db): sincronizar datos"
 npm run db:restore
 ```
 
-- `db:dump` exporta `parque100` (esquema + datos) a `.BD/parque100.sql`.
+- `db:dump` exporta `parque100` (esquema + datos) a `.BD/parque100.sql` y **reemplaza
+  todas las contraseñas por las claves de desarrollo** (tabla siguiente). Las
+  contraseñas reales del servidor público nunca se suben al repositorio.
+- Revisa el diff antes del commit: el dump incluye las cuentas creadas en el sitio
+  público (`/register`).
 - `db:restore` importa el archivo y **reemplaza** las tablas del proyecto por las del dump.
-- Alternativa esquema-only para una BD nueva: `mysql -u root < setup.sql`.
+  En el equipo que publica el sitio (existe `C:\ProgramData\Parque100`) se niega a
+  ejecutarse, porque reemplazaría la BD del servidor público; solo con
+  `npm run db:restore -- --confirmar-servidor`.
+- Alternativa esquema-only para una BD nueva: `mysql -u root -p < setup.sql`.
+- Si MySQL `root` tiene contraseña, define antes en la terminal
+  `DB_ADMIN_USER` y `DB_ADMIN_PASSWORD` (los usan `db:*`, `migrate:*` y `access:provision`).
 
-### Credenciales de prueba
+### Credenciales de prueba (solo copias locales)
+
+Tras `npm run db:restore`, las cuentas demo usan estas claves de desarrollo:
 
 | Rol | Correo | Contraseña |
 |-----|--------|------------|
 | Usuario | `usuario@ejemplo.com` | `12345678` |
 | Administrador | `admin@parque100.com` | `admin123` |
 | Domiciliario | `domiciliario@parque100.com` | `domiciliario123` |
+| Cualquier otra cuenta del dump | — | `parque100-dev` |
+
+> El servidor público usa contraseñas distintas, que el responsable entrega por un
+> canal interno. Estas claves no funcionan allí.
 
 ## Comandos
 

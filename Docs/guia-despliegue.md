@@ -204,33 +204,48 @@ registro. No se requiere migración de base de datos.
 
 ### Paso 8 — Caddyfile
 
-Crear `Caddyfile` (fuera del repo, p. ej. `C:\parque100-server\Caddyfile`):
+Ubicación: `C:\ProgramData\Parque100\conf\Caddyfile` (carpeta que solo pueden
+modificar los Administradores; ver Paso 9):
 
 ```
 {
 	email admin@<subdominio>.duckdns.org
-	storage file_system C:/parque100-server/caddy-data
+	storage file_system C:/ProgramData/Parque100/caddy-data
+	# Sin API de administración: los cambios se aplican reiniciando el servicio.
+	admin off
+	persist_config off
 }
 
 <subdominio>.duckdns.org {
 	encode gzip
+
+	log {
+		output file C:/ProgramData/Parque100/logs/caddy-access.log {
+			roll_size 10MiB
+			roll_keep 5
+		}
+		format json
+	}
+
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		-Server
-	}
-
-	@access path /access.html
-	handle @access {
-		root * C:/ruta/al/proyecto/dist
-		file_server
 	}
 
 	handle /api/* {
 		reverse_proxy 127.0.0.1:3001
+	}
+
+	# Página pública de acceso y su script (sin scripts en línea por la CSP)
+	@access path /access.html /access.js
+	handle @access {
+		root * C:/ProgramData/Parque100/app/dist
+		file_server
 	}
 
 	handle {
@@ -238,13 +253,19 @@ Crear `Caddyfile` (fuera del repo, p. ej. `C:\parque100-server\Caddyfile`):
 			forward_auth 127.0.0.1:3001 {
 				uri /api/site-access/proxy-access
 			}
-			root * C:/ruta/al/proyecto/dist
+			root * C:/ProgramData/Parque100/app/dist
 			try_files {path} /index.html
 			file_server
 		}
 	}
 }
 ```
+
+- **CSP:** si se agrega un origen externo de imágenes o scripts, hay que
+  incluirlo en la política; de lo contrario el navegador lo bloquea (consola:
+  *Refused to load…*). `access.html` no debe contener scripts en línea.
+- **Registro de accesos:** guarda IP, ruta y código HTTP para investigar
+  incidentes; Caddy oculta por defecto `Cookie` y `Authorization`.
 
 El `route` es necesario para que `forward_auth` reciba la ruta original antes de
 que `try_files` aplique el fallback a `index.html`; de lo contrario, al iniciar
@@ -275,42 +296,52 @@ node server/index.js
 caddy run --config C:\parque100-server\Caddyfile --adapter caddyfile
 ```
 
-**Servicios NSSM en inicio manual** — el servidor actual usa cuatro servicios de Windows
-administrados por **NSSM**, en **inicio manual (`SERVICE_DEMAND_START`)**: no arrancan al
-iniciar Windows; se inician desde el panel o con `control-server.ps1 start`. Cada servicio
-necesita su **directorio de trabajo** (clave para que Express encuentre el `.env`):
+**Servicios NSSM endurecidos (inicio manual)** — el servidor usa cuatro servicios de
+Windows administrados por **NSSM**, en **inicio manual (`SERVICE_DEMAND_START`)**. Desde el
+22/10/2026 se ejecutan con **cuentas virtuales sin privilegios** (`NT SERVICE\<servicio>`,
+nunca `LocalSystem`) y todo lo que ejecutan vive en `C:\ProgramData\Parque100`, carpeta que
+solo pueden modificar Administradores y SYSTEM:
 
-| Servicio | Programa | Argumentos | Dir. de trabajo |
+```
+C:\ProgramData\Parque100├── bin\        nssm.exe, caddy.exe
+├── scripts\    control-server.ps1, duckdns-service.ps1, duckdns-update.ps1
+├── conf\       Caddyfile, duckdns.conf (token: solo Admin/SYSTEM/servicio DDNS)
+├── app\        copia desplegada: server\, node_modules\, dist\, .env propio
+│   └── server\logs\   registro de actividad (escritura solo del backend)
+├── caddy-data\ certificados y claves TLS (solo Caddy y Administradores)
+└── logs\       registros de los servicios (lectura para Usuarios)
+```
+
+| Servicio | Programa | Cuenta | Escritura permitida |
 |---|---|---|---|
-| `Parque100-MySQL` | `mysqld.exe` | `--datadir=<datadir>` | carpeta de `bin` de MySQL |
-| `Parque100-Backend` | `node.exe` | `server\index.js` | raíz del proyecto |
-| `Parque100-Caddy` | `caddy.exe` | `run --config <Caddyfile> --adapter caddyfile` | carpeta del Caddyfile |
-| `Parque100-DDNS` | `powershell` | `-File duckdns-service.ps1` | carpeta del servidor |
+| `Parque100-MySQL` | `mysqld.exe` (Program Files) | `NT SERVICE\Parque100-MySQL` | datadir, `logs\` |
+| `Parque100-Backend` | `node.exe server\index.js` en `app\` | `NT SERVICE\Parque100-Backend` | `app\server\logs\`, `logs\` |
+| `Parque100-Caddy` | `bin\caddy.exe run --config conf\Caddyfile` | `NT SERVICE\Parque100-Caddy` | `caddy-data\`, `logs\` |
+| `Parque100-DDNS` | `powershell -File scripts\duckdns-service.ps1` | `NT SERVICE\Parque100-DDNS` | `logs\` |
 
-Registro con NSSM (PowerShell como administrador; `install-servicios.ps1` lo automatiza):
+Además, cada servicio solo conserva los privilegios `SeChangeNotifyPrivilege` y
+`SeCreateGlobalPrivilege` (`sc.exe privs`), lo que impide escalar a SYSTEM aunque
+se comprometa el proceso. El backend se conecta a MySQL con la cuenta `p100_app`
+(solo `SELECT/INSERT/UPDATE/DELETE` sobre `parque100`) y `root` tiene contraseña.
+
+Instalación (PowerShell como administrador, scripts fuera del repositorio):
+
+1. `install-servicios.ps1` registra los servicios (instalación nueva).
+2. `endurecer-servidor.ps1` crea `C:\ProgramData\Parque100`, copia binarios, scripts y la
+   aplicación, aplica permisos, cambia las cuentas de servicio y verifica el arranque.
+   `revertir-endurecimiento.ps1` deshace el cambio si fuera necesario.
+
+Operación (solo `control-server.ps1`, con acciones fijas):
 
 ```powershell
-nssm install Parque100-Backend (Get-Command node).Source
-nssm set Parque100-Backend AppParameters 'server\index.js'
-nssm set Parque100-Backend AppDirectory 'C:\ruta\al\proyecto'
-nssm set Parque100-Backend Start SERVICE_DEMAND_START
-nssm set Parque100-Backend ObjectName LocalSystem
-nssm set Parque100-Backend AppExit Default Restart
+$cs = 'C:\ProgramData\Parque100\scripts\control-server.ps1'
+powershell -NoProfile -ExecutionPolicy Bypass -File $cs status          # sin privilegios
+powershell -NoProfile -ExecutionPolicy Bypass -File $cs start           # como administrador
+powershell -NoProfile -ExecutionPolicy Bypass -File $cs restart-caddy   # aplica el Caddyfile
+powershell -NoProfile -ExecutionPolicy Bypass -File $cs deploy          # publica (ver §5)
 ```
 
-Operación:
-
-```powershell
-# Estado y tipo de inicio
-Get-Service Parque100-* | Select Name,Status,StartType
-# Iniciar / detener en orden (MySQL -> backend -> Caddy -> DDNS)
-powershell -ExecutionPolicy Bypass -File C:\ruta\servidor\control-server.ps1 start
-powershell -ExecutionPolicy Bypass -File C:\ruta\servidor\control-server.ps1 stop
-```
-
-> **Esquema anterior:** las tareas programadas `Parque100-*` quedaron **deshabilitadas**;
-> `install-tareas.ps1` se conserva solo como rollback. No ejecutarlo con los servicios
-> activos (levantaría procesos duplicados).
+> **Esquema anterior:** `install-tareas.ps1` (tareas como SYSTEM) **no debe usarse**.
 
 ### Paso 10 — Energía (evitar que se duerma)
 
@@ -340,7 +371,7 @@ Resolve-DnsName <subdominio>.duckdns.org -Type A
 Invoke-WebRequest https://<subdominio>.duckdns.org/api/products -UseBasicParsing
 
 # Certificado emitido (log de Caddy)
-Select-String -Path C:\parque100-server\logs\caddy.err.log -Pattern 'certificate obtained successfully'
+Select-String -Path C:\ProgramData\Parque100\logs\caddy.err.log -Pattern 'certificate obtained successfully'
 
 # Batería de la app
 node scripts/smoke-lote2.mjs
@@ -354,23 +385,24 @@ Comprobar además el acceso **desde fuera** (otra red/dispositivo) abriendo
 ## 5. Operación diaria
 
 ```powershell
-# Estado de las tareas
-Get-ScheduledTask -TaskName 'Parque100-*' | Select TaskName,State
+$cs = 'C:\ProgramData\Parque100\scripts\control-server.ps1'
+# Estado y registros (sin privilegios)
+powershell -NoProfile -ExecutionPolicy Bypass -File $cs status
+powershell -NoProfile -ExecutionPolicy Bypass -File $cs logs
 
-# Reiniciar un servicio
-Stop-ScheduledTask  -TaskName 'Parque100-Backend'
-Start-ScheduledTask -TaskName 'Parque100-Backend'
-
-# Logs
-Get-Content C:\parque100-server\logs\caddy.err.log -Tail 20
-Get-Content C:\parque100-server\duckdns.log       -Tail 5
-
-# Publicar cambios del frontend
-npm run build      # Caddy sirve dist/ directamente; no hay que reiniciar Caddy
+# Publicar cambios (frontend y/o backend)
+npm run build                      # 1) SIN privilegios, en el repositorio
+powershell -NoProfile -ExecutionPolicy Bypass -File $cs deploy   # 2) como administrador
 ```
 
-> Cambios en el **backend**: reiniciar la tarea `Parque100-Backend`.
-> Cambios en el **Caddyfile**: reiniciar la tarea `Parque100-Caddy`.
+- `deploy` copia `dist\`, `server\` y `node_modules\` del repositorio a `app\` (sin seguir
+  enlaces ni uniones) y reinicia el backend solo si cambió su código. Nunca ejecuta
+  `npm` ni scripts del repositorio con privilegios.
+- Cambios en la configuración del backend: editar `C:\ProgramData\Parque100pp\.env`
+  (como administrador) y ejecutar `restart-backend`. El `.env` del repositorio es solo
+  para desarrollo y tiene su propio `JWT_SECRET`.
+- Cambios en el Caddyfile: editar `conf\Caddyfile` y ejecutar `restart-caddy` (corte de 2–3 s).
+- El panel de escritorio ejecuta estas mismas acciones pidiendo UAC en cada una.
 
 ---
 
@@ -383,8 +415,10 @@ npm run build      # Caddy sirve dist/ directamente; no hay que reiniciar Caddy
 | El sitio abre pero la API falla (CORS / rutas) | El frontend se compiló sin `VITE_API_URL=/api` | Recompilar con `.env.production` |
 | Login responde `401` aunque las credenciales sean correctas | El backend espera `Correo`/`Contrasena`, no `email`/`password` | Enviar los nombres de campo correctos |
 | `mysqld` no arranca como servicio | Instalación **portable** sin servicio | Ejecutar `mysqld.exe --datadir=<datadir>` (o registrarlo como servicio) |
-| Las tareas no levantan el backend | Directorio de trabajo mal configurado → no encuentra `.env` | Configurar "Start in" de la tarea en la raíz del proyecto |
-| El dominio no resuelve o apunta a IP vieja | DuckDNS no actualizado | Verificar `duckdns.log` y la tarea `Parque100-DDNS` |
+| El backend no arranca tras el endurecimiento | La cuenta `NT SERVICE\Parque100-Backend` no puede leer `app\.env` o escribir `app\server\logs` | Revisar `logsackend.err.log` y reaplicar `endurecer-servidor.ps1` (es idempotente) |
+| Caddy no arranca tras el endurecimiento | Sin escritura en `caddy-data\` o `logs\` | Revisar `logs\caddy.err.log` y los permisos de esas carpetas |
+| Una imagen o script no carga y la consola dice *Refused to load* | La CSP no incluye ese origen | Añadir el origen a la directiva correspondiente del Caddyfile y `restart-caddy` |
+| El dominio no resuelve o apunta a IP vieja | DuckDNS no actualizado | Verificar `logs\duckdns.log` y el servicio `Parque100-DDNS` |
 | No entra desde fuera | CGNAT, reenvío mal configurado o firewall | Verificar IP WAN vs. pública; revisar Port Mapping (interfaz WAN) y reglas de firewall |
 
 ---
@@ -392,6 +426,14 @@ npm run build      # Caddy sirve dist/ directamente; no hay que reiniciar Caddy
 ## 7. Seguridad y mantenimiento
 
 - **Mantén cerrados** `3001` (API) y `3306` (MySQL); solo Caddy habla con ellos.
+- Ningún servicio corre como SYSTEM ni ejecuta archivos del perfil de usuario (§3, Paso 9).
+- Migraciones y restauraciones de BD usan `DB_ADMIN_USER`/`DB_ADMIN_PASSWORD` definidos
+  en la terminal. `db:restore` se bloquea en el equipo servidor (requiere
+  `--confirmar-servidor`) y `db:dump` sustituye las contraseñas por claves de
+  desarrollo antes de escribir el archivo versionado.
+- El cambio de contraseña de tienda exige sesión y deja sin efecto los tokens anteriores;
+  los pedidos tienen topes (`ORDER_MAX_UNITS_PER_PRODUCT`=50, `ORDER_MAX_PENDING`=5 y
+  20 pedidos por cuenta de acceso cada 15 min).
 - Usa el dominio HTTPS con un certificado válido para todo acceso remoto. El
   modo local (`http://localhost`) es solo para desarrollo y no cifra con TLS;
   no expongas Vite ni Express directamente a redes públicas.
@@ -403,6 +445,7 @@ npm run build      # Caddy sirve dist/ directamente; no hay que reiniciar Caddy
 - Express escucha unicamente en `127.0.0.1`; Caddy debe ejecutarse en el mismo servidor y ser el unico punto de entrada publico.
 - Express confia unicamente en proxies de loopback para obtener la IP cliente de Caddy; no amplíes `trust proxy` a redes no confiables.
 - El **token de DuckDNS** y los `.env` son **secretos**: nunca al control de versiones.
+  En el servidor viven en `conf\` y `app\` con permisos restringidos.
 - **Windows Update** puede reiniciar el equipo: programa las actualizaciones fuera de las horas de demo.
 - El frontend ya exige una cuenta académica autorizada y la aceptación del
   descargo. Para defensa en profundidad puede añadirse una capa perimetral

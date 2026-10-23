@@ -72,11 +72,15 @@ La aplicación se ejecuta **en el navegador**: no requiere instalar ningún prog
 
 Si estás explorando el sistema en un entorno de demostración, puedes usar estas cuentas (los datos son ficticios):
 
-| Rol | Correo | Contraseña |
-|-----|--------|------------|
-| Cliente | `usuario@ejemplo.com` | `12345678` |
-| Administrador | `admin@parque100.com` | `admin123` |
-| Domiciliario | `domiciliario@parque100.com` | `domiciliario123` |
+| Rol | Correo |
+|-----|--------|
+| Cliente | `usuario@ejemplo.com` |
+| Administrador | `admin@parque100.com` |
+| Domiciliario | `domiciliario@parque100.com` |
+
+> Las contraseñas no se publican en el repositorio: el responsable del equipo
+> las entrega por un canal interno. Las del servidor público son distintas a
+> las de una instalación local nueva.
 
 ---
 
