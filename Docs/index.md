@@ -14,7 +14,7 @@
 | [`CODING_STANDARDS.md`](CODING_STANDARDS.md) | Estándares de codificación obligatorios del proyecto |
 | [`CHANGELOG.md`](../CHANGELOG.md) | Historial de cambios del proyecto |
 
-> La bitácora del desarrollador, el informe de auditoría y la guía de acceso académico son documentos internos del equipo y no forman parte del repositorio.
+> La bitácora del desarrollador, el informe de auditoría, la guía de acceso académico y la guía de identidad visual son documentos internos del equipo y no forman parte del repositorio.
 
 ## Datos del proyecto
 

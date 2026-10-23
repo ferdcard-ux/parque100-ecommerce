@@ -1,4 +1,4 @@
-import type { Product, Category, UnitOfMeasure, AdminProduct, ProductUpsert, ProductCreate } from '../models';
+import type { Product, Category, UnitOfMeasure, WeeklyTopSeller, AdminProduct, ProductUpsert, ProductCreate } from '../models';
 import { API_BASE as API, authHeaders } from './api';
 
 const PEXELS = (id: number, file?: string) =>
@@ -134,6 +134,30 @@ export const productService = {
     if (!res.ok) throw new Error('No fue posible cargar el producto.');
     const data = await res.json().catch(() => null);
     return data?.error ? null : mapProduct(data);
+  },
+
+  /**
+   * Obtiene el producto con mas unidades vendidas en los ultimos 7 dias.
+   *
+   * @returns {Promise<WeeklyTopSeller|null>} Producto y metricas, o null si
+   *   no hubo ventas validas en el periodo.
+   * @throws {Error} Si el servidor no responde correctamente.
+   */
+  async getWeeklyTopSeller(): Promise<WeeklyTopSeller | null> {
+    let res: Response;
+    try {
+      res = await fetch(`${API}/products/top-selling-week`);
+    } catch {
+      throw new Error('No fue posible conectar con el servidor.');
+    }
+    if (!res.ok) throw new Error('No fue posible cargar el producto más vendido de la semana.');
+    const data = await res.json().catch(() => null);
+    if (!data?.product) return null;
+    return {
+      product: mapProduct(data.product),
+      unitsSold: Number(data.unitsSold) || 0,
+      ordersCount: Number(data.ordersCount) || 0,
+    };
   },
 
   async getByCategory(category: string): Promise<Product[]> {

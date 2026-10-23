@@ -3,7 +3,7 @@
  * Punto unico de exportacion de los tipos del dominio para que el
  * resto de capas importe desde 'models' sin conocer archivos internos.
  */
-export type { Product, Category, UnitOfMeasure, AdminProduct, InventoryStatus, ProductUpsert, ProductCreate } from './product';
+export type { Product, Category, UnitOfMeasure, WeeklyTopSeller, AdminProduct, InventoryStatus, ProductUpsert, ProductCreate } from './product';
 export { normalizeUserRole } from './user';
 export type { CartItem } from './cart';
 export type { User, UserDeliveryDetails, AuthState, LoginCredentials, RegisterData, UserRole } from './user';

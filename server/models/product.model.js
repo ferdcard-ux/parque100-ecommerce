@@ -5,6 +5,7 @@
  * base de datos para esta entidad (patron MVC - Model).
  */
 import pool from '../config/db.js';
+import { DEMO_PAYMENT_METHODS } from '../config/payment-mode.js';
 
 /**
  * Modelo de productos.
@@ -36,6 +37,58 @@ export const productModel = {
       ) r ON r.ID_Producto = p.ID_Producto
     `);
     return rows;
+  },
+
+  /**
+   * Obtiene el producto con mas unidades vendidas en los ultimos `days` dias.
+   *
+   * La ventana es movil (hoy menos `days`) y solo cuenta pedidos que no
+   * estan cancelados ni usan un medio de pago DEMO. Se agrega por producto
+   * para que el resultado sea el mas vendido real y no una linea de detalle.
+   *
+   * @async
+   * @param {number} [days=7] - Tamano de la ventana en dias.
+   * @returns {Promise<Object|null>} Producto con `Unidades_Vendidas` y
+   *   `Pedidos`, o `null` si no hubo ventas en el periodo.
+   * @throws {Error} Si falla la consulta a la base de datos.
+   */
+  async findTopSellingSince(days = 7) {
+    const safeDays = Number.isInteger(days) && days > 0 && days <= 365 ? days : 7;
+    const demoMethods = Object.values(DEMO_PAYMENT_METHODS);
+    const demoFilter = demoMethods.length
+      ? `AND (pd.Metodo_Pago IS NULL OR pd.Metodo_Pago NOT IN (${demoMethods.map(() => '?').join(', ')}))`
+      : '';
+    const [rows] = await pool.query(
+      `SELECT p.*, c.Nombre_Categoria,
+              r.promedio AS Promedio_Calificacion,
+              r.total AS Total_Calificaciones,
+              s.Unidades_Vendidas,
+              s.Pedidos
+       FROM (
+         SELECT d.ID_Producto,
+                SUM(COALESCE(d.Cantidad, 0)) AS Unidades_Vendidas,
+                COUNT(DISTINCT pd.ID_Pedido) AS Pedidos,
+                MAX(pd.Fecha) AS Ultima_Venta
+         FROM detalle_pedido d
+         JOIN pedidos pd ON pd.ID_Pedido = d.ID_Pedido
+         WHERE pd.Fecha >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+           AND COALESCE(pd.Estado, '') <> 'cancelado'
+           ${demoFilter}
+         GROUP BY d.ID_Producto
+         ORDER BY Unidades_Vendidas DESC, Pedidos DESC, Ultima_Venta DESC, d.ID_Producto ASC
+         LIMIT 1
+       ) s
+       JOIN productos p ON p.ID_Producto = s.ID_Producto
+       LEFT JOIN categorias c ON p.ID_Categoria = c.ID_Categoria
+       LEFT JOIN (
+         SELECT ID_Producto, AVG(Estrellas) AS promedio, COUNT(*) AS total
+         FROM calificaciones
+         WHERE Tipo = 'producto' AND ID_Producto IS NOT NULL
+         GROUP BY ID_Producto
+       ) r ON r.ID_Producto = p.ID_Producto`,
+      [safeDays, ...demoMethods],
+    );
+    return rows[0] || null;
   },
 
   /**

@@ -11,6 +11,9 @@ const router = Router();
 /** GET /api/products - Lista completa de productos. */
 router.get('/products', productController.list);
 
+/** GET /api/products/top-selling-week - Producto mas vendido de la semana. */
+router.get('/products/top-selling-week', productController.topSellingWeek);
+
 /** GET /api/products/:id - Detalle de un producto. */
 router.get('/products/:id', productController.getById);
 

@@ -6,7 +6,7 @@
  * servicios.
  */
 import { useState, useEffect, useCallback } from 'react';
-import type { Product, Category, UnitOfMeasure, AdminProduct, ProductUpsert, ProductCreate } from '../models';
+import type { Product, Category, UnitOfMeasure, WeeklyTopSeller, AdminProduct, ProductUpsert, ProductCreate } from '../models';
 import { productService } from '../services';
 
 /**
@@ -15,6 +15,7 @@ import { productService } from '../services';
  * @returns Objeto con estado y acciones del catalogo.
  * @property {Product[]} products - Catalogo completo normalizado.
  * @property {Category[]} categories - Categorias con estilo visual.
+ * @property {WeeklyTopSeller|null} weeklyTopSeller - Producto mas vendido de los ultimos 7 dias.
  * @property {AdminProduct[]} adminProducts - Filas para la tabla admin.
  * @property {boolean} isLoading - true durante la carga inicial/recargas.
  * @property {string|null} error - Mensaje si la carga fallo (null si OK).
@@ -27,6 +28,7 @@ import { productService } from '../services';
 export function useProductController() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [weeklyTopSeller, setWeeklyTopSeller] = useState<WeeklyTopSeller | null>(null);
   const [units, setUnits] = useState<UnitOfMeasure[]>([]);
   const [unitCatalogError, setUnitCatalogError] = useState<string | null>(null);
   const [adminProducts, setAdminProducts] = useState<AdminProduct[]>([]);
@@ -38,14 +40,17 @@ export function useProductController() {
     setIsLoading(true);
     setError(null);
     try {
-      const [allProducts, allCategories, allAdmin] = await Promise.all([
+      const [allProducts, allCategories, allAdmin, topSeller] = await Promise.all([
         productService.getAll(),
         productService.getCategories(),
         productService.getAdminProducts(),
+        // El panel semanal es complementario: si falla, el catalogo sigue disponible.
+        productService.getWeeklyTopSeller().catch(() => null),
       ]);
       setProducts(allProducts);
       setCategories(allCategories);
       setAdminProducts(allAdmin);
+      setWeeklyTopSeller(topSeller);
       try {
         setUnits(await productService.getUnits());
         setUnitCatalogError(null);
@@ -143,6 +148,7 @@ export function useProductController() {
   return {
     products,
     categories,
+    weeklyTopSeller,
     units,
     unitCatalogError,
     adminProducts,

@@ -7,7 +7,6 @@ import { CategoryGrid } from '../components/home/CategoryGrid';
 import { CategoryModal } from '../components/home/CategoryModal';
 import { AllCategoriesModal } from '../components/home/AllCategoriesModal';
 import { FeaturedProducts } from '../components/home/FeaturedProducts';
-import { PromoBanner } from '../components/home/PromoBanner';
 import { Footer } from '../components/layout/Footer';
 import { hasPromo } from '../../utils';
 import type { Category } from '../../models';
@@ -19,7 +18,7 @@ interface HomePageProps {
 }
 
 export function HomePage({ onAddToCart, userId }: HomePageProps) {
-  const { products, categories, isLoading } = useProductController();
+  const { products, categories, weeklyTopSeller, isLoading } = useProductController();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [searchParams] = useSearchParams();
@@ -48,7 +47,7 @@ export function HomePage({ onAddToCart, userId }: HomePageProps) {
 
   return (
     <div>
-      <HeroBanner />
+      <HeroBanner products={products} onAddToCart={onAddToCart} weeklyTopSeller={weeklyTopSeller} />
       <TrustBar />
       <CategoryGrid categories={categories} onCategoryClick={setSelectedCategory} onViewAllClick={() => setShowAllCategories(true)} />
       {promos.length > 0 && (
@@ -74,7 +73,6 @@ export function HomePage({ onAddToCart, userId }: HomePageProps) {
           userId={userId}
         />
       )}
-      <PromoBanner />
       <Footer />
       <CategoryModal category={selectedCategory} products={products} onClose={() => setSelectedCategory(null)} onAddToCart={onAddToCart} />
       {showAllCategories && <AllCategoriesModal categories={categories} onCategoryClick={setSelectedCategory} onClose={() => setShowAllCategories(false)} />}

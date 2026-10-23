@@ -64,6 +64,16 @@ export interface UnitOfMeasure {
   name: string;
 }
 
+/** Producto mas vendido en la ventana semanal y sus metricas agregadas. */
+export interface WeeklyTopSeller {
+  /** Producto real del catalogo. */
+  product: Product;
+  /** Unidades vendidas en los ultimos 7 dias. */
+  unitsSold: number;
+  /** Pedidos distintos que incluyeron el producto. */
+  ordersCount: number;
+}
+
 /** Fila resumida de producto para la tabla de inventario admin. */
 export interface AdminProduct {
   /** Identificador del producto. */

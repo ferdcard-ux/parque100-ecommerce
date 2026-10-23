@@ -1,18 +1,29 @@
 import { Link } from 'react-router';
-import { Zap, Star, Tag } from 'lucide-react';
-import { ImageWithFallback } from '../figma/ImageWithFallback';
+import { Zap } from 'lucide-react';
+import type { Product, WeeklyTopSeller } from '../../../models';
+import { HeroProductSlider } from './HeroProductSlider';
+import { TopSellerBanner } from './TopSellerBanner';
 
-export function HeroBanner() {
+interface HeroBannerProps {
+  /** Catalogo real para el carrusel de productos destacados. */
+  products: Product[];
+  /** Agrega un producto al carrito desde el carrusel. */
+  onAddToCart: (product: Product) => void;
+  /** Producto con mas ventas en los ultimos 7 dias (opcional si no hay ventas). */
+  weeklyTopSeller?: WeeklyTopSeller | null;
+}
+
+export function HeroBanner({ products, onAddToCart, weeklyTopSeller }: HeroBannerProps) {
   return (
     <section
-      className="relative overflow-hidden py-16 px-4 md:px-8"
+      className="relative overflow-hidden py-12 px-4 md:px-8 lg:py-16"
       style={{ background: 'linear-gradient(135deg, var(--brand-yellow) 0%, var(--brand-orange) 40%, var(--brand-red) 100%)' }}
     >
       <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-10 bg-white" style={{ transform: 'translate(30%, -30%)' }} />
       <div className="absolute bottom-0 left-0 w-72 h-72 rounded-full opacity-10 bg-white" style={{ transform: 'translate(-20%, 30%)' }} />
 
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-8 relative z-10">
-        <div className="flex-1 text-white">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 items-center gap-8 relative z-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-10 xl:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
+        <div className="w-full text-white">
           <div className="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 mb-4">
             <Zap size={14} className="text-white" />
             <span style={{ fontSize: '0.8rem' }}>Entregas a tu apartamento</span>
@@ -39,33 +50,15 @@ export function HeroBanner() {
           <p className="text-white/70 mt-4" style={{ fontSize: '0.75rem' }}>Promoción válida hasta agotar existencias. Aplican términos y condiciones.</p>
         </div>
 
-        <div className="flex-1 flex justify-center">
-          <div className="relative w-72 h-60 md:w-96 md:h-72">
-            <div className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl">
-              <ImageWithFallback
-                src="https://images.unsplash.com/photo-1550989460-0adf9ea622e2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&w=600"
-                alt="Productos frescos en el mercado"
-                sizes="(max-width: 767px) 80vw, 40vw"
-                eager
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-            </div>
-            <div className="absolute -bottom-3 -left-3 bg-white rounded-xl px-4 py-2 shadow-xl flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-brand-yellow flex items-center justify-center">
-                <Tag size={14} className="text-white" />
-              </div>
-              <div>
-                <p className="text-brand-ink font-bold leading-none" style={{ fontSize: '0.9rem' }}>Oferta del día</p>
-                <p className="text-brand-red font-bold" style={{ fontSize: '0.8rem' }}>Hasta 30% OFF</p>
-              </div>
-            </div>
-            <div className="absolute -top-3 -right-3 bg-white rounded-xl px-3 py-2 shadow-xl flex items-center gap-1.5">
-              <Star size={14} className="fill-brand-yellow text-brand-yellow" />
-              <span className="text-brand-ink font-bold" style={{ fontSize: '0.9rem' }}>4.9</span>
-              <span className="text-gray-400" style={{ fontSize: '0.75rem' }}>+500 reseñas</span>
-            </div>
-          </div>
+        <div className="mx-auto flex w-full max-w-[700px] flex-col gap-3 sm:gap-4 lg:ml-auto lg:mr-0">
+          {weeklyTopSeller && (
+            <TopSellerBanner
+              product={weeklyTopSeller.product}
+              unitsSold={weeklyTopSeller.unitsSold}
+              ordersCount={weeklyTopSeller.ordersCount}
+            />
+          )}
+          <HeroProductSlider products={products} onAddToCart={onAddToCart} />
         </div>
       </div>
     </section>

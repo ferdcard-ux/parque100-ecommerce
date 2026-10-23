@@ -128,6 +128,38 @@ export const productController = {
   },
 
   /**
+   * GET /api/products/top-selling-week
+   * Devuelve el producto con mas unidades vendidas en los ultimos 7 dias.
+   *
+   * Solo considera pedidos no cancelados y pagos que no sean DEMO, igual
+   * que los reportes del panel administrativo. Si no hubo ventas en el
+   * periodo responde `{ product: null, unitsSold: 0, ordersCount: 0 }`.
+   *
+   * @async
+   * @param {import('express').Request} _req - Peticion (sin parametros).
+   * @param {import('express').Response} res - Respuesta HTTP.
+   * @returns {Promise<void>}
+   */
+  async topSellingWeek(_req, res) {
+    try {
+      // El ranking depende de las ventas del momento: no debe reutilizarse caché.
+      res.set('Cache-Control', 'no-store');
+      const row = await productModel.findTopSellingSince(7);
+      if (!row) {
+        return res.json({ product: null, unitsSold: 0, ordersCount: 0 });
+      }
+      const { Unidades_Vendidas, Pedidos, ...product } = row;
+      res.json({
+        product,
+        unitsSold: Number(Unidades_Vendidas) || 0,
+        ordersCount: Number(Pedidos) || 0,
+      });
+    } catch (err) {
+      sendError(res, err);
+    }
+  },
+
+  /**
    * GET /api/products/:id
    * Responde con un producto especifico o 404 si no existe.
    *
