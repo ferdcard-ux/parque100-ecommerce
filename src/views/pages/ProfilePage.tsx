@@ -7,6 +7,7 @@ import { useApp } from '../../App';
 import { PageHeader } from '../components/shared/page-header';
 import { SectionTitle } from '../components/shared/section-title';
 import { useDialogBehavior } from '../../utils/useDialog';
+import { sanitizePersonName } from '../../utils';
 import { useUserDeliveryController } from '../../controllers/use-user-delivery-controller';
 
 interface FieldProps {
@@ -282,8 +283,8 @@ export function ProfilePage() {
           {saved && <p className="text-green-600 mb-3" style={{ fontSize: '0.8rem' }}>Cambios guardados.</p>}
           {saveError && <p role="alert" className="text-brand-red mb-3" style={{ fontSize: '0.8rem' }}>{saveError}</p>}
           <div className="flex flex-col gap-4">
-            <ProfileField label="Nombre" icon={<User size={16} />} maxLength={30} autoComplete="given-name" value={firstName} editing={editing} onChange={setFirstName} />
-            <ProfileField label="Apellido" icon={<User size={16} />} maxLength={30} autoComplete="family-name" value={lastName} editing={editing} onChange={setLastName} />
+            <ProfileField label="Nombre" icon={<User size={16} />} maxLength={30} autoComplete="given-name" value={firstName} editing={editing} onChange={(value) => setFirstName(sanitizePersonName(value))} />
+            <ProfileField label="Apellido" icon={<User size={16} />} maxLength={30} autoComplete="family-name" value={lastName} editing={editing} onChange={(value) => setLastName(sanitizePersonName(value))} />
             <ProfileField label="Correo" icon={<Mail size={16} />} type="email" maxLength={50} autoComplete="email" value={email} editing={editing} onChange={setEmail} />
             <ProfileField label="Telefono" icon={<Phone size={16} />} type="tel" inputMode="numeric" pattern="[0-9]{7,10}" maxLength={10} autoComplete="tel" value={phone} editing={editing} onChange={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))} />
           </div>

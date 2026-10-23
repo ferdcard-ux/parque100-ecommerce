@@ -42,6 +42,21 @@ export function isValidPassword(password: string): boolean {
 }
 
 /**
+ * Limpia un nombre o apellido mientras se escribe.
+ * Conserva letras (incluidas acentos, ñ y ü), marcas diacríticas y espacios;
+ * elimina números, signos y cualquier otro carácter especial.
+ *
+ * @param {string} value - Texto ingresado en el campo.
+ * @returns {string} Texto apto para un nombre o apellido.
+ */
+export function sanitizePersonName(value: string): string {
+  return value
+    .replace(/[^\p{L}\p{M} ]/gu, '')
+    .replace(/^ +/, '')
+    .replace(/ {2,}/g, ' ');
+}
+
+/**
  * Valida un numero de tarjeta: 16 digitos exactos (ignora espacios).
  *
  * @param {string} value - Numero con o sin espacios.

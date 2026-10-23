@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowLeft, Store } from 'lucide-react';
 import type { RegisterData } from '../../../models';
-import { isValidEmail, isValidPassword } from '../../../utils';
+import { isValidEmail, isValidPassword, sanitizePersonName } from '../../../utils';
 
 interface RegisterFormProps {
   onRegister: (data: RegisterData) => Promise<void>;
@@ -25,10 +25,13 @@ export function RegisterForm({ onRegister }: RegisterFormProps) {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.name === 'phone' ? e.target.value.replace(/\D/g, '').slice(0, 10) : e.target.value,
-    }));
+    const { name, value } = e.target;
+    const cleanValue = name === 'phone'
+      ? value.replace(/\D/g, '').slice(0, 10)
+      : name === 'firstName' || name === 'lastName'
+        ? sanitizePersonName(value)
+        : value;
+    setForm((prev) => ({ ...prev, [name]: cleanValue }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
