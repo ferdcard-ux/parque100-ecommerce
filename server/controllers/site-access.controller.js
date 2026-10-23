@@ -32,6 +32,18 @@ const FAILURE_WINDOW_MS = Math.max(
   1, Number(process.env.SITE_ACCESS_LOCK_MINUTES) || 15) * 60 * 1000;
 const LOCK_MS = FAILURE_WINDOW_MS;
 
+/** Datos mínimos del dispositivo que se muestran en el control de sesiones. */
+function sessionMetadata(req) {
+  const forwarded = req.headers?.['x-forwarded-for'];
+  const forwardedIp = Array.isArray(forwarded) ? forwarded[0] : forwarded;
+  const ip = String(req.ip || forwardedIp || '')
+    .split(',')[0].trim().slice(0, 45) || null;
+  const userAgent = String(
+    req.get?.('user-agent') || req.headers?.['user-agent'] || '',
+  ).trim().slice(0, 255) || null;
+  return { ip, userAgent };
+}
+
 /**
  * Hash de relleno (mismo coste que las cuentas reales): se compara aunque el
  * usuario no exista, para que el tiempo de respuesta no revele cuentas.
@@ -191,7 +203,8 @@ export const siteAccessController = {
 
       await siteAccessModel.updateLastLogin(user.ID_Acceso);
       const sessionId = randomUUID();
-      await siteAccessModel.startSession(user.ID_Acceso, sessionId);
+      await siteAccessModel.startSession(
+        user.ID_Acceso, sessionId, sessionMetadata(req));
       const token = signSiteAccessToken(user, sessionId);
       res.cookie('p100_access', token, COOKIE_OPTIONS);
       res.setHeader('Cache-Control', 'no-store');
@@ -243,7 +256,7 @@ export const siteAccessController = {
   async logout(req, res) {
     const current = await authenticateSiteAccessRequest(req).catch(() => null);
     if (current) {
-      await siteAccessModel.endSession(current.id);
+      await siteAccessModel.endSession(current.sessionId, current.id);
       logSession({
         username: current.username,
         action: 'Cerró sesión en el sitio',

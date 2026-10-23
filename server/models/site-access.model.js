@@ -62,6 +62,29 @@ export const siteAccessModel = {
     }
   },
 
+  /**
+   * Busca una sesión concreta por su `jti`.
+   *
+   * Si la tabla `sesiones_acceso` todavía no existe devuelve un marcador para
+   * que el middleware pueda usar las columnas antiguas durante el despliegue.
+   */
+  async findSession(userId, sessionId) {
+    if (!sessionId) return null;
+    try {
+      const [rows] = await pool.query(
+        `SELECT ID_Sesion, ID_Acceso, Creada_En, Ultima_Actividad,
+                Revocada_En, User_Agent, Direccion_IP
+         FROM sesiones_acceso
+         WHERE ID_Sesion = ? AND ID_Acceso = ? LIMIT 1`,
+        [sessionId, userId],
+      );
+      return rows[0] || null;
+    } catch (error) {
+      if (!missingSchema(error)) throw error;
+      return { missingSchema: true };
+    }
+  },
+
   async updateLastLogin(id) {
     await pool.query(
       'UPDATE usuarios_acceso SET Ultimo_Acceso = CURRENT_TIMESTAMP WHERE ID_Acceso = ?',
@@ -69,47 +92,144 @@ export const siteAccessModel = {
     );
   },
 
-  /** Abre una sesión nueva (un único token vigente por cuenta). */
-  async startSession(id, sessionId) {
-    await ignoreMissing(() => pool.query(
-      `UPDATE usuarios_acceso
-       SET Sesion_ID = ?, Sesion_Iniciada_En = CURRENT_TIMESTAMP(3),
-           Ultima_Actividad = CURRENT_TIMESTAMP(3),
-           Intentos_Fallidos = 0, Ultimo_Intento_Fallido = NULL,
-           Bloqueado_Hasta = NULL
-       WHERE ID_Acceso = ?`,
-      [sessionId, id],
-    ));
+  /**
+   * Abre una sesión nueva sin cerrar las de otros dispositivos.
+   * `metadata` guarda el dispositivo (User-Agent) y la IP para el panel.
+   */
+  async startSession(id, sessionId, metadata = {}) {
+    const userAgent = metadata.userAgent
+      ? String(metadata.userAgent).slice(0, 255) : null;
+    const ip = metadata.ip ? String(metadata.ip).slice(0, 45) : null;
+    try {
+      await pool.query(
+        `INSERT INTO sesiones_acceso
+           (ID_Sesion, ID_Acceso, User_Agent, Direccion_IP)
+         VALUES (?, ?, ?, ?)`,
+        [sessionId, id, userAgent, ip],
+      );
+      await pool.query(
+        `UPDATE usuarios_acceso
+         SET Intentos_Fallidos = 0, Ultimo_Intento_Fallido = NULL,
+             Bloqueado_Hasta = NULL
+         WHERE ID_Acceso = ?`,
+        [id],
+      );
+      return { multiSession: true };
+    } catch (error) {
+      if (!missingSchema(error)) throw error;
+      // Compatibilidad mientras la migración no se haya aplicado.
+      await pool.query(
+        `UPDATE usuarios_acceso
+         SET Sesion_ID = ?, Sesion_Iniciada_En = CURRENT_TIMESTAMP(3),
+             Ultima_Actividad = CURRENT_TIMESTAMP(3),
+             Intentos_Fallidos = 0, Ultimo_Intento_Fallido = NULL,
+             Bloqueado_Hasta = NULL
+         WHERE ID_Acceso = ?`,
+        [sessionId, id],
+      );
+      return { multiSession: false };
+    }
   },
 
-  /** Renueva la marca de actividad (llamada con límite de frecuencia). */
-  async touchActivity(id) {
-    await ignoreMissing(() => pool.query(
-      'UPDATE usuarios_acceso SET Ultima_Actividad = CURRENT_TIMESTAMP(3) '
-      + 'WHERE ID_Acceso = ?',
-      [id],
-    ));
+  /** Renueva la actividad de una sesión concreta, no de toda la cuenta. */
+  async touchActivity(sessionId, userId) {
+    if (!sessionId) return;
+    try {
+      await pool.query(
+        `UPDATE sesiones_acceso
+         SET Ultima_Actividad = CURRENT_TIMESTAMP(3)
+         WHERE ID_Sesion = ? AND Revocada_En IS NULL`,
+        [sessionId],
+      );
+    } catch (error) {
+      if (!missingSchema(error)) throw error;
+      if (!userId) return;
+      await pool.query(
+        `UPDATE usuarios_acceso
+         SET Ultima_Actividad = CURRENT_TIMESTAMP(3)
+         WHERE ID_Acceso = ? AND Sesion_ID = ?`,
+        [userId, sessionId],
+      );
+    }
   },
 
-  /** Cierra la sesión activa sin revocar tokens anteriores. */
-  async endSession(id) {
-    await ignoreMissing(() => pool.query(
-      `UPDATE usuarios_acceso
-       SET Sesion_ID = NULL, Sesion_Iniciada_En = NULL, Ultima_Actividad = NULL
-       WHERE ID_Acceso = ?`,
-      [id],
-    ));
+  /** Cierra solo la sesión indicada. */
+  async endSession(sessionId, userId = null) {
+    try {
+      await pool.query(
+        `UPDATE sesiones_acceso
+         SET Revocada_En = CURRENT_TIMESTAMP(3)
+         WHERE ID_Sesion = ? AND Revocada_En IS NULL`,
+        [sessionId],
+      );
+    } catch (error) {
+      if (!missingSchema(error)) throw error;
+      if (!userId) return;
+      await pool.query(
+        `UPDATE usuarios_acceso
+         SET Sesion_ID = NULL, Sesion_Iniciada_En = NULL, Ultima_Actividad = NULL
+         WHERE ID_Acceso = ? AND Sesion_ID = ?`,
+        [userId, sessionId],
+      );
+    }
   },
 
-  /** Invalida el token vigente y marca la revocación para auditoría. */
-  async revokeSession(id) {
-    await ignoreMissing(() => pool.query(
-      `UPDATE usuarios_acceso
-       SET Sesion_ID = NULL, Sesion_Iniciada_En = NULL,
-           Ultima_Actividad = NULL, Sesion_Revocada_En = CURRENT_TIMESTAMP(3)
-       WHERE ID_Acceso = ?`,
-      [id],
-    ));
+  /**
+   * Revoca una sesión concreta o todas las de la cuenta.
+   * Devuelve cuántas sesiones quedaron revocadas en esta llamada.
+   */
+  async revokeSession(id, sessionId = null) {
+    try {
+      const [result] = sessionId
+        ? await pool.query(
+          `UPDATE sesiones_acceso
+           SET Revocada_En = CURRENT_TIMESTAMP(3)
+           WHERE ID_Sesion = ? AND ID_Acceso = ? AND Revocada_En IS NULL`,
+          [sessionId, id],
+        )
+        : await pool.query(
+          `UPDATE sesiones_acceso
+           SET Revocada_En = CURRENT_TIMESTAMP(3)
+           WHERE ID_Acceso = ? AND Revocada_En IS NULL`,
+          [id],
+        );
+      return result.affectedRows;
+    } catch (error) {
+      if (!missingSchema(error)) throw error;
+      const [result] = sessionId
+        ? await pool.query(
+          `UPDATE usuarios_acceso
+           SET Sesion_ID = NULL, Sesion_Iniciada_En = NULL,
+               Ultima_Actividad = NULL, Sesion_Revocada_En = CURRENT_TIMESTAMP(3)
+           WHERE ID_Acceso = ? AND Sesion_ID = ?`,
+          [id, sessionId],
+        )
+        : await pool.query(
+          `UPDATE usuarios_acceso
+           SET Sesion_ID = NULL, Sesion_Iniciada_En = NULL,
+               Ultima_Actividad = NULL, Sesion_Revocada_En = CURRENT_TIMESTAMP(3)
+           WHERE ID_Acceso = ?`,
+          [id],
+        );
+      return result.affectedRows;
+    }
+  },
+
+  /** Sesiones no revocadas, ordenadas por cuenta y actividad reciente. */
+  async listSessions() {
+    try {
+      const [rows] = await pool.query(
+        `SELECT ID_Sesion, ID_Acceso, Creada_En, Ultima_Actividad,
+                Revocada_En, User_Agent, Direccion_IP
+         FROM sesiones_acceso
+         WHERE Revocada_En IS NULL
+         ORDER BY ID_Acceso, Ultima_Actividad DESC`,
+      );
+      return rows;
+    } catch (error) {
+      if (!missingSchema(error)) throw error;
+      return [];
+    }
   },
 
   async registerFailedAttempt(id, attempts, blockedUntil) {

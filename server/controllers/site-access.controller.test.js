@@ -64,21 +64,34 @@ test('site access login creates an independent secure cookie for a valid team id
   });
   let updatedId;
   let session;
+  let sessionMetadata;
   siteAccessModel.updateLastLogin = async (id) => { updatedId = id; };
-  siteAccessModel.startSession = async (id, sessionId) => {
+  siteAccessModel.startSession = async (id, sessionId, metadata) => {
     session = { id, sessionId };
+    sessionMetadata = metadata;
   };
   const res = responseRecorder();
+  const req = {
+    body: { username: '3183694992', password: 'password123' },
+    headers: {
+      'user-agent': 'TestBrowser/1.0',
+      'x-forwarded-for': '203.0.113.7',
+    },
+    ip: '203.0.113.7',
+    get(name) { return this.headers[name]; },
+  };
 
   try {
-    await siteAccessController.login({
-      body: { username: '3183694992', password: 'password123' },
-    }, res);
+    await siteAccessController.login(req, res);
     assert.equal(res.statusCode, 200);
     assert.deepEqual(res.body, { authenticated: true });
     assert.equal(updatedId, 17);
     assert.equal(session.id, 17);
     assert.match(session.sessionId, /^[0-9a-f-]{36}$/i);
+    assert.deepEqual(sessionMetadata, {
+      ip: '203.0.113.7',
+      userAgent: 'TestBrowser/1.0',
+    });
     assert.equal(res.cookies[0].name, 'p100_access');
     assert.deepEqual(res.cookies[0].options, {
       httpOnly: true,
@@ -239,10 +252,20 @@ test('disclaimer acceptance is stored against the active site account session', 
   }
 });
 
+function jwtPayload(token) {
+  return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8'));
+}
+
 test('protected API session blocks requests until this site session accepts', async () => {
   const originalFindActive = siteAccessModel.findActiveById;
+  const originalFindSession = siteAccessModel.findSession;
+  const originalTouch = siteAccessModel.touchActivity;
   const originalHasAccepted = siteAccessModel.hasAcceptedDisclaimer;
   siteAccessModel.findActiveById = async () => ({ ID_Acceso: 17, Usuario: '3183694992' });
+  siteAccessModel.findSession = async () => ({
+    ID_Sesion: 'session', Revocada_En: null,
+  });
+  siteAccessModel.touchActivity = async () => {};
   siteAccessModel.hasAcceptedDisclaimer = async () => false;
   const res = responseRecorder();
   let continued = false;
@@ -260,18 +283,59 @@ test('protected API session blocks requests until this site session accepts', as
     assert.equal(req.siteAccess.username, '3183694992');
   } finally {
     siteAccessModel.findActiveById = originalFindActive;
+    siteAccessModel.findSession = originalFindSession;
+    siteAccessModel.touchActivity = originalTouch;
     siteAccessModel.hasAcceptedDisclaimer = originalHasAccepted;
   }
 });
 
-test('a revoked or replaced site session is rejected before disclaimer checks', async () => {
+test('two independent site sessions remain valid at the same time', async () => {
   const originalFindActive = siteAccessModel.findActiveById;
+  const originalFindSession = siteAccessModel.findSession;
+  const originalTouch = siteAccessModel.touchActivity;
   const originalHasAccepted = siteAccessModel.hasAcceptedDisclaimer;
   siteAccessModel.findActiveById = async () => ({
-    ID_Acceso: 17,
-    Usuario: '3183694992',
-    Sesion_ID: 'a-different-session',
+    ID_Acceso: 17, Usuario: '3183694992',
   });
+  siteAccessModel.findSession = async (_userId, sessionId) => ({
+    ID_Sesion: sessionId, Revocada_En: null,
+  });
+  siteAccessModel.touchActivity = async () => {};
+  siteAccessModel.hasAcceptedDisclaimer = async () => true;
+
+  const tokenA = signSiteAccessToken({ ID_Acceso: 17 });
+  const tokenB = signSiteAccessToken({ ID_Acceso: 17 });
+  const reqA = { headers: { cookie: `p100_access=${tokenA}` } };
+  const reqB = { headers: { cookie: `p100_access=${tokenB}` } };
+  let continuedA = false;
+  let continuedB = false;
+
+  try {
+    await requireSiteSession(reqA, responseRecorder(), () => { continuedA = true; });
+    await requireSiteSession(reqB, responseRecorder(), () => { continuedB = true; });
+    assert.equal(continuedA, true);
+    assert.equal(continuedB, true);
+    assert.notEqual(reqA.siteAccess.sessionId, reqB.siteAccess.sessionId);
+  } finally {
+    siteAccessModel.findActiveById = originalFindActive;
+    siteAccessModel.findSession = originalFindSession;
+    siteAccessModel.touchActivity = originalTouch;
+    siteAccessModel.hasAcceptedDisclaimer = originalHasAccepted;
+  }
+});
+
+test('a revoked site session is rejected before disclaimer checks', async () => {
+  const originalFindActive = siteAccessModel.findActiveById;
+  const originalFindSession = siteAccessModel.findSession;
+  const originalTouch = siteAccessModel.touchActivity;
+  const originalHasAccepted = siteAccessModel.hasAcceptedDisclaimer;
+  siteAccessModel.findActiveById = async () => ({
+    ID_Acceso: 17, Usuario: '3183694992',
+  });
+  siteAccessModel.findSession = async () => ({
+    ID_Sesion: 'session', Revocada_En: new Date(),
+  });
+  siteAccessModel.touchActivity = async () => {};
   siteAccessModel.hasAcceptedDisclaimer = async () => {
     throw new Error('no debe consultarse');
   };
@@ -286,7 +350,86 @@ test('a revoked or replaced site session is rejected before disclaimer checks', 
     assert.equal(continued, false);
   } finally {
     siteAccessModel.findActiveById = originalFindActive;
+    siteAccessModel.findSession = originalFindSession;
+    siteAccessModel.touchActivity = originalTouch;
     siteAccessModel.hasAcceptedDisclaimer = originalHasAccepted;
+  }
+});
+
+test('legacy single-session fallback still applies while the migration is pending', async () => {
+  const originalFindActive = siteAccessModel.findActiveById;
+  const originalFindSession = siteAccessModel.findSession;
+  const originalTouch = siteAccessModel.touchActivity;
+  const originalHasAccepted = siteAccessModel.hasAcceptedDisclaimer;
+  const token = signSiteAccessToken({ ID_Acceso: 17 });
+  const payload = jwtPayload(token);
+  let currentLegacySession = payload.jti;
+  siteAccessModel.findActiveById = async () => ({
+    ID_Acceso: 17,
+    Usuario: '3183694992',
+    Sesion_ID: currentLegacySession,
+  });
+  siteAccessModel.findSession = async () => ({ missingSchema: true });
+  siteAccessModel.touchActivity = async () => {};
+  siteAccessModel.hasAcceptedDisclaimer = async () => true;
+  let continued = false;
+
+  try {
+    await requireSiteSession(
+      { headers: { cookie: `p100_access=${token}` } },
+      responseRecorder(),
+      () => { continued = true; },
+    );
+    assert.equal(continued, true);
+
+    currentLegacySession = 'a-different-session';
+    const res = responseRecorder();
+    continued = false;
+    await requireSiteSession(
+      { headers: { cookie: `p100_access=${token}` } },
+      res,
+      () => { continued = true; },
+    );
+    assert.equal(res.statusCode, 401);
+    assert.equal(continued, false);
+  } finally {
+    siteAccessModel.findActiveById = originalFindActive;
+    siteAccessModel.findSession = originalFindSession;
+    siteAccessModel.touchActivity = originalTouch;
+    siteAccessModel.hasAcceptedDisclaimer = originalHasAccepted;
+  }
+});
+
+test('logout revokes only the current site session', async () => {
+  const originalFindActive = siteAccessModel.findActiveById;
+  const originalFindSession = siteAccessModel.findSession;
+  const originalTouch = siteAccessModel.touchActivity;
+  const originalEnd = siteAccessModel.endSession;
+  const token = signSiteAccessToken({ ID_Acceso: 17 });
+  const payload = jwtPayload(token);
+  let ended;
+  siteAccessModel.findActiveById = async () => ({
+    ID_Acceso: 17, Usuario: '3183694992',
+  });
+  siteAccessModel.findSession = async () => ({
+    ID_Sesion: payload.jti, Revocada_En: null,
+  });
+  siteAccessModel.touchActivity = async () => {};
+  siteAccessModel.endSession = async (...args) => { ended = args; };
+  const res = responseRecorder();
+
+  try {
+    await siteAccessController.logout({
+      headers: { cookie: `p100_access=${token}` },
+    }, res);
+    assert.deepEqual(ended, [payload.jti, 17]);
+    assert.equal(res.statusCode, 204);
+    assert.equal(res.cookies[0].cleared, true);
+  } finally {
+    siteAccessModel.findActiveById = originalFindActive;
+    siteAccessModel.findSession = originalFindSession;
+    siteAccessModel.touchActivity = originalTouch;
+    siteAccessModel.endSession = originalEnd;
   }
 });
 

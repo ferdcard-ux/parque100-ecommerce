@@ -122,32 +122,42 @@ export async function authenticateRequest(req) {
   };
 }
 
-/** Evita escribir en cada petición: como máximo una marca por minuto. */
+/** Evita escribir en cada petición: como máximo una marca por minuto y sesión. */
 const activityTouched = new Map();
 const ACTIVITY_TOUCH_MS = 60 * 1000;
 
-function touchSiteActivity(id) {
+function touchSiteActivity(sessionId, userId) {
   const now = Date.now();
-  if (now - (activityTouched.get(id) || 0) < ACTIVITY_TOUCH_MS) return;
-  activityTouched.set(id, now);
-  siteAccessModel.touchActivity(id).catch(() => {});
+  if (now - (activityTouched.get(sessionId) || 0) < ACTIVITY_TOUCH_MS) return;
+  activityTouched.set(sessionId, now);
+  siteAccessModel.touchActivity(sessionId, userId).catch(() => {});
 }
 
 /** Autenticates the independent site-access account exclusively from its cookie. */
 export async function authenticateSiteAccessRequest(req) {
   const payload = verifyToken(getSiteAccessCookie(req), 'site-access');
   if (!payload) return null;
-  const user = await siteAccessModel.findActiveById(Number(payload.id));
+  const userId = Number(payload.id);
+  const user = await siteAccessModel.findActiveById(userId);
   if (!user) return null;
-  // Una sesión revocada o reemplazada deja de ser válida de inmediato.
-  // Si la columna no existe (migración pendiente), `undefined` no bloquea.
-  if (user.Sesion_ID === null) return null;
-  if (typeof user.Sesion_ID === 'string' && user.Sesion_ID !== payload.jti) return null;
-  touchSiteActivity(Number(user.ID_Acceso));
+
+  const session = await siteAccessModel.findSession(userId, payload.jti);
+  if (session?.missingSchema) {
+    // Compatibilidad durante el despliegue: mientras la tabla nueva no exista,
+    // se mantiene el control de una sola sesión de las columnas antiguas.
+    if (user.Sesion_ID === null) return null;
+    if (typeof user.Sesion_ID === 'string' && user.Sesion_ID !== payload.jti) return null;
+  } else if (!session || session.Revocada_En) {
+    // Cada dispositivo tiene su propia fila; revocar una no afecta a las demás.
+    return null;
+  }
+
+  touchSiteActivity(payload.jti, userId);
   return {
-    id: Number(user.ID_Acceso),
+    id: userId,
     username: user.Usuario,
     sessionId: payload.jti,
+    session: session?.missingSchema ? null : session,
   };
 }
 

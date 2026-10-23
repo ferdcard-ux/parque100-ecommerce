@@ -16,8 +16,11 @@ import {
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const ENV_FILE = join(ROOT, '.env');
 const MIGRATION_FILE = join(ROOT, 'scripts', 'migrations', '20261021-academic-site-access.sql');
+const MULTI_SESSION_MIGRATION_FILE = join(
+  ROOT, 'scripts', 'migrations', '20261023-multi-session.sql');
 const DB_USER = 'p100_site_access';
 const DATABASE = 'parque100_acceso';
+const ACTIVE_SESSION_WINDOW_MS = 5 * 60 * 1000;
 const SESSION_COLUMNS = {
   Sesion_ID: 'char(36) CHARACTER SET ascii COLLATE ascii_bin NULL DEFAULT NULL',
   Sesion_Iniciada_En: 'timestamp(3) NULL DEFAULT NULL',
@@ -98,6 +101,24 @@ async function ensureSessionColumns(connection) {
   }
 }
 
+/** Crea la tabla de sesiones y conserva la sesión activa anterior. */
+async function ensureMultiSessionTable(connection) {
+  const sql = readFileSync(MULTI_SESSION_MIGRATION_FILE, 'utf8');
+  for (const part of sql.split(';')) {
+    const statement = part
+      .split(/\r?\n/)
+      .filter((line) => !line.trim().startsWith('--'))
+      .join('\n')
+      .trim();
+    if (statement) await connection.query(statement);
+  }
+}
+
+async function ensureSessionSchema(connection) {
+  await ensureSessionColumns(connection);
+  await ensureMultiSessionTable(connection);
+}
+
 /** Vida del token de acceso, para distinguir sesión vigente de expirada. */
 function jwtLifetimeMs() {
   const value = String(process.env.JWT_EXPIRES_IN || '8h').trim();
@@ -118,44 +139,139 @@ function timeLabel(value) {
   }
 }
 
-/** Estado de login que verá el panel (Conectado, Inactivo, Bloqueado...). */
-function sessionStatus(row, now = new Date()) {
-  const started = row.Sesion_Iniciada_En
-    ? new Date(row.Sesion_Iniciada_En) : null;
-  const revoked = row.Sesion_Revocada_En
-    ? new Date(row.Sesion_Revocada_En) : null;
-  const expired = Boolean(started
-    && now.getTime() - started.getTime() >= jwtLifetimeMs());
-  const hasSession = Boolean(row.Activo && started
-    && !(revoked && revoked >= started) && !expired);
-  if (!row.Activo) {
-    return { state: 'disabled', label: 'Deshabilitado', hasSession: false };
+function dateValue(value) {
+  if (!value) return null;
+  const parsed = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function isoValue(value) {
+  const parsed = dateValue(value);
+  return parsed ? parsed.toISOString() : null;
+}
+
+function platformLabel(userAgent) {
+  const ua = String(userAgent || '');
+  if (/Windows/i.test(ua)) return 'Windows';
+  if (/Android/i.test(ua)) return 'Android';
+  if (/iPhone|iPad|iPod/i.test(ua)) return 'iOS';
+  if (/Mac OS X|Macintosh/i.test(ua)) return 'macOS';
+  if (/Linux/i.test(ua)) return 'Linux';
+  return '';
+}
+
+/** Etiqueta corta y legible del dispositivo para el panel. */
+function deviceLabel(userAgent) {
+  const ua = String(userAgent || '').trim();
+  if (!ua) return 'Dispositivo desconocido';
+  let browser = 'Navegador';
+  if (/OpenCode/i.test(ua)) browser = 'OpenCode';
+  else if (/HeadlessChrome/i.test(ua)) browser = 'Chrome headless';
+  else if (/Edg\//i.test(ua)) browser = 'Edge';
+  else if (/OPR\//i.test(ua)) browser = 'Opera';
+  else if (/Firefox\//i.test(ua)) browser = 'Firefox';
+  else if (/CriOS|Chrome\//i.test(ua)) browser = 'Chrome';
+  else if (/Safari\//i.test(ua)) browser = 'Safari';
+  else if (/curl\//i.test(ua)) browser = 'curl';
+  const platform = platformLabel(ua);
+  return platform ? `${browser} · ${platform}` : browser;
+}
+
+/** Estado de una fila individual de sesiones_acceso. */
+function sessionState(row, now = new Date()) {
+  const started = dateValue(row.Creada_En ?? row.Sesion_Iniciada_En);
+  const last = dateValue(row.Ultima_Actividad) || started;
+  const revoked = dateValue(row.Revocada_En);
+  if (!started) {
+    return { state: 'offline', label: 'Sin sesión', hasSession: false, expired: false };
   }
-  const blocked = row.Bloqueado_Hasta ? new Date(row.Bloqueado_Hasta) : null;
+  if (revoked) {
+    return { state: 'offline', label: 'Revocada', hasSession: false, expired: false };
+  }
+  const expired = now.getTime() - started.getTime() >= jwtLifetimeMs();
+  if (expired) {
+    return { state: 'expired', label: 'Expirada', hasSession: false, expired: true };
+  }
+  const idle = now.getTime() - last.getTime();
+  if (idle <= ACTIVE_SESSION_WINDOW_MS) {
+    return { state: 'online', label: 'Conectado', hasSession: true, expired: false };
+  }
+  return { state: 'idle', label: 'Inactivo', hasSession: true, expired: false };
+}
+
+/** Resumen de la cuenta y todas sus sesiones vigentes o expiradas. */
+function sessionStatus(row, sessions = [], now = new Date()) {
+  const list = Array.isArray(sessions) ? sessions : [];
+  const valid = list.filter((session) => sessionState(session, now).hasSession);
+  const canRevoke = list.length > 0;
+  if (!row.Activo) {
+    return {
+      state: 'disabled', label: 'Deshabilitado', hasSession: false,
+      count: valid.length, can_revoke: canRevoke,
+    };
+  }
+  const blocked = dateValue(row.Bloqueado_Hasta);
   if (blocked && blocked > now) {
     return {
       state: 'blocked',
       label: `Bloqueado hasta ${timeLabel(blocked)}`,
       blockedUntil: blocked.toISOString(),
-      hasSession,
+      hasSession: valid.length > 0,
+      count: valid.length,
+      can_revoke: canRevoke,
     };
   }
-  if (!started) {
-    return { state: 'offline', label: 'Sin sesión', hasSession: false };
+  if (valid.length === 0) {
+    if (list.length > 0) {
+      return {
+        state: 'expired', label: 'Sesión expirada', hasSession: false,
+        count: 0, can_revoke: true,
+      };
+    }
+    return {
+      state: 'offline', label: 'Sin sesión', hasSession: false,
+      count: 0, can_revoke: false,
+    };
   }
-  if (revoked && revoked >= started) {
-    return { state: 'offline', label: 'Sin sesión', hasSession: false };
-  }
-  if (expired) {
-    return { state: 'offline', label: 'Sesión expirada', hasSession: false };
-  }
-  const activity = row.Ultima_Actividad
-    ? new Date(row.Ultima_Actividad) : started;
-  const idle = now.getTime() - activity.getTime();
-  if (idle <= 5 * 60 * 1000) {
-    return { state: 'online', label: 'Conectado', hasSession: true };
-  }
-  return { state: 'idle', label: 'Inactivo', hasSession: true };
+  const online = valid.some((session) => sessionState(session, now).state === 'online');
+  return {
+    state: online ? 'online' : 'idle',
+    label: valid.length > 1
+      ? `${valid.length} sesiones` : (online ? 'Conectado' : 'Inactivo'),
+    hasSession: true,
+    count: valid.length,
+    can_revoke: true,
+  };
+}
+
+function sessionPayload(row, now = new Date()) {
+  const state = sessionState(row, now);
+  const started = dateValue(row.Creada_En ?? row.Sesion_Iniciada_En);
+  return {
+    id: row.ID_Sesion,
+    shortId: String(row.ID_Sesion || '').slice(0, 8),
+    device: deviceLabel(row.User_Agent),
+    userAgent: row.User_Agent || '',
+    ip: row.Direccion_IP || '',
+    startedAt: isoValue(started),
+    lastActivityAt: isoValue(row.Ultima_Actividad) || isoValue(started),
+    expiresAt: started
+      ? new Date(started.getTime() + jwtLifetimeMs()).toISOString() : null,
+    state: state.state,
+    label: state.label,
+    expired: state.expired,
+  };
+}
+
+/** Revoca todas las sesiones vigentes de una cuenta. */
+async function revokeAllSessions(connection, id) {
+  const [result] = await connection.execute(
+    `UPDATE ${DATABASE}.sesiones_acceso
+     SET Revocada_En = CURRENT_TIMESTAMP(3)
+     WHERE ID_Acceso = ? AND Revocada_En IS NULL`,
+    [id],
+  );
+  return result.affectedRows;
 }
 
 /** Deja constancia de la revocación en el monitor ACTIVIDAD WEB. */
@@ -191,19 +307,39 @@ async function panelCommand() {
     if (request.action === 'provision') {
       result = await prepareAccessDatabase();
     } else {
-      await ensureSessionColumns(connection);
+      await ensureSessionSchema(connection);
     }
     if (request.action === 'provision') {
       // prepareAccessDatabase ya aplicó la migración.
     } else if (request.action === 'list') {
       const [rows] = await connection.query(
         `SELECT ID_Acceso, Usuario, Activo, Ultimo_Acceso,
-                Sesion_Iniciada_En, Ultima_Actividad, Sesion_Revocada_En,
                 Bloqueado_Hasta, Intentos_Fallidos, Ultimo_Intento_Fallido
          FROM ${DATABASE}.usuarios_acceso ORDER BY Usuario`,
       );
+      const [sessionRows] = await connection.query(
+        `SELECT ID_Sesion, ID_Acceso, Creada_En, Ultima_Actividad,
+                Revocada_En, User_Agent, Direccion_IP
+         FROM ${DATABASE}.sesiones_acceso
+         WHERE Revocada_En IS NULL
+         ORDER BY ID_Acceso, Ultima_Actividad DESC`,
+      );
+      const sessionsByUser = new Map();
+      for (const session of sessionRows) {
+        const key = String(session.ID_Acceso);
+        if (!sessionsByUser.has(key)) sessionsByUser.set(key, []);
+        sessionsByUser.get(key).push(session);
+      }
+      const now = new Date();
       result = {
-        users: rows.map((row) => ({ ...row, session: sessionStatus(row) })),
+        users: rows.map((row) => {
+          const sessions = sessionsByUser.get(String(row.ID_Acceso)) || [];
+          return {
+            ...row,
+            session: sessionStatus(row, sessions, now),
+            sessions: sessions.map((session) => sessionPayload(session, now)),
+          };
+        }),
       };
     } else if (request.action === 'add') {
       if (!validateUsername(request.username)) {
@@ -242,8 +378,9 @@ async function panelCommand() {
         fields.push('Activo = ?');
         values.push(request.active ? 1 : 0);
       }
-      // Cambiar la contraseña o desactivar la cuenta cierra la sesión vigente.
-      if (request.password !== undefined || request.active === false) {
+      const revokeSessions = request.password !== undefined || request.active === false;
+      // Cambiar la contraseña o desactivar la cuenta cierra todas las sesiones.
+      if (revokeSessions) {
         fields.push('Sesion_ID = NULL', 'Sesion_Iniciada_En = NULL',
           'Ultima_Actividad = NULL',
           'Sesion_Revocada_En = CURRENT_TIMESTAMP(3)');
@@ -261,11 +398,32 @@ async function panelCommand() {
         );
         if (rows.length !== 1) throw new Error('La cuenta ya no existe.');
       }
-      result = { id: request.id, username: request.username };
+      let revokedSessions = 0;
+      if (revokeSessions) {
+        revokedSessions = await revokeAllSessions(connection, request.id);
+        if (revokedSessions > 0) {
+          await appendSessionEvent(
+            request.username,
+            'Se revocaron las sesiones al cambiar la cuenta',
+            'login.revoked',
+            'OK',
+            `${revokedSessions} sesión(es) cerrada(s) por contraseña o estado`,
+          );
+        }
+      }
+      result = { id: request.id, username: request.username, revokedSessions };
     } else if (request.action === 'delete') {
       if (!Number.isSafeInteger(request.id) || request.id < 1) {
         throw new Error('Selecciona una cuenta válida para eliminar.');
       }
+      await connection.execute(
+        `DELETE FROM ${DATABASE}.sesiones_acceso WHERE ID_Acceso = ?`,
+        [request.id],
+      );
+      await connection.execute(
+        `DELETE FROM ${DATABASE}.aceptaciones_descargo WHERE ID_Acceso = ?`,
+        [request.id],
+      );
       const [deleted] = await connection.execute(
         `DELETE FROM ${DATABASE}.usuarios_acceso WHERE ID_Acceso = ?`,
         [request.id],
@@ -277,27 +435,90 @@ async function panelCommand() {
         throw new Error('Selecciona una cuenta válida para revocar su sesión.');
       }
       const [rows] = await connection.execute(
-        `SELECT Usuario FROM ${DATABASE}.usuarios_acceso
+        `SELECT Usuario, Activo, Bloqueado_Hasta
+         FROM ${DATABASE}.usuarios_acceso
          WHERE ID_Acceso = ? LIMIT 1`,
         [request.id],
       );
       if (rows.length !== 1) throw new Error('La cuenta ya no existe.');
-      await connection.execute(
-        `UPDATE ${DATABASE}.usuarios_acceso
-         SET Sesion_ID = NULL, Sesion_Iniciada_En = NULL,
-             Ultima_Actividad = NULL,
-             Sesion_Revocada_En = CURRENT_TIMESTAMP(3)
-         WHERE ID_Acceso = ?`,
+      const user = rows[0];
+      const requestedSession = typeof request.sessionId === 'string'
+        ? request.sessionId.trim() : '';
+      if (requestedSession && !/^[0-9a-f-]{36}$/i.test(requestedSession)) {
+        throw new Error('La sesión seleccionada no es válida.');
+      }
+      const [sessionRows] = await connection.execute(
+        `SELECT ID_Sesion, User_Agent, Direccion_IP, Creada_En, Ultima_Actividad
+         FROM ${DATABASE}.sesiones_acceso
+         WHERE ID_Acceso = ? AND Revocada_En IS NULL
+         ORDER BY Ultima_Actividad DESC`,
         [request.id],
       );
-      await appendSessionEvent(rows[0].Usuario,
-        'Se revocó la sesión desde el panel', 'login.revoked', 'OK',
-        'El usuario deberá autenticarse de nuevo');
+      let revokedCount = 0;
+      let detail = '';
+      let actionLabel = 'Se revocó una sesión desde el panel';
+      if (requestedSession) {
+        const target = sessionRows.find(
+          (session) => session.ID_Sesion === requestedSession);
+        if (!target) throw new Error('La sesión seleccionada ya no está activa.');
+        const [revoked] = await connection.execute(
+          `UPDATE ${DATABASE}.sesiones_acceso
+           SET Revocada_En = CURRENT_TIMESTAMP(3)
+           WHERE ID_Sesion = ? AND ID_Acceso = ? AND Revocada_En IS NULL`,
+          [requestedSession, request.id],
+        );
+        if (revoked.affectedRows !== 1) {
+          throw new Error('La sesión seleccionada ya no está activa.');
+        }
+        revokedCount = 1;
+        detail = `Se revocó la sesión de ${deviceLabel(target.User_Agent)} `
+          + `(${requestedSession.slice(0, 8)})`;
+        // Mantener coherente la columna antigua si apuntaba a esta sesión.
+        await connection.execute(
+          `UPDATE ${DATABASE}.usuarios_acceso
+           SET Sesion_ID = NULL, Sesion_Iniciada_En = NULL,
+               Ultima_Actividad = NULL
+           WHERE ID_Acceso = ? AND Sesion_ID = ?`,
+          [request.id, requestedSession],
+        );
+      } else {
+        actionLabel = 'Se revocaron las sesiones desde el panel';
+        const [revoked] = await connection.execute(
+          `UPDATE ${DATABASE}.sesiones_acceso
+           SET Revocada_En = CURRENT_TIMESTAMP(3)
+           WHERE ID_Acceso = ? AND Revocada_En IS NULL`,
+          [request.id],
+        );
+        revokedCount = revoked.affectedRows;
+        detail = revokedCount > 0
+          ? `${revokedCount} sesión(es) cerrada(s); el usuario deberá autenticarse de nuevo`
+          : 'No había sesiones activas';
+        await connection.execute(
+          `UPDATE ${DATABASE}.usuarios_acceso
+           SET Sesion_ID = NULL, Sesion_Iniciada_En = NULL,
+               Ultima_Actividad = NULL,
+               Sesion_Revocada_En = CURRENT_TIMESTAMP(3)
+           WHERE ID_Acceso = ?`,
+          [request.id],
+        );
+      }
+      await appendSessionEvent(user.Usuario, actionLabel, 'login.revoked', 'OK', detail);
+      const [remainingRows] = await connection.execute(
+        `SELECT ID_Sesion, ID_Acceso, Creada_En, Ultima_Actividad,
+                Revocada_En, User_Agent, Direccion_IP
+         FROM ${DATABASE}.sesiones_acceso
+         WHERE ID_Acceso = ? AND Revocada_En IS NULL
+         ORDER BY Ultima_Actividad DESC`,
+        [request.id],
+      );
+      const now = new Date();
       result = {
         id: request.id,
-        username: rows[0].Usuario,
-        revoked: true,
-        session: { state: 'offline', label: 'Sin sesión' },
+        username: user.Usuario,
+        revoked: revokedCount > 0,
+        revokedCount,
+        session: sessionStatus(user, remainingRows, now),
+        sessions: remainingRows.map((session) => sessionPayload(session, now)),
       };
     } else {
       throw new Error('Operación de administración no permitida.');
@@ -321,7 +542,7 @@ async function provision({ quiet = false } = {}) {
   const servicePassword = randomBytes(36).toString('base64url');
   try {
     await admin.query(readFileSync(MIGRATION_FILE, 'utf8'));
-    await ensureSessionColumns(admin);
+    await ensureSessionSchema(admin);
     const escapedPassword = mysql.escape(servicePassword);
     await admin.query(
       `CREATE USER IF NOT EXISTS '${DB_USER}'@'localhost' IDENTIFIED BY ${escapedPassword}`,
@@ -349,7 +570,7 @@ async function ensureSchemaWithAdmin() {
     adminConnectionOptions({ multipleStatements: false }),
   );
   try {
-    await ensureSessionColumns(admin);
+    await ensureSessionSchema(admin);
   } finally {
     await admin.end();
   }
@@ -455,34 +676,74 @@ async function disableUser(username) {
     throw new Error('Indica el identificador numérico de la cuenta que deseas desactivar.');
   }
   const changed = await withAccessPool(async (pool) => {
-    const [result] = await pool.query(
-      'UPDATE usuarios_acceso SET Activo = 0 WHERE Usuario = ? AND Activo = 1',
+    const [users] = await pool.query(
+      'SELECT ID_Acceso FROM usuarios_acceso WHERE Usuario = ? AND Activo = 1 LIMIT 1',
       [username],
     );
-    return result.affectedRows === 1;
+    if (users.length !== 1) return false;
+    const id = users[0].ID_Acceso;
+    await pool.query('UPDATE usuarios_acceso SET Activo = 0 WHERE ID_Acceso = ?', [id]);
+    try {
+      await pool.query(
+        `UPDATE usuarios_acceso
+         SET Sesion_ID = NULL, Sesion_Iniciada_En = NULL,
+             Ultima_Actividad = NULL, Sesion_Revocada_En = CURRENT_TIMESTAMP(3)
+         WHERE ID_Acceso = ?`,
+        [id],
+      );
+    } catch (error) {
+      if (error?.code !== 'ER_BAD_FIELD_ERROR') throw error;
+    }
+    try {
+      await pool.query(
+        `UPDATE sesiones_acceso
+         SET Revocada_En = CURRENT_TIMESTAMP(3)
+         WHERE ID_Acceso = ? AND Revocada_En IS NULL`,
+        [id],
+      );
+    } catch (error) {
+      if (!['ER_BAD_TABLE_ERROR', 'ER_BAD_FIELD_ERROR'].includes(error?.code)) {
+        throw error;
+      }
+    }
+    return true;
   });
   if (!changed) throw new Error('La cuenta no existe o ya estaba desactivada.');
-  console.log(`Cuenta de acceso ${username} desactivada.`);
+  console.log(`Cuenta de acceso ${username} desactivada; sus sesiones fueron revocadas.`);
 }
 
 async function listUsers() {
   await ensureSchemaWithAdmin();
-  const users = await withAccessPool(async (pool) => {
-    const [rows] = await pool.query(
-      `SELECT Usuario, Activo, Ultimo_Acceso, Sesion_Iniciada_En,
-              Ultima_Actividad, Sesion_Revocada_En, Bloqueado_Hasta,
-              Intentos_Fallidos
+  const { users, sessions } = await withAccessPool(async (pool) => {
+    const [userRows] = await pool.query(
+      `SELECT ID_Acceso, Usuario, Activo, Ultimo_Acceso,
+              Bloqueado_Hasta, Intentos_Fallidos
        FROM usuarios_acceso ORDER BY Usuario`,
     );
-    return rows;
+    const [sessionRows] = await pool.query(
+      `SELECT ID_Sesion, ID_Acceso, Creada_En, Ultima_Actividad,
+              Revocada_En, User_Agent, Direccion_IP
+       FROM sesiones_acceso
+       WHERE Revocada_En IS NULL
+       ORDER BY ID_Acceso, Ultima_Actividad DESC`,
+    );
+    return { users: userRows, sessions: sessionRows };
   });
   if (users.length === 0) {
     console.log('No hay cuentas de acceso creadas.');
     return;
   }
+  const now = new Date();
   for (const user of users) {
-    const session = sessionStatus(user);
-    console.log(`${user.Usuario}\t${user.Activo ? 'activa' : 'desactivada'}\t${session.label}\t${user.Ultimo_Acceso || 'sin acceso'}`);
+    const userSessions = sessions.filter(
+      (session) => String(session.ID_Acceso) === String(user.ID_Acceso));
+    const summary = sessionStatus(user, userSessions, now);
+    console.log(`${user.Usuario}\t${user.Activo ? 'activa' : 'desactivada'}`
+      + `\t${summary.label}\t${user.Ultimo_Acceso || 'sin acceso'}`);
+    for (const session of userSessions.map((row) => sessionPayload(row, now))) {
+      console.log(`  - ${session.device} · ${session.ip || 'IP desconocida'}`
+        + ` · ${session.label} · ${session.lastActivityAt || 'sin actividad'}`);
+    }
   }
 }
 
