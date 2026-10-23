@@ -233,7 +233,7 @@ modificar los Administradores; ver Paso 9):
 		X-Frame-Options "DENY"
 		Referrer-Policy "strict-origin-when-cross-origin"
 		Permissions-Policy "camera=(), microphone=(), geolocation=()"
-		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://images.unsplash.com https://images.pexels.com; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self'; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 		-Server
 	}
 
@@ -261,9 +261,11 @@ modificar los Administradores; ver Paso 9):
 }
 ```
 
-- **CSP:** si se agrega un origen externo de imágenes o scripts, hay que
-  incluirlo en la política; de lo contrario el navegador lo bloquea (consola:
-  *Refused to load…*). `access.html` no debe contener scripts en línea.
+- **CSP:** las imágenes se admiten desde cualquier origen HTTPS (`img-src … https:`)
+  porque el administrador puede usar URL de imagen de cualquier tienda o CDN; una
+  imagen `http://` (sin TLS) se bloquea. Los scripts solo se cargan desde el
+  propio sitio: si se agrega un script externo hay que incluirlo en `script-src`
+  (consola: *Refused to load…*). `access.html` no debe contener scripts en línea.
 - **Registro de accesos:** guarda IP, ruta y código HTTP para investigar
   incidentes; Caddy oculta por defecto `Cookie` y `Authorization`.
 
